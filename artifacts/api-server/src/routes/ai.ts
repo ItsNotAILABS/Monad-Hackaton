@@ -23,8 +23,10 @@ const MONAD_SYSTEM = `You are the MonadBuilder+ AI — an expert on:
   - Max contract size: 128 KB
 
 Available dApp components (type → description):
-  wallet-connect, token-swap, nft-gallery, dao-vote, stats-bar, price-chart,
-  token-balance, gas-price, recent-transactions, hero-section, button, text-block, image-block
+  wallet-connect, token-balance, nft-gallery, transaction-feed,
+  token-swap, price-chart, dao-vote,
+  hero-section, card, stats-row, divider,
+  heading, paragraph, button, image
 
 THESIS OS modules: EcosystemLaw (immutable global rules), LawBook (owner-tunable laws),
   PolicyKernel (evaluates proposals), SovereignVault (executes only cleared actions),
@@ -33,6 +35,94 @@ THESIS OS modules: EcosystemLaw (immutable global rules), LawBook (owner-tunable
 Be concise, technically precise, and opinionated. Prefer Monad-specific advice over generic Web3 advice.
 When asked to generate components, always output valid JSON. When explaining gas, always emphasize
 the limit×price model. When discussing THESIS, always emphasize the law-first governance model.`;
+
+// ─── Component type validation ────────────────────────────────────────────
+// Source of truth: artifacts/monad-builder/src/components/builder/palette.ts
+const VALID_COMPONENT_TYPES = new Set([
+  // Web3
+  "wallet-connect", "token-balance", "nft-gallery", "transaction-feed",
+  "token-swap", "price-chart", "dao-vote",
+  // Layout
+  "hero-section", "card", "stats-row", "divider",
+  // Content
+  "heading", "paragraph", "button", "image",
+]);
+
+// Known model hallucinations → correct palette type (no second AI call needed)
+const TYPE_ALIASES: Record<string, string> = {
+  "stats-bar":           "stats-row",
+  "stats_bar":           "stats-row",
+  "stats-section":       "stats-row",
+  "recent-transactions": "transaction-feed",
+  "recent_transactions": "transaction-feed",
+  "tx-feed":             "transaction-feed",
+  "text-block":          "paragraph",
+  "text_block":          "paragraph",
+  "text-section":        "paragraph",
+  "image-block":         "image",
+  "image_block":         "image",
+  "image-section":       "image",
+  "gas-price":           "stats-row",
+  "gas_price":           "stats-row",
+  "gas-tracker":         "stats-row",
+  "liquidity-pool":      "token-swap",
+  "swap-widget":         "token-swap",
+  "nft-mint":            "nft-gallery",
+  "nft-collection":      "nft-gallery",
+  "governance":          "dao-vote",
+  "dao-proposal":        "dao-vote",
+  "staking":             "token-balance",
+  "token-staking":       "token-balance",
+  "wallet":              "wallet-connect",
+  "wallet-button":       "wallet-connect",
+};
+
+interface RawComponent {
+  type?: string;
+  props?: Record<string, any>;
+  id?: string;
+  order?: number;
+  [key: string]: any;
+}
+
+interface ValidationResult {
+  components: RawComponent[];
+  warnings: string[];
+}
+
+/**
+ * Validate and normalise AI-generated component types against the palette.
+ * Known aliases are remapped; unrecognised types are dropped with a warning.
+ */
+function validateComponents(raw: RawComponent[]): ValidationResult {
+  const warnings: string[] = [];
+  const components: RawComponent[] = [];
+
+  for (const c of raw) {
+    const rawType = String(c.type ?? "").toLowerCase().trim();
+
+    if (!rawType) {
+      warnings.push("A component with no type was removed");
+      continue;
+    }
+
+    if (VALID_COMPONENT_TYPES.has(rawType)) {
+      components.push({ ...c, type: rawType });
+      continue;
+    }
+
+    const remapped = TYPE_ALIASES[rawType];
+    if (remapped) {
+      warnings.push(`Component type "${rawType}" remapped to "${remapped}"`);
+      components.push({ ...c, type: remapped });
+      continue;
+    }
+
+    warnings.push(`Component type "${rawType}" is not in the palette and was removed`);
+  }
+
+  return { components, warnings };
+}
 
 // ─── Chain utility — used by LiveBlockTicker ─────────────────────────────
 import { Router as ChainRouter } from "express";
@@ -172,18 +262,24 @@ You generate MonadBuilder+ component configs. Return ONLY valid JSON (no markdow
   "reasoning": "<one sentence why this component fits>"
 }
 
+Valid component types ONLY (use exactly these strings):
+  wallet-connect, token-balance, nft-gallery, transaction-feed,
+  token-swap, price-chart, dao-vote,
+  hero-section, card, stats-row, divider,
+  heading, paragraph, button, image
+
 Common props by type:
 - wallet-connect: { label, chainId: 143, networkName: "Monad Mainnet" }
 - token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
 - nft-gallery: { limit: 8, columns: 4, contractAddress: "0x..." }
 - dao-vote: { title, subtitle, chainId: 143 }
-- stats-bar: { items: 3, chainId: 143 }
+- stats-row: { items: 3, chainId: 143 }
 - price-chart: { token: "MON", chainId: 143 }
-- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- gas-price: { chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
 - hero-section: { title, subtitle }
 - button: { label, variant: "primary" }
-- text-block: { text }`,
+- paragraph: { text }`,
         },
         {
           role: "user",
@@ -195,7 +291,17 @@ Common props by type:
     const raw = response.choices[0]?.message?.content ?? "{}";
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(cleaned);
-    res.json({ ok: true, component: parsed });
+
+    // Validate the single component type against the palette
+    const { components: validated, warnings } = validateComponents([parsed]);
+    if (validated.length === 0) {
+      // Unrecognised type — surface the warning rather than returning garbage
+      res.status(422).json({ ok: false, error: warnings[0] ?? "AI returned an unrecognised component type", warnings });
+      return;
+    }
+    // Merge the validated type back (name + reasoning are pass-through)
+    const component = { ...parsed, type: validated[0].type };
+    res.json({ ok: true, component, warnings });
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -272,26 +378,29 @@ Return ONLY valid JSON — no markdown, no explanation:
   ]
 }
 
-Always include 5-6 components. Always start with a hero-section or stats-bar.
-Always include wallet-connect near the top. End with a button or text-block call-to-action.
+Always include 5-6 components. Always start with a hero-section or stats-row.
+Always include wallet-connect near the top. End with a button or paragraph call-to-action.
 Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
 Tailor the dApp type (DeFi/NFT/DAO/token) to the user's idea.
 
-Component types available: wallet-connect, token-swap, nft-gallery, dao-vote, stats-bar,
-price-chart, token-balance, gas-price, recent-transactions, hero-section, button, text-block, image-block
+Valid component types ONLY (use exactly these strings):
+  wallet-connect, token-balance, nft-gallery, transaction-feed,
+  token-swap, price-chart, dao-vote,
+  hero-section, card, stats-row, divider,
+  heading, paragraph, button, image
 
 Common props:
 - wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
 - token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
 - nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
 - dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
-- stats-bar: { items: 3, chainId: 143 }
+- stats-row: { items: 3, chainId: 143 }
 - price-chart: { token: "MON", chainId: 143 }
-- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- gas-price: { chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
 - hero-section: { title: "...", subtitle: "..." }
 - button: { label: "...", variant: "primary" }
-- text-block: { text: "..." }`,
+- paragraph: { text: "..." }`,
         },
         {
           role: "user",
@@ -317,15 +426,23 @@ Common props:
       return;
     }
 
-    // Assign stable IDs and order to components
-    const components = (parsed.components ?? []).map((c: any, i: number) => ({
+    // Validate and remap component types against the palette
+    const { components: validatedRaw, warnings } = validateComponents(parsed.components ?? []);
+
+    if (validatedRaw.length === 0) {
+      res.status(500).json({ ok: false, error: "AI returned no valid components. Try a different prompt.", warnings });
+      return;
+    }
+
+    // Assign stable IDs and order
+    const components = validatedRaw.map((c, i) => ({
       id: `comp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
       type: c.type,
-      props: c.props ?? {},
+      props: (c.props as Record<string, any>) ?? {},
       order: i,
     }));
 
-    res.json({ ok: true, projectName: parsed.projectName ?? "My Monad dApp", components });
+    res.json({ ok: true, projectName: parsed.projectName ?? "My Monad dApp", components, warnings });
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -484,18 +601,24 @@ Rules:
 - Do not duplicate component types unless the instruction explicitly calls for it.
 - Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
 
-Component types available: wallet-connect, token-swap, nft-gallery, dao-vote, stats-bar,
-price-chart, token-balance, gas-price, recent-transactions, hero-section, button, text-block, image-block
+Valid component types ONLY (use exactly these strings):
+  wallet-connect, token-balance, nft-gallery, transaction-feed,
+  token-swap, price-chart, dao-vote,
+  hero-section, card, stats-row, divider,
+  heading, paragraph, button, image
 
 Common props:
 - wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
 - token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
 - nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
 - dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
-- stats-bar: { items: 3, chainId: 143 }
+- stats-row: { items: 3, chainId: 143 }
 - price-chart: { token: "MON", chainId: 143 }
+- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
 - hero-section: { title: "...", subtitle: "..." }
-- button: { label: "...", variant: "primary" }`,
+- button: { label: "...", variant: "primary" }
+- paragraph: { text: "..." }`,
         },
         {
           role: "user",
@@ -527,14 +650,22 @@ Return an updated component list that incorporates this instruction.`,
       return;
     }
 
-    const components = (parsed.components ?? []).map((c: any, i: number) => ({
+    // Validate and remap component types against the palette
+    const { components: validatedRaw, warnings } = validateComponents(parsed.components ?? []);
+
+    if (validatedRaw.length === 0) {
+      res.status(500).json({ ok: false, error: "AI returned no valid components. Try a different instruction.", warnings });
+      return;
+    }
+
+    const components = validatedRaw.map((c, i) => ({
       id: `comp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
       type: c.type,
-      props: c.props ?? {},
+      props: (c.props as Record<string, any>) ?? {},
       order: i,
     }));
 
-    res.json({ ok: true, components });
+    res.json({ ok: true, components, warnings });
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message });
   }
