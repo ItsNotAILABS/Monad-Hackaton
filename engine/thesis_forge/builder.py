@@ -377,3 +377,120 @@ def builder_home(network: str = "monad-testnet") -> Dict[str, Any]:
             "signals",
         ],
     }
+
+
+def utility_now(network: str = "monad-testnet") -> Dict[str, Any]:
+    """Right-away utility pack — one response with everything useful on first paint."""
+    t0 = time.time()
+    brief = daily_ai_brief(network)
+    from .signals import generate_signals
+    from .trading import load_desk, run_desk_arena, desk_snapshot
+    from .gas_intel import gas_coach
+    from .edge_workers import edge_run_local
+
+    sig = generate_signals(network, n=5)
+    desk = desk_snapshot()
+    gas = gas_coach()
+    # cheap reject peek without full morning XP double-spend
+    try:
+        arena = run_desk_arena(load_desk())
+    except Exception:
+        arena = {"n_rejected": 0, "n_accepted": 0}
+    edge = edge_run_local("seatbelt", "brief", network=network)
+
+    top = (sig.get("leaderboard") or [{}])[0]
+    taps = [
+        {
+            "id": "morning",
+            "label": "▶ AI Morning",
+            "desc": "Check-in · gas · REJECT · signal fill",
+            "api": "POST /builder/morning",
+            "primary": True,
+            "seconds": 15,
+        },
+        {
+            "id": "reject",
+            "label": "Celebrate REJECT",
+            "desc": f"Live peek: {arena.get('n_rejected')} rejected last arena",
+            "api": "POST /tools/reject_demo/run",
+            "seconds": 5,
+        },
+        {
+            "id": "auto",
+            "label": "Auto paper loop",
+            "desc": "Signals + strategy fills under laws",
+            "api": "POST /auto/loop",
+            "seconds": 12,
+        },
+        {
+            "id": "signals",
+            "label": f"Signal {top.get('side') or '—'} {top.get('symbol') or ''}",
+            "desc": f"score {top.get('score')} · auto={top.get('auto')}",
+            "api": "GET /signals",
+            "seconds": 3,
+        },
+        {
+            "id": "x",
+            "label": "Draft X post",
+            "desc": "Ecosystem marketing from real actions",
+            "api": "POST /x/from-actions",
+            "seconds": 4,
+        },
+        {
+            "id": "edge",
+            "label": "Edge seatbelt",
+            "desc": "CF Worker route (local sim)",
+            "api": "POST /edge/run",
+            "seconds": 4,
+        },
+        {
+            "id": "agent",
+            "label": "Agent step",
+            "desc": "Delta attention long-horizon",
+            "api": "POST /agent/step",
+            "seconds": 8,
+        },
+        {
+            "id": "report",
+            "label": "Full PDF report",
+            "desc": "Downloadable ops pack",
+            "api": "POST /reports/full",
+            "seconds": 8,
+        },
+    ]
+
+    return {
+        "schema": "monadbuilder.utility_now.v1",
+        "product": PRODUCT,
+        "version": __version__,
+        "network": network,
+        "ready_ms": round((time.time() - t0) * 1000, 1),
+        "format": "text",
+        "tts": False,
+        "speech_to_text": True,
+        "headline": brief.get("brief_text") or brief.get("ai_voice"),
+        "celebration": brief.get("celebration"),
+        "mood": brief.get("mood"),
+        "stats": brief.get("stats"),
+        "gas": {
+            "title": (gas.get("tip") or {}).get("title"),
+            "body": (gas.get("tip") or {}).get("body") or (gas.get("tip") or {}).get("roommate"),
+            "limit": (gas.get("demo_margin") or {}).get("recommended_gas_limit"),
+        },
+        "desk": {
+            "equity": desk.get("equity"),
+            "day_pnl": desk.get("day_pnl"),
+            "cash_usdc": desk.get("cash_usdc"),
+        },
+        "arena_peek": {
+            "n_rejected": arena.get("n_rejected"),
+            "n_accepted": arena.get("n_accepted"),
+            "reject_is_a_feature": int(arena.get("n_rejected") or 0) >= 1,
+        },
+        "signal_top": top,
+        "signals": (sig.get("leaderboard") or [])[:5],
+        "edge_brief": (edge.get("result") or {}).get("summary"),
+        "taps": taps,
+        "doctrine": DOCTRINE,
+        "one_liner": ONE_LINER,
+    }

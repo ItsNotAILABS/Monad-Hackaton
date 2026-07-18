@@ -303,16 +303,19 @@ def main() -> int:
     br = c.get("/builder/brief").json()
     assert br.get("ai_delivered") and (br.get("brief_text") or br.get("ai_voice"))
     assert br.get("tts") is False
+    bn = c.get("/builder/now").json()
+    assert bn.get("taps") and bn.get("signals") is not None and bn.get("headline")
     bm = c.post("/builder/morning", json={"network": "monad-testnet"}).json()
     assert bm.get("ok") is not False and bm.get("headline")
     print(
         "builder",
         brand.get("product_short"),
-        "brief_mood",
-        br.get("mood"),
+        "now_taps",
+        len(bn.get("taps") or []),
+        "ready_ms",
+        bn.get("ready_ms"),
         "morning",
         (bm.get("stats") or {}).get("streak"),
-        bm.get("celebration", "")[:40],
     )
 
     ag = c.get("/agent").json()

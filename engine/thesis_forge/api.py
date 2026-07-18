@@ -105,7 +105,7 @@ from .signals import generate_signals, signal_to_ticket
 from .auto_exec import auto_loop, auto_paper_from_signals, auto_strategy_run, intelligence_pulse
 from .hybrid import hybrid_catalog, run_hybrid_node
 from .brand import PRODUCT, PRODUCT_SHORT, TAGLINE, brand_payload
-from .builder import builder_home, daily_ai_brief, run_morning, utilities_catalog
+from .builder import builder_home, daily_ai_brief, run_morning, utilities_catalog, utility_now
 from .delta_ai import agent_status, long_horizon_step
 from .x_marketing import (
     draft_from_recent_actions,
@@ -494,9 +494,15 @@ def builder_get(network: str = Query("monad-testnet")):
     return builder_home(network)
 
 
+@app.get("/builder/now")
+def builder_now(network: str = Query("monad-testnet")):
+    """Right-away utility pack — brief + signals + reject peek + one-tap map."""
+    return utility_now(network)
+
+
 @app.get("/builder/brief")
 def builder_brief(network: str = Query("monad-testnet")):
-    """AI-delivered daily brief — addictive helpful seatbelt."""
+    """AI-delivered daily brief — text only (no robot TTS)."""
     return daily_ai_brief(network)
 
 

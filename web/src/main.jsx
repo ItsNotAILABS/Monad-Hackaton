@@ -760,14 +760,11 @@ function App() {
         </div>
       ) : null}
 
-      {/* Always-on usable action bar */}
+      {/* Always-on utility bar — polished, sticky */}
       <div className="use-bar">
-        <button type="button" className="forge use-run" disabled={busy} onClick={runSystem}>
-          ▶ RUN SYSTEM
-        </button>
         <button
           type="button"
-          className="ghost"
+          className="forge use-run"
           disabled={busy}
           onClick={async () => {
             setBusy(true);
@@ -786,10 +783,63 @@ function App() {
             }
           }}
         >
-          AI Morning
+          ▶ AI MORNING
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const a = await api("/auto/loop", {
+                method: "POST",
+                body: JSON.stringify({ network }),
+              });
+              setToast(a.headline || "Auto loop done");
+              setTab("builder");
+            } catch (e) {
+              setErr(String(e.message || e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Auto
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const r = await api("/tools/reject_demo/run", { method: "POST", body: "{}" });
+              setToast(r?.result?.proof || "Reject proven");
+              setTab("builder");
+            } catch (e) {
+              setErr(String(e.message || e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          Reject
         </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("builder")}>
-          Brief
+          HQ
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("agent")}>
+          Agent
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("hybrid")}>
+          Edge
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={runSystem}>
+          System
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("judge")}>
+          Proof
         </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
           Cloud
