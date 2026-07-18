@@ -1,0 +1,13 @@
+{
+  "schema": "thesis.commercial.release.v1",
+  "release": "company-os-commercial-alpha",
+  "status": "validated-local-ready-for-ci",
+  "hash_manifest_root": "5cc8cf53dfb5273a23a4c3a4801ef21d560456c72cfbc0846bb4837a499bc316",
+  "system_test": "proof/commercial-system-test.json",
+  "latency_receipt": "proof/commercial-latency.json",
+  "entrypoint": "thesis_forge.app:app",
+  "default_surface": "web/index.html",
+  "legacy_surface": "web/workstation.html",
+  "operator_boundary": "No live chain broadcast without user wallet signature.",
+  "release_receipt": "a8029023aa8b98514549c33a6668b2db84337e5fb55ed1399caa43a5f84fb163"
+}

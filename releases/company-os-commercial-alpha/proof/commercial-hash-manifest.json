@@ -1,0 +1,27 @@
+{
+  "schema": "thesis.commercial.hash_manifest.v1",
+  "generated_at": 1784358333.2809725,
+  "files": [
+    {"path":".gitignore","sha256":"363c4e588e16d222fe1eefd1df7b090e161a2da0d6fa8d29e52624818c437094","bytes":360},
+    {"path":"README.md","sha256":"71f10cb4917897810d9ef544a6a31cff91d1574792076483f4ce62fccd62dd97","bytes":5333},
+    {"path":"COMMERCIAL.md","sha256":"a5c6b652f66ea4947db3ad760b3afbe2c2c7da82462de0418263c56c6f4e1fd9","bytes":3575},
+    {"path":"Dockerfile","sha256":"e3999ac7049223237fd769a23e4a48712d23732ff76fd7f18e2486f9371ced67","bytes":443},
+    {"path":"docker-compose.yml","sha256":"e933a0bebbef39ae71de01ab313f931acbea873d042fba2f1aded7ff89d73567","bytes":514},
+    {"path":"engine/thesis_forge/company.py","sha256":"f3f995062ad5a0972c6120fb0048c0d4738979991a4c3c65b97c838eb986ea13","bytes":33841},
+    {"path":"engine/thesis_forge/company_api.py","sha256":"3881cf6418d5d0cef2c92d6e3b3ee08c844987682e2fbd7b3bb7d6e2ff798131","bytes":3921},
+    {"path":"engine/thesis_forge/app.py","sha256":"c438597594050ca69307e2546ff05c6a37082623573079ea6d5110412d0343af","bytes":306},
+    {"path":"engine/tests/test_company.py","sha256":"6baa8f3fd83131c93f5c30a81822b2af953236da55604d319523ffbf8c62b5ff","bytes":6269},
+    {"path":"web/index.html","sha256":"498c877e25b819ab0ad445186a097a6944df813c9e708493a02c48f12a9407ae","bytes":459},
+    {"path":"web/workstation.html","sha256":"c70688955303cf56ba6445931280bcae6596c235451978f8dc7bd60ec8f29ab2","bytes":385},
+    {"path":"web/vite.config.js","sha256":"2014efc37276ae9591eb8f1a957a7e8dec9476e92d58e5623faf0a9fe140064f","bytes":588},
+    {"path":"web/src/company.jsx","sha256":"b4736f3d96f96cb8cc6b760bcf3a4bf37b8fdb730d3bc32c8fba27b84d1091a8","bytes":17661},
+    {"path":"web/src/company.css","sha256":"f9ed674961b13f15e4d20c618dcbdc631c477ecec7ba2dcdba5e62d819294a73","bytes":9549},
+    {"path":"web/nginx.conf","sha256":"f461f51561a5c9235dddc357a1138c4e44756c4e672fcee6c8767d01db8555c2","bytes":380},
+    {"path":"web/Dockerfile","sha256":"54502f039093304b6750f898cc38571ab159fdf78461b2fb473b0498f30ad9d1","bytes":346},
+    {"path":"scripts/run_commercial.ps1","sha256":"f3799ea2bbd6eef5510d81ad19da50ab5d3d2c787a547a6863fff177d6ab984b","bytes":534},
+    {"path":"scripts/validate_commercial.py","sha256":"e260ba610243e8a5dc2db74f0789667cf6aa01a94226fb91727b769c89c85614","bytes":10972},
+    {"path":"proof/commercial-latency.json","sha256":"57e51133aba7fe26e1919f1e25a20db95bc0effb2dcd68945083ca2283bb2100","bytes":395}
+  ],
+  "root_hash": "5cc8cf53dfb5273a23a4c3a4801ef21d560456c72cfbc0846bb4837a499bc316",
+  "claims_boundary": "Hashes cover the commercial-alpha files listed here; they are not an external code audit."
+}
