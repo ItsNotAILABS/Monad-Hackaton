@@ -1,65 +1,163 @@
-# THESIS Forge
+# THESIS — Monad AI Workstation
 
-Monad-native intent-to-deployment foundry and sovereign DeFi operating layer.
+**Agents propose. Laws decide. Humans & AIs learn by failing safely.**
 
-THESIS Forge converts a builder objective into a governed application blueprint, Solidity contracts, Python engines, tests, deployment plans, verification commands, and release receipts. The flagship generated application is THESIS Sovereign DeFi: a policy-governed vault where agents propose actions but cannot bypass owner-defined laws.
+Public Spark entry for [Build Anything · Spark](https://buildanything.so/hackathons/spark) on [Monad](https://docs.monad.xyz/).
 
-## Hackathon provenance
+| | |
+|--|--|
+| **Charter** | [CHARTER.md](CHARTER.md) |
+| **Deploy** | [DEPLOYMENT.md](DEPLOYMENT.md) |
+| **Repo** | https://github.com/ItsNotAILABS/Monad-Hackaton |
+| **Safety** | [PRODUCTION.md](PRODUCTION.md) |
 
-This repository is a new build created for the Build Anything / Monad hackathon. No pre-hackathon application code is imported.
+---
 
-## Alpha capabilities
+## What it is
 
-- Intent compiler: plain-language objective -> typed application manifest.
-- Protocol atlas: adapter registry spanning swaps, lending, vaults, staking, perps, analytics, and agents.
-- Policy kernel: asset, protocol, slippage, allocation, leverage, reserve, and agent limits.
-- Agent arena: competing plans scored against policy and risk.
-- Deployment forge: Foundry commands for Monad testnet/mainnet deployment and verification.
-- Receipt chain: hash-linked build, simulation, policy, deployment, and execution receipts.
-- Web cockpit: project generation, lawbook, protocol selection, plan comparison, and release view.
+THESIS is a **production workstation** for building on Monad with AI:
 
-## Architecture
+| Pillar | Job |
+|--------|-----|
+| **STUDIO** | Objective → typed manifest + Foundry deploy plan + sealed receipt |
+| **CODEX** | Ecosystem atlas (honest adapter status) + network constants |
+| **NOMOS** | Policy lawbook + multi-plan arena — **reject is a feature** |
+| **ACADEMY** | Failure-first labs that teach **people and AI agents** |
 
-```text
-Objective -> THESIS compiler -> Manifest -> CODEX generator -> TEST gates
-          -> Deployment plan -> Monad contracts -> Verification -> NERVUS receipts
+Onchain kernel: `PolicyKernel` + `SovereignVault` + `ReceiptChain` (+ registry / proposals / router).
 
-Wallet state -> SENSUS -> Agents -> MATHESIS -> NOMOS -> AGORA -> PRAXIS
-             -> SovereignVault -> Monad -> receipt -> MEMORIA
-```
+**Spark contract address field → `SovereignVault`.**
 
-## Run locally
+---
+
+## Personal problem
+
+AI + crypto is fast but reckless. Protocols and RPCs are scattered. Agents invent plans that can spend capital. Tutorials skip the failure modes that keep money safe.
+
+THESIS is one place to **forge a plan, fail unlawfully plans hard, learn why, deploy what passed**.
+
+---
+
+## Quick start
+
+### Engine API
 
 ```bash
 cd engine
 python -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev]
+# Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Unix / WSL
+pip install -e ".[dev]"
 uvicorn thesis_forge.api:app --reload --port 8043
 ```
+
+Health: http://127.0.0.1:8043/health  
+OpenAPI: http://127.0.0.1:8043/docs  
+
+### Web cockpit
 
 ```bash
 cd web
 npm install
+# optional: set VITE_API_URL=http://127.0.0.1:8043
 npm run dev
 ```
 
+Dev server proxies `/api` → `:8043` (see `vite.config.js`).
+
+Production build:
+
 ```bash
+cd web && npm run build
+```
+
+### Contracts
+
+```bash
+# WSL recommended on Windows — https://docs.monad.xyz/guides/deploy-smart-contract/foundry
 cd contracts
+forge install foundry-rs/forge-std --no-commit   # once
 forge test
 ```
 
-## Monad networks
+Deploy testnet (fund deployer first: https://testnet.monad.xyz):
 
-- Mainnet chain ID: `143`
-- Testnet chain ID: `10143`
+```bash
+export PRIVATE_KEY=0x…
+./scripts/deploy.sh testnet
+# addresses → receipts/deployment.json
+```
 
-RPC URLs and private keys are supplied by environment variables. No secrets are committed.
+---
 
-## Status
+## API map
 
-Alpha source, Python validation, and production web build are complete. Live Monad deployment, contract verification, hosted URL, and public demo URL require operator credentials and external hosting.
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/health` | Status + pillars + deploy tip |
+| GET | `/charter` | Product summary |
+| GET | `/networks` | Testnet 10143 / mainnet 143 |
+| GET | `/protocols` | Codex atlas |
+| POST | `/forge` | Studio compile + receipt |
+| POST | `/arena` | Nomos multi-plan evaluation |
+| GET | `/academy/quests` | List labs |
+| POST | `/academy/grade` | Grade lab + receipt |
+| GET | `/deployment` | Recorded vault address |
+| GET | `/demo/pack` | 3-minute demo script |
 
-## Repository
+---
 
-Public hackathon source: https://github.com/ItsNotAILABS/Monad-Hackaton
+## Demo (≤3 min)
+
+1. **Problem** — won’t give agents a blank check.  
+2. **STUDIO** — forge → sealed manifest + deploy commands.  
+3. **NOMOS** — arena shows **REJECT** with reasons + lawful winner.  
+4. **ACADEMY** — pass a slippage / rogue-category lab.  
+5. **CODEX** — explorer link for `SovereignVault`.  
+6. **Close** — agents propose, laws decide, receipts remember.
+
+---
+
+## Networks
+
+| | Testnet | Mainnet |
+|--|---------|---------|
+| Chain ID | 10143 | 143 |
+| RPC | https://testnet-rpc.monad.xyz | https://rpc.monad.xyz |
+| Explorer | testnet.monadvision.com | monadvision.com |
+
+Official guides: [deploy](https://docs.monad.xyz/guides/deploy-smart-contract/foundry) · [verify](https://docs.monad.xyz/guides/verify-smart-contract/foundry)
+
+---
+
+## Tests & CI
+
+```bash
+cd engine && pytest -q
+cd web && npm run build
+cd contracts && forge test
+```
+
+GitHub Actions: `.github/workflows/ci.yml` (pytest + web build).
+
+---
+
+## Spark submission
+
+| Field | Value |
+|-------|--------|
+| Name | THESIS — Monad AI Workstation |
+| Github | https://github.com/ItsNotAILABS/Monad-Hackaton |
+| Category | Testnet (or Mainnet if deployed) |
+| Contract | `SovereignVault` from `receipts/deployment.json` |
+| Project URL | Hosted `web/dist` + live API |
+| Demo video | ≤3 min public URL |
+| Post URL | Social post for viral track |
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+**Not audited. Do not deposit real capital without independent security review.**

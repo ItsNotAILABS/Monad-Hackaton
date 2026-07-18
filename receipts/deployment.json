@@ -1,0 +1,22 @@
+{
+  "schema": "thesis.deployment.v1",
+  "status": "not_deployed",
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "rpc": "https://testnet-rpc.monad.xyz",
+  "explorer": "https://testnet.monadvision.com",
+  "primary_submission_address": "",
+  "contracts": {
+    "PolicyKernel": "",
+    "ReceiptChain": "",
+    "AgentRegistry": "",
+    "ProposalBook": "",
+    "ExecutionRouter": "",
+    "SovereignVault": ""
+  },
+  "hint": "Fund a deployer on https://testnet.monad.xyz then run ./scripts/deploy.sh testnet",
+  "docs": {
+    "deploy": "https://docs.monad.xyz/guides/deploy-smart-contract/foundry",
+    "verify": "https://docs.monad.xyz/guides/verify-smart-contract/foundry"
+  }
+}

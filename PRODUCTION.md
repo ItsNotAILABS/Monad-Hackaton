@@ -1,13 +1,23 @@
 # Production Boundary
 
-The alpha is a governed application foundry and policy simulation environment. It is not audited and must not hold production capital until contracts and adapters receive independent security review.
+The alpha is a governed application foundry, policy simulation environment, and educational workstation. It is **not audited** and must not hold production capital until contracts and adapters receive independent security review.
+
+See [CHARTER.md](CHARTER.md) for product truth and non-goals.
 
 ## Hard gates
 
 - No private keys in repository or browser bundle.
-- No external protocol target unless explicitly allowlisted.
-- No agent execution without owner authorization and non-expired identity.
-- No transaction without simulation when policy requires it.
-- Every execution emits a receipt.
-- Emergency pause and owner withdrawal remain available.
+- No external protocol target unless explicitly allowlisted on-chain.
+- No agent execution without owner authorization (PolicyKernel agent allowlist).
+- No transaction without simulation when policy requires it (off-chain arena + on-chain validate).
+- Every material act emits a receipt (off-chain hash chain; on-chain ReceiptChain on execute).
+- Emergency pause (policy.paused) and owner withdrawal remain available.
 - Adapter integration requires ABI provenance, fork or testnet validation, negative tests, and receipt verification.
+- UI must call live API paths — no success-only mocks for forge / arena / academy.
+- Adapter status `simulated` or `planned` is not a live capital integration claim.
+
+## Spark honesty
+
+- Primary submission contract: **SovereignVault**.
+- Prefer Monad **testnet** until mainnet deploy + verify complete.
+- Academy certificates prove lab completion, not financial advice.

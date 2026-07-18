@@ -1,11 +1,24 @@
 [profile.default]
 src = "src"
-test = "test"
 out = "out"
+libs = ["lib"]
 solc_version = "0.8.26"
 optimizer = true
 optimizer_runs = 200
+# Required for explorer verification (Monad Foundry / Sourcify)
+metadata = true
+metadata_hash = "none"
+use_literal_content = true
+
+# Default: Monad Testnet (Spark submission)
+# Docs: https://docs.monad.xyz/guides/deploy-smart-contract/foundry
+eth-rpc-url = "https://testnet-rpc.monad.xyz"
+chain_id = 10143
 
 [rpc_endpoints]
-monad_testnet = "${MONAD_TESTNET_RPC_URL}"
-monad_mainnet = "${MONAD_MAINNET_RPC_URL}"
+monad_testnet = "https://testnet-rpc.monad.xyz"
+monad_mainnet = "https://rpc.monad.xyz"
+
+[etherscan]
+# Optional: Monadscan API key for etherscan verifier
+# monad = { key = "${ETHERSCAN_API_KEY}", chain = 10143, url = "https://api.etherscan.io/v2/api?chainid=10143" }
