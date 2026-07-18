@@ -274,6 +274,30 @@ def main() -> int:
         True,
     )
 
+    sig = c.get("/signals").json()
+    assert sig.get("n", 0) >= 3 and sig.get("leaderboard")
+    al = c.post("/auto/loop", json={"network": "monad-testnet"}).json()
+    assert al.get("ok") and al.get("headline")
+    pulse = c.get("/intelligence/pulse").json()
+    assert pulse.get("recommendation")
+    print(
+        "auto",
+        "signals",
+        sig["n"],
+        "loop",
+        al.get("headline", "")[:50],
+        "fills",
+        (al.get("signals") or {}).get("n_filled"),
+        "intel",
+        pulse.get("recommendation"),
+    )
+
+    hy = c.get("/hybrid").json()
+    assert hy.get("novel_tech") and hy.get("layers")
+    hr = c.post("/hybrid/run", json={"op": "pulse"}).json()
+    assert hr.get("ok") is not False
+    print("hybrid", hy.get("novel_tech"), "run_ok", hr.get("ok"))
+
     print("SMOKE_OK")
     return 0
 

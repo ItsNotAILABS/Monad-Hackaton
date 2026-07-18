@@ -289,6 +289,19 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         "actions": ["status", "exec", "report"],
     },
     {
+        "id": "app.hybrid",
+        "name": "Worker hybrid",
+        "kind": "novel_tech",
+        "tab": "hybrid",
+        "primitives": ["intel", "law", "market"],
+        "description": (
+            "Blockchain + Web Worker hybrid: off-main-thread arena/signals/crawl; "
+            "Node worker_threads on bridge; chain laws on API host."
+        ),
+        "entry": "GET /hybrid",
+        "actions": ["status", "run"],
+    },
+    {
         "id": "app.local_ai",
         "name": "Local AI",
         "kind": "local_ai",
@@ -607,6 +620,12 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
         ("app.terminal", "report"): lambda network="monad-testnet", **_k: __import__(
             "thesis_forge.reports", fromlist=["write_full_report"]
         ).write_full_report(network, fmt="both"),
+        ("app.hybrid", "status"): lambda **_k: __import__(
+            "thesis_forge.hybrid", fromlist=["hybrid_catalog"]
+        ).hybrid_catalog(),
+        ("app.hybrid", "run"): lambda op="pulse", **kw: __import__(
+            "thesis_forge.hybrid", fromlist=["run_hybrid_node"]
+        ).run_hybrid_node(op or "pulse", kw.get("params") or {}),
         ("app.cloud", "pipeline"): _cloud_pipeline,
         ("app.cloud", "run"): _system_run,
         ("app.shell", "system"): _system_status,

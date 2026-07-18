@@ -10,6 +10,7 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import { spawnSync } from "node:child_process";
+import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { existsSync } from "node:fs";
@@ -152,10 +153,48 @@ function pulse() {
     platform: process.platform,
     arch: process.arch,
     pid: process.pid,
-    engines: ["pulse", "agent-rank", "wasm-hash", "wasm-native", "webgpu-info", "julia"],
+    engines: [
+      "pulse",
+      "agent-rank",
+      "wasm-hash",
+      "wasm-native",
+      "webgpu-info",
+      "julia",
+      "hybrid-worker",
+    ],
     julia_script: existsSync(JULIA_SCRIPT),
+    hybrid_worker: existsSync(join(__dirname, "hybrid-worker.mjs")),
     nonce: randomBytes(8).toString("hex"),
   };
+}
+
+/** Run heavy op in worker_threads (blockchain/agent hybrid off main process). */
+function runHybridWorker(op, payload = {}) {
+  return new Promise((resolve) => {
+    const script = join(__dirname, "hybrid-worker.mjs");
+    if (!existsSync(script)) {
+      resolve({ ok: false, error: "hybrid-worker.mjs missing" });
+      return;
+    }
+    const t0 = Date.now();
+    const w = new Worker(script, { workerData: { op, payload } });
+    const timer = setTimeout(() => {
+      w.terminate();
+      resolve({ ok: false, error: "hybrid worker timeout", elapsed_ms: Date.now() - t0 });
+    }, 20000);
+    w.on("message", (msg) => {
+      clearTimeout(timer);
+      resolve({
+        ...msg,
+        engine: "node.hybrid_worker",
+        novel_tech: "blockchain + node-worker_threads hybrid",
+      });
+    });
+    w.on("error", (e) => {
+      clearTimeout(timer);
+      resolve({ ok: false, error: String(e.message || e) });
+    });
+  });
 }
 
 async function main() {
@@ -184,6 +223,21 @@ async function main() {
       emit(webgpuInfo());
       return;
     }
+    if (cmd === "hybrid-worker" || cmd === "hybrid" || cmd === "worker") {
+      // node thesis-bridge.mjs hybrid-worker '{"op":"pulse"}'
+      // or node thesis-bridge.mjs hybrid-worker pulse
+      let op = "pulse";
+      let payload = {};
+      if (params && typeof params === "object" && Object.keys(params).length) {
+        op = params.op || "pulse";
+        payload = params.payload || params;
+      } else if (process.argv[3] && !String(process.argv[3]).startsWith("{")) {
+        op = process.argv[3];
+        payload = parseJson(process.argv[4] || "{}");
+      }
+      emit(await runHybridWorker(op, payload));
+      return;
+    }
     if (cmd === "julia") {
       const jcmd = process.argv[3] || "pulse";
       const jparams = parseJson(process.argv[4] || "{}");
@@ -195,7 +249,11 @@ async function main() {
       emit(runJulia(cmd, params));
       return;
     }
-    emit({ ok: false, error: `unknown cmd ${cmd}`, hint: "pulse|agent-rank|wasm-hash|wasm-native|webgpu-info|julia" });
+    emit({
+      ok: false,
+      error: `unknown cmd ${cmd}`,
+      hint: "pulse|agent-rank|wasm-hash|wasm-native|webgpu-info|hybrid-worker|julia",
+    });
   } catch (e) {
     emit({ ok: false, error: String(e.message || e), engine: "node" });
   }

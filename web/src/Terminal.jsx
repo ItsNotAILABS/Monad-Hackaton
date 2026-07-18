@@ -122,8 +122,11 @@ export function Terminal({ api, network, busy: parentBusy, onNavigate }) {
           </p>
         </div>
         <div className="win-actions">
-          <button type="button" className="forge win-btn" disabled={disabled} onClick={() => exec("workflow morning")}>
-            WORKFLOW MORNING
+          <button type="button" className="forge win-btn" disabled={disabled} onClick={() => exec("auto")}>
+            AUTO LOOP
+          </button>
+          <button type="button" className="ghost" disabled={disabled} onClick={() => exec("workflow alpha")}>
+            ALPHA WORKFLOW
           </button>
           <button type="button" className="ghost" disabled={disabled} onClick={genReport}>
             FULL PDF REPORT
@@ -137,7 +140,7 @@ export function Terminal({ api, network, busy: parentBusy, onNavigate }) {
       {err ? <div className="banner err">{err}</div> : null}
 
       <div className="chips tight" style={{ marginBottom: 10 }}>
-        {["brief", "vault", "ecosystem", "arena", "nomos", "lawbook", "report pdf", "help"].map((c) => (
+        {["brief", "vault", "signals", "auto", "intel", "arena", "nomos", "report pdf", "help"].map((c) => (
           <button key={c} type="button" className="ghost" disabled={disabled} onClick={() => exec(c)}>
             {c}
           </button>

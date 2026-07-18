@@ -334,6 +334,49 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
         actions.append({"tool": "terminal.exec", "result": {"command": cmd, "ok": tr.get("ok")}})
         replies.append(f"**{cmd}:**\n```\n{(tr.get('text') or '')[:900]}\n```")
 
+    if any(k in low for k in ("signal", "alpha", "gorillionaire", "kisignal", "leaderboard")):
+        from .signals import generate_signals
+
+        s = generate_signals(network, n=6)
+        actions.append({"tool": "signals.board", "result": {"n": s.get("n"), "top": (s.get("leaderboard") or [{}])[0]}})
+        lines = [f"**Signals** ({s.get('n')}): {s.get('tagline')}"]
+        for b in (s.get("leaderboard") or [])[:5]:
+            lines.append(
+                f"- #{b.get('rank')} {b.get('side')} {b.get('symbol')} score={b.get('score')} "
+                f"{'AUTO' if b.get('auto') else ''}"
+            )
+        replies.append("\n".join(lines))
+
+    if any(k in low for k in ("auto exec", "auto-exec", "auto loop", "auto trade", "paper fill", "run auto")):
+        from .auto_exec import auto_loop
+
+        loop = auto_loop(network)
+        actions.append(
+            {
+                "tool": "auto_exec.loop",
+                "result": {
+                    "fills": (loop.get("signals") or {}).get("n_filled"),
+                    "rejects": (loop.get("arena") or {}).get("n_rejected"),
+                },
+            }
+        )
+        replies.append(
+            f"**Auto paper loop:** {loop.get('headline')}\n"
+            f"Chain broadcast: false · Owner still signs for vault/mainnet.\n"
+            f"Absorbs winner utility (signals→ticket→fill) under dual-stack brakes."
+        )
+
+    if any(k in low for k in ("intel pulse", "what now", "recommend")):
+        from .auto_exec import intelligence_pulse
+
+        p = intelligence_pulse(network)
+        actions.append({"tool": "intelligence.pulse", "result": {"rec": p.get("recommendation")}})
+        replies.append(
+            f"**Intelligence:** {p.get('headline')}\n"
+            f"Recommendation: `{p.get('recommendation')}`\n"
+            f"{p.get('brief')}"
+        )
+
     if not replies:
         replies.append(
             "**THESIS Ecosystem Node online** (sandbox mode). "

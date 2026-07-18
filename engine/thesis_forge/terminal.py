@@ -41,6 +41,10 @@ COMMANDS: Dict[str, Dict[str, str]] = {
     "company": {"usage": "company [objective…]", "desc": "Staff Company OS mission"},
     "gas": {"usage": "gas [estimate]", "desc": "Monad gas limit coach"},
     "agent": {"usage": "agent [message…]", "desc": "Talk to in-app AI node (twins only)"},
+    "signals": {"usage": "signals", "desc": "Alpha signal board (winner pattern + brakes)"},
+    "auto": {"usage": "auto", "desc": "Auto paper loop: arena + signals + strategy fills"},
+    "intel": {"usage": "intel", "desc": "Intelligence pulse: coach + signals + reject"},
+    "hybrid": {"usage": "hybrid [op]", "desc": "Node worker_threads hybrid (pulse/arena/bench)"},
     "doctrine": {"usage": "doctrine", "desc": "Print platform doctrine"},
     "whoami": {"usage": "whoami", "desc": "Sovereign operator context (no keys)"},
 }
@@ -54,8 +58,8 @@ WORKFLOWS: Dict[str, Dict[str, Any]] = {
     },
     "judge": {
         "name": "Judge proof path",
-        "steps": ["lawbook", "arena", "nomos", "report pdf"],
-        "why": "Live rejects + dual stack + downloadable report",
+        "steps": ["lawbook", "arena", "nomos", "auto", "report pdf"],
+        "why": "Live rejects + auto paper exec + dual stack + report",
     },
     "risk": {
         "name": "Risk / NOMOS",
@@ -67,6 +71,11 @@ WORKFLOWS: Dict[str, Dict[str, Any]] = {
         "steps": ["brief", "daily", "ecosystem", "company"],
         "why": "Company OS + ecosystem pulse",
     },
+    "alpha": {
+        "name": "Winner-class alpha",
+        "steps": ["signals", "auto", "intel"],
+        "why": "Absorb KiSignal/Gorillionaire utility under THESIS laws",
+    },
 }
 
 
@@ -77,6 +86,8 @@ ACTIONS: Dict[str, str] = {
     "pdf": "report pdf",
     "md": "report md",
     "staff": "company Grow safely under dual law stack",
+    "alpha": "auto",
+    "signals": "signals",
 }
 
 
@@ -406,6 +417,93 @@ def cmd_agent(args: List[str], network: str) -> Dict[str, Any]:
     return _out(True, lines, r)
 
 
+def cmd_signals(args: List[str], network: str) -> Dict[str, Any]:
+    from .signals import generate_signals
+
+    s = generate_signals(network)
+    lines = [
+        f"=== SIGNALS ({s.get('n')}) · {s.get('tagline')} ===",
+        f"Absorbs: {', '.join(s.get('absorbs') or [])}",
+    ]
+    for b in (s.get("leaderboard") or [])[:8]:
+        mark = "AUTO" if b.get("auto") else ("OK" if b.get("policy_ok") else "BLOCK")
+        lines.append(
+            f"  #{b.get('rank')} {b.get('side'):<4} {b.get('symbol'):<12} "
+            f"score={b.get('score')} [{mark}] {b.get('id')}"
+        )
+    lines.append("Next: auto · or POST /signals/{id}/ticket")
+    return _out(True, lines, s)
+
+
+def cmd_auto(args: List[str], network: str) -> Dict[str, Any]:
+    from .auto_exec import auto_loop
+
+    r = auto_loop(network)
+    lines = [
+        f"=== AUTO EXEC (paper) ===",
+        r.get("headline") or "",
+        f"Chain broadcast: {r.get('chain_broadcast', False)}",
+    ]
+    for st in r.get("steps") or []:
+        lines.append(f"  {'✓' if st.get('ok') else '✗'} {st.get('step')}: {st.get('detail')}")
+    lines.append(f"Desk equity {(r.get('desk') or {}).get('equity')} dayPnL {(r.get('desk') or {}).get('day_pnl')}")
+    lines.append(r.get("owner_next") or "")
+    return _out(bool(r.get("ok")), lines, r)
+
+
+def cmd_intel(args: List[str], network: str) -> Dict[str, Any]:
+    from .auto_exec import intelligence_pulse
+
+    p = intelligence_pulse(network)
+    lines = [
+        "=== INTELLIGENCE PULSE ===",
+        str(p.get("headline") or ""),
+        f"Recommendation: {p.get('recommendation')}",
+        f"Brief: {p.get('brief')}",
+    ]
+    for t in (p.get("tips") or [])[:3]:
+        lines.append(f"  → {t.get('title')}: {t.get('body')}")
+    lines.append("Signals top:")
+    for s in (p.get("signals_top") or [])[:4]:
+        lines.append(f"  #{s.get('rank')} {s.get('side')} {s.get('symbol')} score={s.get('score')}")
+    return _out(True, lines, p)
+
+
+def cmd_hybrid(args: List[str], network: str) -> Dict[str, Any]:
+    from .hybrid import hybrid_catalog, run_hybrid_node
+
+    op = args[0] if args else "pulse"
+    if op in ("help", "catalog", "info"):
+        c = hybrid_catalog()
+        lines = [
+            "=== HYBRID (blockchain + workers) ===",
+            c.get("description", "")[:200],
+            f"Layers: {', '.join(x['id'] for x in c.get('layers') or [])}",
+            "Browser: HYBRID tab · Node: hybrid pulse|arena|bench",
+        ]
+        return _out(True, lines, c)
+    r = run_hybrid_node(op, {"network": network})
+    res = r.get("result") or {}
+    lines = [
+        f"=== HYBRID NODE WORKER · {op} ===",
+        f"ok={r.get('ok')} novel={r.get('novel_tech')}",
+        f"engine={(res.get('engine') or res.get('worker') or 'node')}",
+    ]
+    inner = res.get("result") if isinstance(res.get("result"), dict) else res
+    if isinstance(inner, dict):
+        if "arena" in inner:
+            a = inner["arena"]
+            lines.append(
+                f"arena accept={a.get('n_accepted')} reject={a.get('n_rejected')} winner={a.get('winner')}"
+            )
+        if "agents" in inner:
+            lines.append(f"agents winner={(inner.get('agents') or {}).get('winner')}")
+        if inner.get("n_rejected") is not None:
+            lines.append(f"n_rejected={inner.get('n_rejected')} n_accepted={inner.get('n_accepted')}")
+    lines.append("Browser workers: open HYBRID tab for off-main-thread scoring")
+    return _out(bool(r.get("ok")), lines, r)
+
+
 def cmd_workflow(args: List[str], network: str) -> Dict[str, Any]:
     if not args:
         lines = ["Workflows:"]
@@ -486,6 +584,13 @@ def exec_line(line: str, *, network: str = "monad-testnet", record: bool = True)
         "company": lambda: cmd_company(args, network),
         "gas": lambda: cmd_gas(args, network),
         "agent": lambda: cmd_agent(args, network),
+        "signals": lambda: cmd_signals(args, network),
+        "signal": lambda: cmd_signals(args, network),
+        "auto": lambda: cmd_auto(args, network),
+        "intel": lambda: cmd_intel(args, network),
+        "intelligence": lambda: cmd_intel(args, network),
+        "hybrid": lambda: cmd_hybrid(args, network),
+        "worker": lambda: cmd_hybrid(args, network),
         "workflow": lambda: cmd_workflow(args, network),
         "wf": lambda: cmd_workflow(args, network),
         "action": lambda: cmd_action(args, network),

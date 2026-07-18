@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/version-2.8-6d4aff?style=for-the-badge&labelColor=0a0b12" alt="Version" /></a>
+  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/version-2.10-6d4aff?style=for-the-badge&labelColor=0a0b12" alt="Version" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ee6a6?style=for-the-badge&labelColor=0a0b12" alt="License" /></a>
   <a href="https://buildanything.so/hackathons/spark"><img src="https://img.shields.io/badge/Spark-Build%20Anything-f0b429?style=for-the-badge&labelColor=0a0b12" alt="Spark" /></a>
   <a href="https://docs.monad.xyz/"><img src="https://img.shields.io/badge/chain-Monad-836EF9?style=for-the-badge&labelColor=0a0b12" alt="Monad" /></a>
@@ -110,6 +110,7 @@ Browser (React HQ)
 | **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
 | **TOOLS** | Shippable actions + MCP for any AI |
 | **TERM** | Sovereign web terminal · vault · ecosystem · PDF reports |
+| **HYBRID** | Novel tech: **Web Workers + blockchain** (off-main-thread agents) |
 | **USE CASES** | 20 runnable scenarios mapped to Spark asks |
 | **CLOUD** | Live Monad engines (chain, gas, research, docs) |
 | **POLYGLOT** | Julia · Node · Python · WebGPU · WASM |
@@ -193,6 +194,10 @@ powershell -File scripts/run_polyglot.ps1
 | `POST` | `/terminal/exec` | Run `brief` · `vault` · `report pdf` · workflows |
 | `POST` | `/reports/full` | Generate full ops report (MD + PDF) |
 | `GET` | `/reports/download/{file}` | Download report PDF/markdown |
+| `GET` | `/signals` | Alpha signal board (winner pattern + brakes) |
+| `POST` | `/auto/loop` | Auto paper exec: arena + signals + strategy |
+| `GET` | `/hybrid` | Blockchain + Web Worker hybrid catalog |
+| `POST` | `/hybrid/run` | Node worker_threads hybrid op |
 | `POST` | `/company/run` | Staff Company OS |
 | `POST` | `/arena/auto` | Propose agents + arbitrate (REJECT demo) |
 | `POST` | `/desk/arena` | Trading rejects + accepts |
@@ -261,6 +266,7 @@ Doctrine: **Owner remains sovereign.**
 | [docs/VS_WINNERS.md](docs/VS_WINNERS.md) | Honest comparison to polished winners |
 | [docs/LAWBOOK.md](docs/LAWBOOK.md) | On-chain LawBook + dual stack |
 | [docs/TERMINAL.md](docs/TERMINAL.md) | Sovereign terminal + PDF reports |
+| [docs/HYBRID_WORKERS.md](docs/HYBRID_WORKERS.md) | **Web Worker + blockchain hybrid** |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |

@@ -445,7 +445,7 @@ def competition_pack(network: str = "monad-testnet") -> Dict[str, Any]:
 
 
 def run_win_path(network: str = "monad-testnet") -> Dict[str, Any]:
-    """One-shot competition demo: prove rejects + laws + scorecard."""
+    """One-shot competition demo: rejects + auto paper exec + signals + scorecard."""
     t0 = time.time()
     embed_ecosystem_laws()
     desk = load_desk()
@@ -455,6 +455,14 @@ def run_win_path(network: str = "monad-testnet") -> Dict[str, Any]:
     hq = headquarters()
     ai = node_status()
     wallets = registry_snapshot()
+
+    # Winner utility: signals + auto paper loop (architecture + execution)
+    from .auto_exec import auto_loop, intelligence_pulse
+    from .signals import generate_signals
+
+    signals = generate_signals(network, n=6)
+    auto = auto_loop(network, include_arena=False, include_signals=True, include_strategy=True)
+    intel = intelligence_pulse(network)
 
     rejected = [
         {
@@ -478,20 +486,48 @@ def run_win_path(network: str = "monad-testnet") -> Dict[str, Any]:
     ][:3]
 
     return {
-        "schema": "thesis.demo.win_path.v1",
+        "schema": "thesis.demo.win_path.v2",
         "ok": True,
         "elapsed_ms": (time.time() - t0) * 1000,
-        "headline": "WIN PATH COMPLETE — rejects proven · laws live · scorecard ready",
+        "headline": (
+            f"WIN PATH · rejects {arena.get('n_rejected')} · "
+            f"auto fills {(auto.get('signals') or {}).get('n_filled', 0)}+"
+            f"{(auto.get('strategy') or {}).get('n_filled', 0)} · "
+            f"signals {signals.get('n')} · grade {card.get('grade')}"
+        ),
         "winning_claim": WINNING_CLAIM,
         "roommate_test": PERSONAL_PROBLEM["roommate_test"],
+        "architecture_plus_utility": {
+            "architecture": "LawBook dual stack · NOMOS arena · Company OS · SovereignVault",
+            "utility": "signals board · auto paper loop · desk fills · intelligence pulse",
+            "absorbs": ["KiSignal", "Gorillionaire", "MonetAI"],
+            "beats": "auto-trade without veto / owner signature",
+        },
         "desk_arena": {
             "n_accepted": arena.get("n_accepted"),
             "n_rejected": arena.get("n_rejected"),
             "rejected_samples": rejected,
             "accepted_samples": accepted,
         },
+        "signals": {
+            "n": signals.get("n"),
+            "leaderboard": (signals.get("leaderboard") or [])[:5],
+            "tagline": signals.get("tagline"),
+        },
+        "auto_exec": {
+            "headline": auto.get("headline"),
+            "steps": auto.get("steps"),
+            "desk": auto.get("desk"),
+            "chain_broadcast": False,
+        },
+        "intelligence": {
+            "recommendation": intel.get("recommendation"),
+            "brief": (intel.get("brief") or "")[:200],
+        },
         "proof": {
             "reject_is_feature": int(arena.get("n_rejected") or 0) >= 1,
+            "auto_paper_exec": True,
+            "signals_live": int(signals.get("n") or 0) >= 3,
             "laws_embedded": land.get("law_stack", {}).get("law_count"),
             "apps_wired": list((land.get("apps") or {}).keys()),
             "modules": len((land.get("apps") or {}).get("modules") or []),
@@ -504,10 +540,10 @@ def run_win_path(network: str = "monad-testnet") -> Dict[str, Any]:
         },
         "scorecard": card,
         "next_clicks": [
+            {"label": "TERM → auto / signals", "tab": "term"},
             {"label": "Open DESK rejects", "tab": "desk"},
             {"label": "Staff company HQ", "tab": "hq"},
             {"label": "JUDGE scorecard", "tab": "judge"},
-            {"label": "Link wallet / AI", "tab": "ai"},
         ],
         "hq_pitch": (hq.get("pitch") or {}).get("one_liner"),
         "landing_headline": land.get("headline"),

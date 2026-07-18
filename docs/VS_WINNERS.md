@@ -44,9 +44,24 @@ They often **lack**:
 - **Spark’s practical / personal-problem** focus plays to THESIS.  
 - Bigger events (e.g. broad EVM accathons) often reward **both depth and polish** — so we ship **focused tools** (`reject_demo`, `gas_coach`, `win_path`) as the narrow demos *inside* the platform.
 
+## How THESIS absorbs winners (utility + architecture)
+
+| Winner pattern | THESIS ships it as |
+|----------------|-------------------|
+| KiSignal (alpha → trade) | `GET /signals` · `POST /auto/signals` · TERM `auto` |
+| Gorillionaire (board + scores) | Signal leaderboard + ranks + confidence |
+| MonetAI (rebalance) | Strategy auto-fill (`market-make` / inventory) |
+| Soft auto-bot | Paper auto **only**; chain still needs **owner sign** |
+
+```bash
+curl -s http://127.0.0.1:8043/signals
+curl -s -X POST http://127.0.0.1:8043/auto/loop -d "{}" -H "content-type: application/json"
+curl -s -X POST http://127.0.0.1:8043/demo/win-path
+```
+
 ## One-liner for judges
 
-> Most AI-onchain winners are elegant single tools. THESIS is a **Company OS with brakes**: multi-agent arena, dual law stack, and owner-signed execution — with the same tools exposed one-click for humans and any external AI via MCP.
+> Winner-class **signals + auto paper execution**, under a **Company OS with brakes**: dual law stack, NOMOS REJECT, owner-signed vault — not allowlist-only agent wallets.
 
 ## How we stay easy to use
 

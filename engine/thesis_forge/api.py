@@ -101,6 +101,9 @@ from .tools import get_tool, mcp_tool_list, run_tool, tools_catalog
 from .lawbook import lawbook_payload
 from .terminal import exec_line, terminal_banner, terminal_history
 from .reports import list_reports, resolve_report_file, write_full_report
+from .signals import generate_signals, signal_to_ticket
+from .auto_exec import auto_loop, auto_paper_from_signals, auto_strategy_run, intelligence_pulse
+from .hybrid import hybrid_catalog, run_hybrid_node
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -395,6 +398,81 @@ def reports_download(filename: str):
         raise HTTPException(404, "report not found")
     media = "application/pdf" if path.suffix == ".pdf" else "text/markdown"
     return FileResponse(path, filename=path.name, media_type=media)
+
+
+class AutoLoopIn(BaseModel):
+    network: str = "monad-testnet"
+    include_arena: bool = True
+    include_signals: bool = True
+    include_strategy: bool = True
+    strategy_id: str = "market-make"
+    max_fills: int = 3
+
+
+@app.get("/signals")
+def signals_get(network: str = Query("monad-testnet"), n: int = Query(8, ge=3, le=20)):
+    """Winner-class alpha signal board (Gorillionaire/KiSignal pattern + THESIS brakes)."""
+    return generate_signals(network, n=n)
+
+
+@app.post("/signals/{signal_id}/ticket")
+def signals_ticket(signal_id: str, network: str = Query("monad-testnet")):
+    """Convert a signal into a risk-gated desk ticket."""
+    out = signal_to_ticket(signal_id, network)
+    if not out.get("ok"):
+        raise HTTPException(400, out.get("error") or "ticket failed")
+    return out
+
+
+@app.get("/intelligence/pulse")
+def intelligence_pulse_api(network: str = Query("monad-testnet")):
+    """Coach + signals + reject intelligence in one pulse."""
+    return intelligence_pulse(network)
+
+
+@app.post("/auto/loop")
+def auto_loop_api(body: AutoLoopIn | None = None):
+    """Auto paper-execution loop: arena + signals + strategy fills (no chain broadcast)."""
+    b = body or AutoLoopIn()
+    return auto_loop(
+        b.network,
+        include_arena=b.include_arena,
+        include_signals=b.include_signals,
+        include_strategy=b.include_strategy,
+        strategy_id=b.strategy_id,
+    )
+
+
+@app.post("/auto/signals")
+def auto_signals_api(body: AutoLoopIn | None = None):
+    """Auto-fill paper tickets from high-score lawful signals."""
+    b = body or AutoLoopIn()
+    return auto_paper_from_signals(b.network, max_fills=b.max_fills)
+
+
+@app.post("/auto/strategy/{strategy_id}")
+def auto_strategy_api(strategy_id: str, auto_fill: bool = Query(True)):
+    """Run strategy and auto paper-fill accepted tickets."""
+    return auto_strategy_run(strategy_id, auto_fill=auto_fill)
+
+
+class HybridRunIn(BaseModel):
+    op: str = "pulse"
+    network: str = "monad-testnet"
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/hybrid")
+def hybrid_get():
+    """Novel tech: blockchain + Web Worker / Node worker_threads hybrid catalog."""
+    return hybrid_catalog()
+
+
+@app.post("/hybrid/run")
+def hybrid_run(body: HybridRunIn | None = None):
+    """Run Node worker_threads hybrid op (arena/agents/pulse/bench). Browser workers run in HQ."""
+    b = body or HybridRunIn()
+    return run_hybrid_node(b.op, b.params or {"network": b.network})
 
 
 @app.get("/tools")
@@ -885,6 +963,12 @@ def health():
             "/reports",
             "/reports/full",
             "/reports/download/{file}",
+            "/signals",
+            "/intelligence/pulse",
+            "/auto/loop",
+            "/auto/signals",
+            "/hybrid",
+            "/hybrid/run",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",

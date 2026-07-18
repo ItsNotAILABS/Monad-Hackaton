@@ -190,6 +190,48 @@ def _run_lawbook(**params) -> Dict[str, Any]:
     }
 
 
+def _run_hybrid(**params) -> Dict[str, Any]:
+    from .hybrid import run_hybrid_node
+
+    op = params.get("op") or params.get("command") or "pulse"
+    r = run_hybrid_node(op, params)
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": f"hybrid {op} · node worker_threads",
+        "novel_tech": r.get("novel_tech"),
+        "result": r.get("result"),
+    }
+
+
+def _run_auto_loop(**params) -> Dict[str, Any]:
+    from .auto_exec import auto_loop
+
+    r = auto_loop(params.get("network") or "monad-testnet")
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": r.get("headline"),
+        "n_signal_fills": (r.get("signals") or {}).get("n_filled"),
+        "n_arena_rejects": (r.get("arena") or {}).get("n_rejected"),
+        "n_strategy_fills": (r.get("strategy") or {}).get("n_filled"),
+        "desk": r.get("desk"),
+        "absorbs_winners": r.get("absorbs_winners"),
+    }
+
+
+def _run_signals(**params) -> Dict[str, Any]:
+    from .signals import generate_signals
+
+    s = generate_signals(params.get("network") or "monad-testnet")
+    top = (s.get("leaderboard") or [{}])[0]
+    return {
+        "ok": True,
+        "proof": f"n={s.get('n')} top={top.get('id')} score={top.get('score')}",
+        "leaderboard": s.get("leaderboard"),
+        "n": s.get("n"),
+        "tagline": s.get("tagline"),
+    }
+
+
 def _run_report(**params) -> Dict[str, Any]:
     from .reports import write_full_report
 
@@ -417,6 +459,45 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Chat without a real command surface",
         "handler": "terminal",
     },
+    {
+        "id": "signals",
+        "name": "Alpha signal board",
+        "kind": "intelligence",
+        "who": "user + agent + any AI",
+        "seconds": 4,
+        "do": "Gorillionaire/KiSignal-class signals under dual-stack brakes",
+        "api": "POST /tools/signals/run",
+        "mcp": "thesis_signals",
+        "proof": "leaderboard scores",
+        "beats_crowd": "Signals without policy REJECT",
+        "handler": "signals",
+    },
+    {
+        "id": "auto_loop",
+        "name": "Auto paper execution loop",
+        "kind": "execution",
+        "who": "user + agent + any AI",
+        "seconds": 12,
+        "do": "Arena + signal fills + strategy fills (paper only, no silent chain)",
+        "api": "POST /tools/auto_loop/run",
+        "mcp": "thesis_auto_loop",
+        "proof": "fills + rejects headline",
+        "beats_crowd": "Auto-trade bots without owner sovereignty",
+        "handler": "auto_loop",
+    },
+    {
+        "id": "hybrid",
+        "name": "Web Worker / Node hybrid",
+        "kind": "novel_tech",
+        "who": "user + agent + any AI",
+        "seconds": 6,
+        "do": "Node worker_threads pulse (browser workers live in HYBRID tab)",
+        "api": "POST /tools/hybrid/run",
+        "mcp": "thesis_hybrid",
+        "proof": "worker result ok",
+        "beats_crowd": "Main-thread-only scoring that freezes UI",
+        "handler": "hybrid",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -433,6 +514,9 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "easy_path": _run_easy_path,
     "full_report": _run_report,
     "terminal": _run_terminal,
+    "signals": _run_signals,
+    "auto_loop": _run_auto_loop,
+    "hybrid": _run_hybrid,
 }
 
 

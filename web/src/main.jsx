@@ -8,6 +8,7 @@ import { UseCases } from "./UseCases.jsx";
 import { Nomos } from "./Nomos.jsx";
 import { Tools } from "./Tools.jsx";
 import { Terminal } from "./Terminal.jsx";
+import { HybridHub } from "./HybridHub.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -811,6 +812,7 @@ function App() {
           ["usecases", "USE CASES"],
           ["tools", "TOOLS"],
           ["term", "TERM"],
+          ["hybrid", "HYBRID"],
           ["cloud", "CLOUD"],
           ["poly", "POLYGLOT"],
           ["local", "LOCAL AI"],
@@ -879,6 +881,16 @@ function App() {
 
       {tab === "term" && (
         <Terminal api={api} network={network} busy={busy} onNavigate={setTab} />
+      )}
+
+      {tab === "hybrid" && (
+        <HybridHub
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+        />
       )}
 
       {tab === "usecases" && (

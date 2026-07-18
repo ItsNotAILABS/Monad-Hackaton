@@ -142,7 +142,15 @@ def polyglot_catalog() -> Dict[str, Any]:
         "node": {
             "available": node_available(),
             "path": str(_NODE),
-            "commands": ["pulse", "agent-rank", "wasm-hash", "wasm-native", "webgpu-info", "julia"],
+            "commands": [
+                "pulse",
+                "agent-rank",
+                "wasm-hash",
+                "wasm-native",
+                "webgpu-info",
+                "hybrid-worker",
+                "julia",
+            ],
         },
         "python": {
             "available": True,
@@ -218,6 +226,7 @@ def polyglot_mesh(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         },
     )
     node_wasm = run_node("wasm-native", {})
+    node_hybrid = run_node("hybrid-worker", {"op": "pulse"})
     py = python_intel({"series": series} if series else {})
     seal("polyglot.mesh", {"ok": True})
     return {
@@ -235,13 +244,16 @@ def polyglot_mesh(params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
             "pulse": node_pulse,
             "agents": node_agents,
             "wasm": node_wasm,
+            "hybrid_worker": node_hybrid,
         },
         "python": py,
+        "novel_tech": "blockchain + web-worker / worker_threads hybrid",
         "synthesis": {
             "winner_agent": (node_agents.get("winner") or (jl_mc.get("ok") and "mc-risk-aware")),
             "recommended_gas_limit": jl_gas.get("recommended_limit") or jl_gas.get("recommended_gas_limit"),
             "var": jl_mc.get("var"),
             "cvar": jl_mc.get("cvar"),
+            "hybrid_worker_ok": bool(node_hybrid.get("ok")),
             "python_z": py.get("z"),
             "wasm_ok": node_wasm.get("ok"),
             "message": (
