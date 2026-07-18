@@ -37,6 +37,10 @@ contract SovereignVaultTest {
         vault.execute(address(target), 0.1 ether, 10, abi.encodeWithSignature("ping()"));
         require(target.hits() == 1, "hit");
         require(receipts.latestReceipt(address(vault)) != bytes32(0), "receipt");
+        // policy reject path
+        try vault.execute(address(target), 0, 9999, abi.encodeWithSignature("ping()")) {
+            revert("slippage should fail");
+        } catch {}
     }
 
     function testRejectsHighSlippage() public {

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thesis-forge"
-version = "0.2.0"
+version = "0.3.0"
 description = "THESIS — Monad AI Workstation (Studio · Codex · Nomos · Academy)"
 readme = "README.md"
 requires-python = ">=3.11"
