@@ -86,8 +86,8 @@ PRIMITIVES: Dict[str, Dict[str, Any]] = {
     "law": {
         "id": "law",
         "name": "Law",
-        "role": "Owner constitution + runtime ecosystem lawbook",
-        "api": ["/laws", "/laws/full", "/company/constitution", "/evaluate"],
+        "role": "Dual stack: owner constitution + LawBook ecosystem registry",
+        "api": ["/laws", "/laws/full", "/lawbook", "/company/constitution", "/evaluate", "/nomos"],
         "laws": ["sys.nomos-veto", "sys.owner-sovereign"],
         "status_fn": "laws",
     },
@@ -262,6 +262,18 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         ),
         "entry": "GET /nomos",
         "actions": ["status", "arena", "run"],
+    },
+    {
+        "id": "app.tools",
+        "name": "Shippable tools",
+        "kind": "product",
+        "tab": "tools",
+        "primitives": ["law", "market", "intel", "company"],
+        "description": (
+            "Nine+ focused tools for humans and any AI (MCP). Easy path: laws → reject → gas → win_path."
+        ),
+        "entry": "GET /tools",
+        "actions": ["list", "easy_path", "reject_demo", "win_path"],
     },
     {
         "id": "app.local_ai",
@@ -528,6 +540,26 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
 
         return run_nomos_arena()
 
+    def tools_list_fn(**_kw):
+        from .tools import tools_catalog
+
+        return tools_catalog()
+
+    def tools_easy(**kw):
+        from .tools import run_tool
+
+        return run_tool("easy_path", kw)
+
+    def tools_reject(**kw):
+        from .tools import run_tool
+
+        return run_tool("reject_demo", kw)
+
+    def tools_win(**kw):
+        from .tools import run_tool
+
+        return run_tool("win_path", kw)
+
     return {
         ("app.shell", "status"): status,
         ("app.shell", "health"): health,
@@ -549,6 +581,10 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
         ("app.nomos", "status"): nomos_status,
         ("app.nomos", "arena"): desk_arena,  # desk arena is the live reject surface
         ("app.nomos", "run"): nomos_run,
+        ("app.tools", "list"): tools_list_fn,
+        ("app.tools", "easy_path"): tools_easy,
+        ("app.tools", "reject_demo"): tools_reject,
+        ("app.tools", "win_path"): tools_win,
         ("app.cloud", "pipeline"): _cloud_pipeline,
         ("app.cloud", "run"): _system_run,
         ("app.shell", "system"): _system_status,

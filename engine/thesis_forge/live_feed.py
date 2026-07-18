@@ -70,16 +70,19 @@ def _platform_strip(network: str) -> Dict[str, Any]:
             },
             "pulse": st.get("pulse"),
             "how_to_use": [
-                "1. PLATFORM → RUN SYSTEM (laws + cloud + desk + vault + company)",
-                "2. CLOUD tab for individual engines / pipeline",
-                "3. LOCAL AI for on-device memory, teach, PDF/Excel",
+                "1. TOOLS → EASY PATH (60s): laws · reject · gas · win_path",
+                "2. PLATFORM → RUN SYSTEM (laws + desk + company + optional cloud)",
+                "3. PROOF → WIN PATH for judges / AI agents",
                 "4. DESK / HQ for tickets and mission approval",
-                "5. Contracts on Monad; engines on API host; UI is HQ",
+                "5. Any external AI: MCP (python -m thesis_forge.mcp_server)",
             ],
             "api": {
                 **(st.get("api") or {}),
                 "system": "GET /system",
                 "system_run": "POST /system/run",
+                "tools": "GET /tools",
+                "easy_path": "POST /tools/easy_path/run",
+                "lawbook": "GET /lawbook",
             },
         }
     except Exception as exc:

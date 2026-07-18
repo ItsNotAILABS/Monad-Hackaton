@@ -212,14 +212,20 @@ def main() -> int:
     print("proof pack ok vaporware", j.get("vaporware"), "vs_winners", True)
 
     tools = c.get("/tools").json()
-    assert tools.get("count", 0) >= 8
+    assert tools.get("count", 0) >= 10
     assert tools.get("easy_path")
     tr = c.post("/tools/reject_demo/run", json={}).json()
     assert tr.get("ok") and int((tr.get("result") or {}).get("n_rejected") or 0) >= 1
     tw = c.post("/tools/win_path/run", json={"network": "monad-testnet"}).json()
     assert tw.get("ok")
+    te = c.post("/tools/easy_path/run", json={"network": "monad-testnet"}).json()
+    assert te.get("ok") and len((te.get("result") or {}).get("steps") or []) >= 4
     mcp = c.get("/tools/mcp").json()
-    assert len(mcp.get("tools") or []) >= 8
+    assert len(mcp.get("tools") or []) >= 10
+    lb = c.get("/lawbook").json()
+    assert lb.get("schema") == "thesis.lawbook.v1"
+    assert (lb.get("onchain_seed") or {}).get("count", 0) >= 20
+    assert (lb.get("alignment") or {}).get("ok") is True
     print(
         "tools",
         tools["count"],
@@ -227,8 +233,14 @@ def main() -> int:
         (tr.get("result") or {}).get("n_rejected"),
         "win_path",
         (tw.get("result") or {}).get("scorecard_grade"),
+        "easy",
+        te.get("result", {}).get("proof", "")[:40],
         "mcp",
         len(mcp["tools"]),
+        "lawbook",
+        (lb.get("alignment") or {}).get("seed_in_runtime"),
+        "/",
+        (lb.get("onchain_seed") or {}).get("count"),
     )
 
     print("SMOKE_OK")

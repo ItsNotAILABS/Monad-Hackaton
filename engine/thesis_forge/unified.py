@@ -68,13 +68,28 @@ def system_status(network: str = "monad-testnet") -> Dict[str, Any]:
         "doctrine": plat.get("doctrine"),
         "surfaces": {
             "platform": "live",
+            "tools": "tools",
             "cloud": "cloud",
             "local_ai": "local",
             "company": "hq",
             "desk": "desk",
             "ai_node": "ai",
             "studio": "studio",
+            "nomos": "nomos",
+            "proof": "judge",
         },
+        "tools": {
+            "catalog": "GET /tools",
+            "mcp": "python -m thesis_forge.mcp_server",
+            "easy_path": "POST /tools/easy_path/run",
+            "lawbook": "GET /lawbook",
+        },
+        "how_to_use": [
+            "1. TOOLS → EASY PATH (60s) or POST /tools/easy_path/run",
+            "2. ▶ RUN SYSTEM for full seatbelt",
+            "3. PROOF → WIN PATH for judges",
+            "4. Any AI: MCP or POST /tools/{id}/run",
+        ],
     }
 
 

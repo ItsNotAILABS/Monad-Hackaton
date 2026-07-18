@@ -13,13 +13,17 @@ Nine **one-press tools** give the same kind of quick utility judges love in sing
 | 3 | **gas_coach** | Monad limit (~7.5% margin) |
 | 4 | **win_path** | scorecard grade · live API |
 
+**One call:** `POST /tools/easy_path/run` (or TOOLS → **EASY PATH**).
+
+Also: `lawbook` tool / `GET /lawbook` for seed ↔ runtime alignment.
+
 In the UI: open **TOOLS** tab, or sticky bar → tools.
 
 ```bash
 # HTTP
 curl -s http://127.0.0.1:8043/tools
-curl -s -X POST http://127.0.0.1:8043/tools/reject_demo/run -d "{}" -H "content-type: application/json"
-curl -s -X POST http://127.0.0.1:8043/tools/win_path/run -d "{}" -H "content-type: application/json"
+curl -s -X POST http://127.0.0.1:8043/tools/easy_path/run -d "{}" -H "content-type: application/json"
+curl -s http://127.0.0.1:8043/lawbook
 
 # Any external AI via MCP (stdio)
 cd engine

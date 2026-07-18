@@ -289,6 +289,93 @@ def run_nomos_arena(
     eco = embed_ecosystem_laws()
     plans = propose_plans(req, pol)
     report = arena_report(plans, pol)
+    # Dual stack: map owner-policy violations → LawBook ids + optional ecosystem re-check
+    from .lawbook import VIOLATION_TO_LAW
+    from .ecosystem_laws import check_proposal_against_ecosystem
+
+    eco_hits = 0
+    for row in report.get("evaluations") or []:
+        ev = row.get("evaluation") or {}
+        action = row.get("action") or {}
+        viol = list(ev.get("violations") or [])
+        law_ids = [VIOLATION_TO_LAW.get(v, "sys.nomos-veto") for v in viol]
+        ok_eco, eco_viol, eco_reasons = check_proposal_against_ecosystem(
+            {
+                "title": action.get("rationale") or action.get("action") or "",
+                "thesis": action.get("rationale") or "",
+                "actions": [action],
+            },
+            network=req.network,
+        )
+        if not ok_eco:
+            eco_hits += 1
+            for v in eco_viol:
+                if v not in viol:
+                    viol.append(v)
+                    law_ids.append(v)
+            reasons = list(ev.get("reasons") or [])
+            for r in eco_reasons:
+                if r not in reasons:
+                    reasons.append(r)
+            ev["reasons"] = reasons
+            if viol:
+                ev["accepted"] = False
+                ev["violations"] = viol
+                ev["human_summary"] = (
+                    f"REJECTED plan by agent '{action.get('agent')}' "
+                    f"(owner + ecosystem): " + "; ".join(reasons or viol)
+                )
+        ev["lawbook_ids"] = list(dict.fromkeys(law_ids))
+        if not ev.get("accepted"):
+            ev["layer"] = "dual_stack"
+            ev["feature"] = "REJECT"
+        else:
+            ev["layer"] = "dual_stack_pass"
+            ev["feature"] = "ACCEPT"
+
+    # Recompute counts / winner after ecosystem layer
+    evals = report.get("evaluations") or []
+    n_acc = sum(1 for r in evals if (r.get("evaluation") or {}).get("accepted"))
+    n_rej = len(evals) - n_acc
+    report["n_accepted"] = n_acc
+    report["n_rejected"] = n_rej
+    lawful = [
+        r
+        for r in evals
+        if (r.get("evaluation") or {}).get("accepted")
+    ]
+    if lawful:
+        best = max(
+            lawful,
+            key=lambda r: float((r.get("evaluation") or {}).get("score") or 0),
+        )
+        report["winner"] = {
+            "action": best.get("action"),
+            "evaluation": best.get("evaluation"),
+        }
+    else:
+        report["winner"] = None
+    # Refresh scoreboard ranks
+    board = []
+    for r in evals:
+        a, e = r.get("action") or {}, r.get("evaluation") or {}
+        board.append(
+            {
+                "agent": a.get("agent"),
+                "protocol": a.get("protocol"),
+                "category": a.get("category"),
+                "accepted": e.get("accepted"),
+                "score": e.get("score"),
+                "violations": e.get("violations") or [],
+                "lawbook_ids": e.get("lawbook_ids") or [],
+                "outcome": "ACCEPT" if e.get("accepted") else "REJECT",
+            }
+        )
+    board.sort(key=lambda x: (0 if x["accepted"] else 1, -float(x.get("score") or 0)))
+    for i, b in enumerate(board):
+        b["rank"] = i + 1
+    report["scoreboard"] = board
+
     receipt = seal(
         "nomos.arena.auto",
         {
@@ -297,6 +384,7 @@ def run_nomos_arena(
             "n_accepted": report["n_accepted"],
             "winner": (report.get("winner") or {}).get("action", {}).get("agent"),
             "ecosystem_law_count": eco.get("law_count"),
+            "ecosystem_hits": eco_hits,
         },
     )
     report["receipt"] = receipt
@@ -309,18 +397,16 @@ def run_nomos_arena(
         "ecosystem_law_count": eco.get("law_count"),
         "ecosystem_embedded_at": eco.get("embedded_at"),
         "ecosystem_domains": list((eco.get("domains") or {}).keys()),
+        "ecosystem_hits": eco_hits,
         "veto_law": "sys.nomos-veto",
+        "onchain": "LawBook.sol + PolicyKernel.sol",
     }
     report["reject_is_a_feature"] = True
-    # Annotate each evaluation with layer hints
-    for row in report.get("evaluations") or []:
-        ev = row.get("evaluation") or {}
-        if not ev.get("accepted"):
-            ev["layer"] = "owner_constitution"
-            ev["feature"] = "REJECT"
-        else:
-            ev["layer"] = "passed_owner_constitution"
-            ev["feature"] = "ACCEPT"
+    report["owner_next"] = (
+        "Owner may approve winner path, reject all, simulate_again, or revise laws."
+        if report.get("winner")
+        else "No lawful winner — dual stack blocked all plans (REJECT is safety)."
+    )
     return report
 
 

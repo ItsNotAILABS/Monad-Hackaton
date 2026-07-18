@@ -49,9 +49,22 @@ export function Tools({ api, network, busy: parentBusy, onNavigate, onRunSystem 
   }
 
   async function easyPath() {
-    for (const step of catalog?.easy_path || []) {
-      // eslint-disable-next-line no-await-in-loop
-      await run(step.tool);
+    setBusy(true);
+    setRunning("easy_path");
+    setErr("");
+    try {
+      const data = await api("/tools/easy_path/run", {
+        method: "POST",
+        body: JSON.stringify({ network }),
+      });
+      setLast(data);
+      setLog(data?.result?.proof || "easy path done");
+      setTimeout(() => setLog(""), 8000);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+      setRunning("");
     }
   }
 
@@ -165,6 +178,19 @@ export function Tools({ api, network, busy: parentBusy, onNavigate, onRunSystem 
                 </div>
               )}
               {result?.answer && <p className="muted sm">{result.answer}</p>}
+              {result?.steps && (
+                <div className="plans">
+                  {result.steps.map((s) => (
+                    <div key={s.tool} className={`plan ${s.ok ? "yes" : "no"}`}>
+                      <header>
+                        <b>{s.tool}</b>
+                        <span className={`pill ${s.ok ? "ok" : "bad"}`}>{s.ok ? "OK" : "FAIL"}</span>
+                      </header>
+                      <p>{s.proof}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
               {last.receipt?.receipt_hash && (
                 <div className="kv">
                   <span>Receipt</span>

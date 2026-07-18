@@ -171,6 +171,53 @@ def _run_judge(**params) -> Dict[str, Any]:
     }
 
 
+def _run_lawbook(**params) -> Dict[str, Any]:
+    from .lawbook import lawbook_payload
+
+    lb = lawbook_payload(params.get("network") or "monad-testnet")
+    al = lb.get("alignment") or {}
+    return {
+        "ok": bool(al.get("ok", True)),
+        "proof": (
+            f"seed {al.get('seed_in_runtime')}/{al.get('seed_total')} aligned · "
+            f"runtime laws {(lb.get('runtime') or {}).get('law_count')}"
+        ),
+        "alignment": al,
+        "onchain_seed_count": (lb.get("onchain_seed") or {}).get("count"),
+        "runtime_law_count": (lb.get("runtime") or {}).get("law_count"),
+        "dual_stack": lb.get("dual_stack"),
+        "beats_crowd": lb.get("beats_crowd"),
+    }
+
+
+def _run_easy_path(**params) -> Dict[str, Any]:
+    """Judge-friendly 60s path: laws → reject → gas → win_path (inner handlers, one outer receipt)."""
+    steps = [
+        ("laws", _run_laws),
+        ("reject_demo", _run_reject_demo),
+        ("gas_coach", _run_gas),
+        ("win_path", _run_win_path),
+    ]
+    out_steps = []
+    all_ok = True
+    for sid, fn in steps:
+        try:
+            r = fn(**params)
+            ok = bool(r.get("ok"))
+            all_ok = all_ok and ok
+            out_steps.append({"tool": sid, "ok": ok, "proof": r.get("proof")})
+        except Exception as exc:
+            all_ok = False
+            out_steps.append({"tool": sid, "ok": False, "proof": str(exc)[:200]})
+    return {
+        "ok": all_ok,
+        "proof": " · ".join(f"{s['tool']}={'✓' if s['ok'] else '✗'}" for s in out_steps),
+        "steps": out_steps,
+        "seconds_hint": 60,
+        "next": "Open PROOF tab or POST /tools/judge/run",
+    }
+
+
 # Focused catalog — ship these, not a pile of half-features.
 TOOLS: List[Dict[str, Any]] = [
     {
@@ -290,6 +337,32 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Ambition without proof",
         "handler": "judge",
     },
+    {
+        "id": "lawbook",
+        "name": "LawBook dual-stack status",
+        "kind": "governance",
+        "who": "user + any AI",
+        "seconds": 3,
+        "do": "On-chain seed vs runtime ecosystem laws alignment",
+        "api": "POST /tools/lawbook/run",
+        "mcp": "thesis_lawbook",
+        "proof": "seed aligned + law_count",
+        "beats_crowd": "Allowlist-only agent wallets without a law registry",
+        "handler": "lawbook",
+    },
+    {
+        "id": "easy_path",
+        "name": "60s easy path (all-in-one)",
+        "kind": "demo",
+        "who": "user + judge + any AI",
+        "seconds": 20,
+        "do": "laws → reject_demo → gas_coach → win_path in one call",
+        "api": "POST /tools/easy_path/run",
+        "mcp": "thesis_easy_path",
+        "proof": "four step proofs",
+        "beats_crowd": "Video-only demos with no live multi-step API",
+        "handler": "easy_path",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -302,6 +375,8 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "win_path": _run_win_path,
     "ai_pulse": _run_ai_pulse,
     "judge": _run_judge,
+    "lawbook": _run_lawbook,
+    "easy_path": _run_easy_path,
 }
 
 
@@ -331,6 +406,7 @@ def tools_catalog() -> Dict[str, Any]:
             {"step": 3, "tool": "gas_coach", "why": "Monad-specific utility"},
             {"step": 4, "tool": "win_path", "why": "judge pack in one click"},
         ],
+        "one_click": "POST /tools/easy_path/run",
     }
 
 

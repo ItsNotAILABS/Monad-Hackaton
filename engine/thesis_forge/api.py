@@ -98,6 +98,7 @@ from .polyglot import polyglot_catalog, polyglot_mesh, run_polyglot
 from .use_cases import use_case_by_id, use_cases_payload
 from .nomos import nomos_payload, run_nomos_arena
 from .tools import get_tool, mcp_tool_list, run_tool, tools_catalog
+from .lawbook import lawbook_payload
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -331,6 +332,12 @@ class ToolRunIn(BaseModel):
     run_company: bool = True
     run_desk: bool = True
     params: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/lawbook")
+def lawbook_get(network: str = Query("monad-testnet")):
+    """Dual law stack: on-chain LawBook seed ↔ runtime ecosystem laws."""
+    return lawbook_payload(network)
 
 
 @app.get("/tools")
@@ -811,6 +818,7 @@ def health():
             "/tools",
             "/tools/{id}/run",
             "/tools/mcp",
+            "/lawbook",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",
