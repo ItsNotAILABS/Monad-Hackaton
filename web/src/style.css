@@ -792,6 +792,65 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
 }
 .footer-platform b { color: var(--accent2); font-weight: 500; }
 
+/* Always-on use bar */
+.use-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  margin: 0 0 10px;
+  border: 1px solid #6d4aff44;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #120f22, #0a0b12 55%, #0a1412);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: 0 8px 28px #0008;
+}
+.use-bar .forge,
+.use-bar .ghost {
+  margin: 0;
+  width: auto;
+  padding: 8px 12px;
+}
+.use-run {
+  box-shadow: 0 0 22px #6d4aff44 !important;
+}
+.use-bar-meta {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10px;
+}
+.use-bar-meta code {
+  color: #a794ff;
+  font-size: 10px;
+}
+
+.start-here {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed #2ee6a644;
+  background: #0c1412;
+}
+.start-steps {
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+.start-steps li {
+  margin: 6px 0;
+  font-size: 0.92rem;
+}
+@media (max-width: 700px) {
+  .use-bar-meta { width: 100%; margin-left: 0; }
+}
+
 
 @media (max-width: 1400px) {
   .app-modules { grid-template-columns: repeat(4, 1fr); }

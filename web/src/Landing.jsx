@@ -104,15 +104,25 @@ export function Landing({
   const forged = platApps.forged || [];
 
   async function invokePlatform(appId, action, params = {}) {
+    // Prefer parent handlers for full app state sync (usable end-to-end)
+    if (appId === "app.company" && action === "run") {
+      act("run_company");
+      return;
+    }
+    if (appId === "app.desk" && action === "arena") {
+      act("desk_arena");
+      return;
+    }
+    if (appId === "app.cloud" || (appId === "app.shell" && (action === "run" || action === "system"))) {
+      act("run_system");
+      return;
+    }
     try {
       const out = await api(`/platform/apps/${encodeURIComponent(appId)}/invoke`, {
         method: "POST",
         body: JSON.stringify({ action, network, params }),
       });
       setInvokeLog(out);
-      // Keep parent app state in sync for company / desk surfaces
-      if (appId === "app.company" && action === "run") act("run_company");
-      if (appId === "app.desk" && action === "arena") act("desk_arena");
       return out;
     } catch (e) {
       setInvokeLog({ ok: false, error: String(e.message || e) });

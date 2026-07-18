@@ -353,7 +353,7 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "2.5.0"
+    assert c.get("/health").json()["version"] == "2.5.1"
     assert c.get("/health").json().get("kind") == "platform"
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"

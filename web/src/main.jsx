@@ -3,32 +3,10 @@ import { createRoot } from "react-dom/client";
 import { Landing } from "./Landing.jsx";
 import { LocalAI } from "./local-ai/LocalAI.jsx";
 import { CloudEngines } from "./CloudEngines.jsx";
+import { api, API_BASE } from "./api.js";
 import "./style.css";
 
 const CATEGORIES = ["dex", "lending", "vault", "staking", "perps", "analytics", "agent"];
-
-const API =
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
-  (typeof window !== "undefined" && window.location.port === "5173" ? "/api" : "http://127.0.0.1:8043");
-
-async function api(path, opts = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
-    ...opts,
-  });
-  const text = await res.text();
-  let data;
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
-  }
-  if (!res.ok) {
-    const msg = data.detail || data.error || res.statusText || "request failed";
-    throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
-  }
-  return data;
-}
 
 const DEFAULT_POLICY = {
   max_slippage_bps: 50,
@@ -772,6 +750,44 @@ function App() {
         </div>
       ) : null}
 
+      {/* Always-on usable action bar */}
+      <div className="use-bar">
+        <button type="button" className="forge use-run" disabled={busy} onClick={runSystem}>
+          ▶ RUN SYSTEM
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
+          Cloud
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
+          Local AI
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("desk")}>
+          Desk
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("hq")}>
+          HQ
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={runDeskArena}>
+          Arena
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={runCompany}>
+          Staff company
+        </button>
+        <button
+          type="button"
+          className="ghost"
+          disabled={busy}
+          onClick={() => connectBrowserWallet("metamask")}
+        >
+          Link wallet
+        </button>
+        <span className="use-bar-meta muted sm">
+          API <code>{API_BASE || "/"}</code>
+          {systemRun?.ok ? " · system OK" : systemRun ? " · system ran" : ""}
+          {desk ? ` · desk ${Number(desk.equity || 0).toFixed(0)}` : ""}
+        </span>
+      </div>
+
       <nav className="tabs">
         {[
           ["live", "PLATFORM"],
@@ -794,12 +810,60 @@ function App() {
         ))}
       </nav>
 
+      {tab === "live" && !systemRun && (
+        <div className="start-here">
+          <div>
+            <span className="eyebrow">START HERE · USABLE IN 60s</span>
+            <ol className="pillars start-steps">
+              <li>
+                <b>▶ RUN SYSTEM</b> — laws + desk + vault sim + company (top bar)
+              </li>
+              <li>
+                <b>CLOUD</b> — live Monad gas / chain pulse / research
+              </li>
+              <li>
+                <b>LOCAL AI</b> — teach security, remember notes, export PDF/Excel
+              </li>
+              <li>
+                <b>DESK</b> — see rejects · <b>HQ</b> — approve mission
+              </li>
+            </ol>
+          </div>
+          <div className="chips tight">
+            <button type="button" className="forge" disabled={busy} onClick={runSystem}>
+              ▶ RUN SYSTEM NOW
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
+              Open cloud
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
+              Open local AI
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("desk")}>
+              Open desk
+            </button>
+          </div>
+        </div>
+      )}
+
       {tab === "cloud" && (
-        <CloudEngines api={api} network={network} busy={busy} onNavigate={setTab} />
+        <CloudEngines
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+        />
       )}
 
       {tab === "local" && (
-        <LocalAI api={api} network={network} busy={busy} onNavigate={setTab} />
+        <LocalAI
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+        />
       )}
 
       {tab === "live" && (

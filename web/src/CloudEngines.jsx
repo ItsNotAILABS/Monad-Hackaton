@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { apiUrl } from "./api.js";
 
 /**
  * Cloud engines panel — real server-side engines for the hosted web app.
  * Runs on API host; talks to Monad RPC + platform modules.
  */
-export function CloudEngines({ api, network, busy: parentBusy, onNavigate }) {
+export function CloudEngines({ api, network, busy: parentBusy, onNavigate, onRunSystem }) {
   const [catalog, setCatalog] = useState(null);
   const [selected, setSelected] = useState("chain");
   const [address, setAddress] = useState("");
@@ -105,27 +106,30 @@ export function CloudEngines({ api, network, busy: parentBusy, onNavigate }) {
             type="button"
             className="forge win-btn"
             disabled={disabled}
-            onClick={async () => {
-              setBusy(true);
-              setErr("");
-              try {
-                const data = await api("/system/run", {
-                  method: "POST",
-                  body: JSON.stringify({
-                    network,
-                    query: query || "Monad gas and vault",
-                    address: address || "",
-                    estimated_gas: Number(estimate) || 80000,
-                  }),
-                });
-                setPipeline(data.cloud || data);
-                setOut(data);
-                flash(data.headline || "system linked");
-              } catch (e) {
-                setErr(String(e.message || e));
-              } finally {
-                setBusy(false);
-              }
+            onClick={() => {
+              if (onRunSystem) return onRunSystem();
+              // fallback local system call
+              return (async () => {
+                setBusy(true);
+                try {
+                  const data = await api("/system/run", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      network,
+                      query: query || "Monad gas and vault",
+                      address: address || "",
+                      estimated_gas: Number(estimate) || 80000,
+                    }),
+                  });
+                  setPipeline(data.cloud || data);
+                  setOut(data);
+                  flash(data.headline || "system linked");
+                } catch (e) {
+                  setErr(String(e.message || e));
+                } finally {
+                  setBusy(false);
+                }
+              })();
             }}
           >
             ▶ RUN SYSTEM
@@ -256,27 +260,66 @@ export function CloudEngines({ api, network, busy: parentBusy, onNavigate }) {
               {JSON.stringify(result, null, 2).slice(0, 12000)}
             </pre>
           )}
-          {result?.download && (
-            <a className="link" href={`/api${result.download}`} target="_blank" rel="noreferrer">
-              Download cloud doc →
-            </a>
+          {(result?.markdown || result?.download) && (
+            <div className="chips tight">
+              {result?.markdown && (
+                <button
+                  type="button"
+                  className="ghost"
+                  onClick={() => {
+                    const blob = new Blob([result.markdown], { type: "text/markdown" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = result.filename || "cloud-report.md";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                >
+                  Download markdown
+                </button>
+              )}
+              {result?.download && (
+                <a className="link" href={apiUrl(result.download)} target="_blank" rel="noreferrer">
+                  Server file →
+                </a>
+              )}
+            </div>
           )}
-          {result?.markdown && !result?.download && (
-            <button
-              type="button"
-              className="ghost"
-              onClick={() => {
-                const blob = new Blob([result.markdown], { type: "text/markdown" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = result.filename || "cloud-report.md";
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              Download markdown
-            </button>
+          {out?.ok === false && out?.error && (
+            <p className="muted sm down">{out.error}</p>
+          )}
+          {result?.brief?.summary && (
+            <div className="proto featured">
+              <span className="eyebrow">RESEARCH BRIEF</span>
+              <b>{result.brief.summary}</b>
+              <ul className="pillars">
+                {(result.brief.insights || []).slice(0, 4).map((i) => (
+                  <li key={i.title}>{i.title}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {result?.recommended_gas_limit != null && (
+            <div className="proto">
+              <b>
+                Gas limit {result.recommended_gas_limit} (est {result.estimated_gas})
+              </b>
+              <p className="muted sm">
+                Live ~{result.live_gas_price_gwei?.toFixed?.(3) ?? result.live_gas_price_gwei} gwei ·{" "}
+                {result.doctrine}
+              </p>
+            </div>
+          )}
+          {result?.block_number != null && (
+            <div className="proto">
+              <b>
+                Chain block {result.block_number} · id {result.observed_chain_id}
+              </b>
+              <p className="muted sm">
+                match={String(result.chain_match)} · {result.rpc}
+              </p>
+            </div>
           )}
         </article>
       </div>

@@ -12,7 +12,7 @@ const SECTIONS = [
  * Full browser environment: inference, storage, agents, PDF/Excel,
  * security scanning, extension download — with teach-as-you-use.
  */
-export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
+export function LocalAI({ api, network, busy: parentBusy, onNavigate, onRunSystem }) {
   const [section, setSection] = useState("teach");
   const [manifest, setManifest] = useState(null);
   const [inf, setInf] = useState(Local.inferenceStatus());
@@ -296,6 +296,11 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
           <button type="button" className="ghost" disabled={disabled} onClick={runSecurityAudit}>
             Security audit
           </button>
+          {onRunSystem && (
+            <button type="button" className="ghost" disabled={disabled} onClick={onRunSystem}>
+              ▶ RUN SYSTEM
+            </button>
+          )}
           <button type="button" className="ghost" onClick={() => onNavigate?.("live")}>
             Platform
           </button>
