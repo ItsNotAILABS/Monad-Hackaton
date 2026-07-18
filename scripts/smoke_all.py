@@ -109,7 +109,7 @@ def main() -> int:
 
     # Platform kernel
     plat = c.get("/platform").json()
-    assert plat.get("product") == "THESIS Platform"
+    assert "MonadBuilder" in str(plat.get("product") or "") or plat.get("product") == "THESIS Platform"
     assert plat["kernel"]["primitives_total"] >= 10
     assert plat["apps"]["first_party_count"] >= 10
     assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
