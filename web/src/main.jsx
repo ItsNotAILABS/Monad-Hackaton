@@ -10,6 +10,7 @@ import { Tools } from "./Tools.jsx";
 import { Terminal } from "./Terminal.jsx";
 import { HybridHub } from "./HybridHub.jsx";
 import { BuilderHome } from "./BuilderHome.jsx";
+import { AgentPanel } from "./AgentPanel.jsx";
 import { MicButton } from "./MicButton.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
@@ -838,6 +839,7 @@ function App() {
       <nav className="tabs">
         {[
           ["builder", "BUILDER"],
+          ["agent", "AGENT"],
           ["live", "PLATFORM"],
           ["usecases", "USE CASES"],
           ["tools", "TOOLS"],
@@ -872,6 +874,10 @@ function App() {
           onRunSystem={runSystem}
           onRefreshHome={refresh}
         />
+      )}
+
+      {tab === "agent" && (
+        <AgentPanel api={api} network={network} busy={busy} onNavigate={setTab} />
       )}
 
       {tab === "live" && !systemRun && (

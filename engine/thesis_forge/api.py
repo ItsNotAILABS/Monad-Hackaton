@@ -106,6 +106,14 @@ from .auto_exec import auto_loop, auto_paper_from_signals, auto_strategy_run, in
 from .hybrid import hybrid_catalog, run_hybrid_node
 from .brand import PRODUCT, PRODUCT_SHORT, TAGLINE, brand_payload
 from .builder import builder_home, daily_ai_brief, run_morning, utilities_catalog
+from .delta_ai import agent_status, long_horizon_step
+from .x_marketing import (
+    draft_from_recent_actions,
+    draft_post,
+    list_queue,
+    mark_posted,
+    x_catalog,
+)
 
 app = FastAPI(
     title=f"{PRODUCT} API",
@@ -515,6 +523,78 @@ def hybrid_run(body: HybridRunIn | None = None):
     """Run Node worker_threads hybrid op (arena/agents/pulse/bench). Browser workers run in HQ."""
     b = body or HybridRunIn()
     return run_hybrid_node(b.op, b.params or {"network": b.network})
+
+
+class AgentStepIn(BaseModel):
+    goal: str = ""
+    network: str = "monad-testnet"
+    note: str = ""
+    stt: str = ""
+    execute: bool = True
+    max_hops: int = 4
+
+
+@app.get("/agent")
+def agent_get():
+    """Long-horizon agent status: skills, delta attention, memory."""
+    return agent_status()
+
+
+@app.post("/agent/step")
+def agent_step(body: AgentStepIn | None = None):
+    """Long-horizon step: multi-sense → delta attention → fast decode → tools → self-evolve."""
+    b = body or AgentStepIn()
+    return long_horizon_step(
+        b.goal,
+        network=b.network,
+        note=b.note,
+        stt=b.stt,
+        execute=b.execute,
+        max_hops=b.max_hops,
+    )
+
+
+class XDraftIn(BaseModel):
+    action: str = "ops"
+    text: str = ""
+    network: str = "monad-testnet"
+    detail: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/x")
+def x_get():
+    """X marketing catalog — AI drafts ecosystem posts from real user actions."""
+    return x_catalog()
+
+
+@app.get("/x/queue")
+def x_queue(limit: int = Query(20, ge=1, le=100)):
+    return list_queue(limit)
+
+
+@app.post("/x/draft")
+def x_draft(body: XDraftIn | None = None):
+    """Draft + queue an X post (owner posts via intent URL)."""
+    b = body or XDraftIn()
+    return draft_post(b.action, b.detail, custom_text=b.text, network=b.network)
+
+
+@app.post("/x/from-actions")
+def x_from_actions(network: str = Query("monad-testnet")):
+    """Auto-draft marketing post from live rejects / streak / morning."""
+    return draft_from_recent_actions(network=network)
+
+
+class XMarkIn(BaseModel):
+    draft_id: str
+
+
+@app.post("/x/mark-posted")
+def x_mark(body: XMarkIn):
+    out = mark_posted(body.draft_id)
+    if not out.get("ok"):
+        raise HTTPException(404, out.get("error") or "not found")
+    return out
 
 
 @app.get("/tools")
@@ -1019,6 +1099,12 @@ def health():
             "/auto/signals",
             "/hybrid",
             "/hybrid/run",
+            "/agent",
+            "/agent/step",
+            "/x",
+            "/x/draft",
+            "/x/from-actions",
+            "/x/queue",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",

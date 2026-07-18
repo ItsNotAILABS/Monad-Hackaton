@@ -1,0 +1,208 @@
+{
+  "schema": "monadbuilder.agent_state.v1",
+  "horizon_goal": "morning seatbelt",
+  "step": 2,
+  "working_memory": [
+    {
+      "step": 1,
+      "goal": "safe ops and reject bad plans",
+      "intent": "safety.reject",
+      "efficiency": 1.0,
+      "ts": 1784398309.2594953
+    },
+    {
+      "step": 2,
+      "goal": "morning seatbelt",
+      "intent": "habit.morning",
+      "efficiency": 0.556,
+      "ts": 1784398313.3034046
+    }
+  ],
+  "episodic": [
+    {
+      "step": 1,
+      "goal": "safe ops and reject bad plans",
+      "intent": "safety.reject",
+      "efficiency": 1.0,
+      "ts": 1784398309.2594953,
+      "exec_n": 2
+    },
+    {
+      "step": 2,
+      "goal": "morning seatbelt",
+      "intent": "habit.morning",
+      "efficiency": 0.556,
+      "ts": 1784398313.3034046,
+      "exec_n": 2
+    }
+  ],
+  "skills": {
+    "reject_is_feature": 1.05,
+    "gas_discipline": 0.54,
+    "signal_trading": 0.3,
+    "morning_loop": 0.55,
+    "x_marketing": 0.2,
+    "coding_forge": 0.2
+  },
+  "last_senses_hash": {},
+  "last_attention": {
+    "schema": "monadbuilder.delta_attention.v1",
+    "residual_bias": 1.35,
+    "weights": {
+      "text": 0.1018,
+      "market": 0.1018,
+      "law": 0.1018,
+      "gas": 0.1018,
+      "desk": 0.1018,
+      "habit": 0.1018,
+      "note": 0.1018,
+      "stt": 0.1018,
+      "chain": 0.1855
+    },
+    "deltas": {
+      "chain": {
+        "prev_hash": "fa4ef0a6e15e833a",
+        "cur_hash": "f93ac9d52a242889",
+        "kind": "delta"
+      }
+    },
+    "static_channels": [
+      "text",
+      "market",
+      "law",
+      "gas",
+      "desk",
+      "habit",
+      "note",
+      "stt"
+    ],
+    "efficiency_gain": 0.556,
+    "point": "Higher residual on change \u2192 less re-compute than full transformers every step",
+    "not_old_ai": "Full-context re-encode every token is the past; delta residual is the path"
+  },
+  "evolved_at": [
+    {
+      "ts": 1784398309.2584953,
+      "intent": "safety.reject",
+      "changes": {
+        "reject_is_feature": {
+          "from": 1.0,
+          "to": 1.05,
+          "delta": 0.05
+        },
+        "gas_discipline": {
+          "to": 0.52
+        }
+      }
+    },
+    {
+      "ts": 1784398313.3034046,
+      "intent": "habit.morning",
+      "changes": {
+        "morning_loop": {
+          "from": 0.5,
+          "to": 0.55,
+          "delta": 0.05
+        },
+        "gas_discipline": {
+          "to": 0.54
+        }
+      }
+    }
+  ],
+  "last_senses": {
+    "text": "Good morning. MonadBuilder seatbelt \u00b7 Level 2 \u00b7 325 XP \u00b7 streak 1. Desk is red \u2014 shrink size, celebrate rejects, no hero tickets. ",
+    "market": {
+      "top_signal": {
+        "rank": 1,
+        "id": "sig-mon-spot",
+        "symbol": "MON/USDC",
+        "side": "BUY",
+        "score": 90.0,
+        "auto": true,
+        "policy_ok": true
+      },
+      "n_signals": 5
+    },
+    "law": {
+      "law_count": 26,
+      "domains": [
+        "system_self",
+        "monad_network",
+        "protocols",
+        "intelligence",
+        "execution"
+      ]
+    },
+    "gas": {
+      "title": "You pay the gas limit",
+      "demo": {
+        "chain_id": 10143,
+        "estimated_gas": 80000,
+        "margin_bps": 10750,
+        "recommended_gas_limit": 86000,
+        "overcharge_if_2x": 74000,
+        "note": "Monad charges the limit \u2014 keep buffers tight."
+      }
+    },
+    "desk": {
+      "equity": 9554.934403669717,
+      "day_pnl": -0.17595702972099891,
+      "cash_usdc": 9556.306338319995
+    },
+    "habit": {
+      "streak": 1,
+      "level": 2,
+      "xp": 325,
+      "next": {
+        "mission_id": "academy-lab",
+        "title": "Lab: Slippage trap",
+        "cta": "Open academy"
+      }
+    },
+    "note": "",
+    "stt": "",
+    "chain": {
+      "receipt_tip": "d87ffb10b5eb9bb1",
+      "network": "monad-testnet"
+    }
+  },
+  "last_senses_full": {
+    "habit": {
+      "streak": 1,
+      "level": 2,
+      "xp": 325,
+      "next": {
+        "mission_id": "academy-lab",
+        "title": "Lab: Slippage trap",
+        "cta": "Open academy"
+      }
+    },
+    "desk": {
+      "equity": 9554.934403669717,
+      "day_pnl": -0.17595702972099891,
+      "cash_usdc": 9556.306338319995
+    },
+    "market": {
+      "top": {
+        "rank": 1,
+        "id": "sig-mon-spot",
+        "symbol": "MON/USDC",
+        "side": "BUY",
+        "score": 90.0,
+        "auto": true,
+        "policy_ok": true
+      }
+    },
+    "law": {
+      "law_count": 26,
+      "domains": [
+        "system_self",
+        "monad_network",
+        "protocols",
+        "intelligence",
+        "execution"
+      ]
+    }
+  }
+}

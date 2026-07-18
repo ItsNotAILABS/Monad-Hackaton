@@ -150,6 +150,15 @@ def node_status() -> Dict[str, Any]:
             "real_key_access": False,
             "phantom_key_export": False,
             "sandbox_only_mutations": True,
+            "delta_attention": True,
+            "multi_sense": True,
+            "multi_device": True,
+            "long_horizon": True,
+            "self_evolve": True,
+            "fast_decode": True,
+            "tts": False,
+            "speech_to_text": True,
+            "x_marketing_draft": True,
         },
     }
 
@@ -393,12 +402,42 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
             f"{p.get('brief')}"
         )
 
+    if any(k in low for k in ("long horizon", "agent step", "delta", "self evolve", "self-evolve", "think step")):
+        from .delta_ai import long_horizon_step
+
+        st = long_horizon_step(message, network=network, note="", stt="" if "dictate" not in low else message)
+        actions.append(
+            {
+                "tool": "delta_ai.step",
+                "result": {
+                    "intent": st.get("intent"),
+                    "step": st.get("step"),
+                    "efficiency": st.get("efficiency"),
+                },
+            }
+        )
+        replies.append(
+            f"**Long-horizon agent (delta attention)** step {st.get('step')}\n"
+            f"intent=`{st.get('intent')}` · efficiency={ (st.get('efficiency') or {}).get('delta_gain') }\n"
+            f"{st.get('answer')}\n_(text only · skills self-evolved locally)_"
+        )
+
+    if any(k in low for k in ("post on x", "tweet", "draft x", "x marketing", "post about")):
+        from .x_marketing import draft_from_recent_actions
+
+        d = draft_from_recent_actions(network=network)
+        actions.append({"tool": "x.draft", "result": {"id": d.get("id"), "intent_url": d.get("intent_url")}})
+        replies.append(
+            f"**X draft (ecosystem + you)**\n{d.get('text')}\n\n"
+            f"Post when ready: {d.get('intent_url')}\n"
+            "I draft — you publish (sovereign marketing)."
+        )
+
     if not replies:
         replies.append(
-            "**MonadBuilder AI online** (sandbox mode · THESIS engine). "
-            "I deliver your day: *daily brief*, *run my morning*, rejects, signals, auto paper loop, PDF reports. "
-            "Open **BUILDER** or **TERM**. I never hold keys or silent-broadcast. "
-            "Try: *run my morning* · *daily brief* · *show a reject* · *auto exec*."
+            "**MonadBuilder AI online** (sandbox · delta-attention · multi-device). "
+            "Text replies only — no robot voice. Mic = speech-to-text for notes/commands. "
+            "Try: *run my morning* · *daily brief* · *agent step* · *draft x* · *auto exec* · *show a reject*."
         )
 
     text = "\n\n".join(replies)

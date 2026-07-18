@@ -14,9 +14,14 @@ import sys
 from typing import Any, Dict
 
 from .tools import mcp_tool_list, run_tool, tools_catalog
+from .x_marketing import draft_from_recent_actions, draft_post, list_queue
 
 # mcp name → thesis tool id
 _MCP_TO_ID = {t["name"]: t["thesis_id"] for t in mcp_tool_list()}
+# extra marketing aliases for external AIs
+_MCP_TO_ID["thesis_x_from_actions"] = "x_draft"
+_MCP_TO_ID["thesis_x_queue"] = "__x_queue__"
+_MCP_TO_ID["thesis_agent_step"] = "agent_step"
 
 
 def _respond(msg_id: Any, result: Any) -> None:
@@ -57,20 +62,63 @@ def handle(msg: Dict[str, Any]) -> None:
         return
 
     if method == "tools/list":
-        _respond(msg_id, {"tools": mcp_tool_list()})
+        tools = list(mcp_tool_list())
+        tools.append(
+            {
+                "name": "thesis_x_from_actions",
+                "description": (
+                    "Draft an X/Twitter marketing post from the user's real MonadBuilder actions "
+                    "(rejects, streak, morning). Returns text + intent_url for owner to publish. "
+                    "Ecosystem + user marketing — not silent spam."
+                ),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"network": {"type": "string", "default": "monad-testnet"}},
+                },
+                "thesis_id": "x_draft",
+            }
+        )
+        tools.append(
+            {
+                "name": "thesis_x_queue",
+                "description": "List queued X marketing drafts (intent URLs).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"limit": {"type": "integer", "default": 20}},
+                },
+                "thesis_id": "x_queue",
+            }
+        )
+        _respond(msg_id, {"tools": tools})
         return
 
     if method == "tools/call":
         name = params.get("name") or ""
         args = params.get("arguments") or {}
+        if not isinstance(args, dict):
+            args = {}
         tool_id = _MCP_TO_ID.get(name) or name.replace("thesis_", "")
-        out = run_tool(tool_id, args if isinstance(args, dict) else {})
+        if tool_id == "__x_queue__":
+            out = {"ok": True, **list_queue(int(args.get("limit") or 20))}
+        elif name in ("thesis_x_from_actions",) or (
+            tool_id == "x_draft" and args.get("from_actions", True) and not args.get("action")
+        ):
+            d = draft_from_recent_actions(network=args.get("network") or "monad-testnet")
+            out = {
+                "ok": True,
+                "result": d,
+                "proof": d.get("text"),
+                "intent_url": d.get("intent_url"),
+                "note": "Owner posts via intent_url — AI drafts for ecosystem + user marketing",
+            }
+        else:
+            out = run_tool(tool_id, args)
         text = json.dumps(out, indent=2)[:12000]
         _respond(
             msg_id,
             {
                 "content": [{"type": "text", "text": text}],
-                "isError": not out.get("ok"),
+                "isError": not out.get("ok", True),
             },
         )
         return

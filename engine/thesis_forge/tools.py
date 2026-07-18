@@ -219,6 +219,48 @@ def _run_builder_brief(**params) -> Dict[str, Any]:
     }
 
 
+def _run_agent_step(**params) -> Dict[str, Any]:
+    from .delta_ai import long_horizon_step
+
+    r = long_horizon_step(
+        params.get("goal") or params.get("message") or params.get("objective") or "",
+        network=params.get("network") or "monad-testnet",
+        note=params.get("note") or "",
+        stt=params.get("stt") or "",
+        execute=bool(params.get("execute", True)),
+    )
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": (r.get("answer") or "")[:200],
+        "intent": r.get("intent"),
+        "efficiency": r.get("efficiency"),
+        "step": r.get("step"),
+        "skills": r.get("skills"),
+        "answer": r.get("answer"),
+    }
+
+
+def _run_x_draft(**params) -> Dict[str, Any]:
+    from .x_marketing import draft_from_recent_actions, draft_post
+
+    if params.get("from_actions", True) and not params.get("action"):
+        d = draft_from_recent_actions(network=params.get("network") or "monad-testnet")
+    else:
+        d = draft_post(
+            params.get("action") or "ops",
+            params.get("detail"),
+            custom_text=params.get("text") or "",
+            network=params.get("network") or "monad-testnet",
+        )
+    return {
+        "ok": True,
+        "proof": (d.get("text") or "")[:160],
+        "draft_id": d.get("id"),
+        "intent_url": d.get("intent_url"),
+        "text": d.get("text"),
+    }
+
+
 def _run_hybrid(**params) -> Dict[str, Any]:
     from .hybrid import run_hybrid_node
 
@@ -553,6 +595,32 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Static dashboards without a daily seatbelt",
         "handler": "brief",
     },
+    {
+        "id": "agent_step",
+        "name": "Long-horizon agent step",
+        "kind": "agent",
+        "who": "user + agent + any AI",
+        "seconds": 10,
+        "do": "Delta attention → fast decode → tools → self-evolve (text out, STT in)",
+        "api": "POST /agent/step",
+        "mcp": "thesis_agent_step",
+        "proof": "intent + efficiency",
+        "beats_crowd": "Stateless chatbots without residual memory",
+        "handler": "agent_step",
+    },
+    {
+        "id": "x_draft",
+        "name": "X marketing draft",
+        "kind": "marketing",
+        "who": "user + agent + any AI",
+        "seconds": 4,
+        "do": "Draft ecosystem/user X post from real actions (owner posts via intent URL)",
+        "api": "POST /x/from-actions",
+        "mcp": "thesis_x_draft",
+        "proof": "intent_url",
+        "beats_crowd": "Spam bots — we draft from real rejects/morning/signals",
+        "handler": "x_draft",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -574,6 +642,8 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "hybrid": _run_hybrid,
     "morning": _run_builder_morning,
     "brief": _run_builder_brief,
+    "agent_step": _run_agent_step,
+    "x_draft": _run_x_draft,
 }
 
 

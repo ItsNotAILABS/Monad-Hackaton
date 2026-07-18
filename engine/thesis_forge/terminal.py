@@ -46,6 +46,8 @@ COMMANDS: Dict[str, Dict[str, str]] = {
     "auto": {"usage": "auto", "desc": "Auto paper loop: arena + signals + strategy fills"},
     "intel": {"usage": "intel", "desc": "Intelligence pulse: coach + signals + reject"},
     "hybrid": {"usage": "hybrid [op]", "desc": "Node worker_threads hybrid (pulse/arena/bench)"},
+    "agent": {"usage": "agent [goal…]", "desc": "Long-horizon delta-attention step (or AI chat)"},
+    "x": {"usage": "x [action]", "desc": "Draft X marketing post from actions"},
     "doctrine": {"usage": "doctrine", "desc": "Print platform doctrine"},
     "whoami": {"usage": "whoami", "desc": "Sovereign operator context (no keys)"},
 }
@@ -423,14 +425,54 @@ def cmd_gas(args: List[str], network: str) -> Dict[str, Any]:
 
 
 def cmd_agent(args: List[str], network: str) -> Dict[str, Any]:
+    # Long-horizon step if goal-like; else legacy chat tools
+    msg = " ".join(args) if args else ""
+    if not msg or any(
+        k in msg.lower()
+        for k in ("step", "horizon", "delta", "evolve", "operate", "plan", "think")
+    ) or len(args) >= 2:
+        from .delta_ai import long_horizon_step
+
+        r = long_horizon_step(msg or "daily safe ops", network=network, execute=True)
+        lines = [
+            f"=== LONG-HORIZON · step {r.get('step')} · {r.get('intent')} ===",
+            f"efficiency={ (r.get('efficiency') or {}).get('delta_gain') } decode_ms={(r.get('fast_decode') or {}).get('elapsed_ms')}",
+            r.get("answer") or "",
+            "text-only · STT for notes/commands",
+        ]
+        return _out(bool(r.get("ok")), lines, r)
+
     from .ai_node import ai_chat
 
-    msg = " ".join(args) if args else "gas tip and daily brief"
-    r = ai_chat(msg, network=network)
-    lines = ["[agent]", r.get("answer") or "(empty)"]
+    r = ai_chat(msg or "daily brief", network=network)
+    lines = ["[agent chat]", r.get("answer") or "(empty)"]
     for a in (r.get("actions") or [])[:6]:
         lines.append(f"  tool:{a.get('tool')}")
     return _out(True, lines, r)
+
+
+def cmd_x(args: List[str], network: str) -> Dict[str, Any]:
+    from .x_marketing import draft_from_recent_actions, draft_post, list_queue
+
+    if args and args[0] in ("queue", "list"):
+        q = list_queue()
+        lines = [f"X queue ({q.get('n')}):"]
+        for it in (q.get("items") or [])[:5]:
+            lines.append(f"  {it.get('id')} [{it.get('status')}] {(it.get('text') or '')[:80]}")
+            lines.append(f"    {it.get('intent_url')}")
+        return _out(True, lines, q)
+    action = args[0] if args else ""
+    if action and action not in ("auto", "from-actions", "actions"):
+        d = draft_post(action, network=network)
+    else:
+        d = draft_from_recent_actions(network=network)
+    lines = [
+        "=== X DRAFT (ecosystem + user marketing) ===",
+        d.get("text") or "",
+        f"intent: {d.get('intent_url')}",
+        "AI drafts · you publish (sovereign)",
+    ]
+    return _out(True, lines, d)
 
 
 def cmd_signals(args: List[str], network: str) -> Dict[str, Any]:
@@ -601,6 +643,8 @@ def exec_line(line: str, *, network: str = "monad-testnet", record: bool = True)
         "company": lambda: cmd_company(args, network),
         "gas": lambda: cmd_gas(args, network),
         "agent": lambda: cmd_agent(args, network),
+        "x": lambda: cmd_x(args, network),
+        "tweet": lambda: cmd_x(args, network),
         "signals": lambda: cmd_signals(args, network),
         "signal": lambda: cmd_signals(args, network),
         "auto": lambda: cmd_auto(args, network),

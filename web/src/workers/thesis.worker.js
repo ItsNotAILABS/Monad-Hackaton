@@ -195,6 +195,66 @@ function heavyMath(n = 200000) {
   };
 }
 
+/** Delta residual attention (browser-side) — only changed channels get high weight. */
+function deltaAttention(prev = {}, cur = {}, residualBias = 1.35) {
+  const senses = ["text", "market", "law", "gas", "desk", "habit", "note", "stt", "chain"];
+  const weights = {};
+  const deltas = {};
+  const staticCh = [];
+  const hash = (v) => {
+    const s = JSON.stringify(v ?? null);
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16);
+  };
+  for (const k of senses) {
+    const ch = hash(cur[k]);
+    const ph = hash(prev[k]);
+    if (cur[k] != null && ch !== ph) {
+      weights[k] = residualBias;
+      deltas[k] = { kind: "delta" };
+    } else if (cur[k] != null) {
+      weights[k] = 1 / residualBias;
+      staticCh.push(k);
+    } else weights[k] = 0;
+  }
+  const tot = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+  const norm = {};
+  for (const [k, v] of Object.entries(weights)) if (v > 0) norm[k] = Math.round((v / tot) * 10000) / 10000;
+  return {
+    schema: "thesis.worker.delta_attention.v1",
+    weights: norm,
+    deltas,
+    static_channels: staticCh,
+    efficiency_gain: Math.round((1 - (staticCh.length / senses.length) * 0.5) * 1000) / 1000,
+    locality: "browser-web-worker",
+  };
+}
+
+function fastDecodeWorker(goal = "", attention = {}) {
+  const g = String(goal).toLowerCase();
+  let intent = "agent.general";
+  if (/morning|brief/.test(g)) intent = "habit.morning";
+  else if (/reject|arena/.test(g)) intent = "safety.reject";
+  else if (/signal|auto|trade/.test(g)) intent = "market.auto";
+  else if (/post|tweet|x\.com/.test(g)) intent = "social.x_marketing";
+  const w = attention.weights || {};
+  const hops = [];
+  if (w.habit >= 0.1) hops.push("brief");
+  if (w.market >= 0.12) hops.push("signals");
+  if (w.law >= 0.1) hops.push("reject");
+  return {
+    schema: "thesis.worker.fast_decode.v1",
+    intent,
+    tool_hops: hops,
+    text: `worker decode intent=${intent} hops=${hops.join(",")}`,
+    locality: "browser-web-worker",
+  };
+}
+
 function hybridPulse(payload = {}) {
   const actions = payload.actions || [
     {
@@ -229,16 +289,20 @@ function hybridPulse(payload = {}) {
       { name: "degen", return: 0.4, risk: 0.5, lawful: false },
     ]
   );
+  const att = deltaAttention(payload.prev_senses || {}, payload.senses || { market: 1, law: 1 });
+  const dec = fastDecodeWorker(payload.goal || "pulse", att);
   return {
     schema: "thesis.worker.hybrid_pulse.v1",
     doctrine: DOCTRINE,
-    novel_tech: "blockchain + web-worker hybrid",
+    novel_tech: "blockchain + web-worker hybrid + delta attention",
     arena: {
       n_accepted: arena.n_accepted,
       n_rejected: arena.n_rejected,
       winner: arena.winner?.action?.agent,
     },
     agents: { winner: agents.winner?.name, n: agents.ranked.length },
+    delta_attention: att,
+    fast_decode: dec,
     locality: "browser-web-worker",
     free_main_thread: true,
   };
@@ -253,6 +317,8 @@ const OPS = {
   fingerprint: (p) => chainFingerprint(p.payload ?? p),
   bench: (p) => heavyMath(p.n),
   pulse: (p) => hybridPulse(p || {}),
+  delta: (p) => deltaAttention(p.prev || {}, p.current || p.senses || {}, p.residual_bias || 1.35),
+  decode: (p) => fastDecodeWorker(p.goal || "", p.attention || {}),
   ping: () => ({ ok: true, pong: true, locality: "browser-web-worker" }),
 };
 

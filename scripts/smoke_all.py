@@ -315,6 +315,29 @@ def main() -> int:
         bm.get("celebration", "")[:40],
     )
 
+    ag = c.get("/agent").json()
+    assert ag.get("schema") and ag.get("skills") is not None
+    st = c.post(
+        "/agent/step",
+        json={"goal": "safe daily ops with rejects", "network": "monad-testnet", "execute": True},
+    ).json()
+    assert st.get("ok") and st.get("intent") and st.get("delta_attention")
+    xd = c.post("/x/from-actions", json={}).json()
+    assert xd.get("text") and xd.get("intent_url")
+    xq = c.get("/x/queue").json()
+    assert xq.get("n", 0) >= 1
+    print(
+        "agent",
+        "step",
+        st.get("step"),
+        "intent",
+        st.get("intent"),
+        "eff",
+        (st.get("efficiency") or {}).get("delta_gain"),
+        "x_draft",
+        (xd.get("text") or "")[:40],
+    )
+
     print("SMOKE_OK")
     return 0
 
