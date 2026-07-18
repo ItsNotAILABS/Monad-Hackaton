@@ -1,41 +1,59 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 /**
- * Live command-center landing:
- * constant market board + AI daily brief + laws explained as they fire.
+ * LIVE command center — wired into real wallets, vault, desk, AI, daily, studio.
+ * Polls /landing and dispatches actions through parent handlers.
  */
-export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
+export function Landing({
+  api,
+  network,
+  busy,
+  onNavigate,
+  onAction,
+}) {
   const [feed, setFeed] = useState(null);
   const [err, setErr] = useState("");
   const [tick, setTick] = useState(0);
   const [flash, setFlash] = useState(false);
 
+  const load = useCallback(async () => {
+    try {
+      const data = await api(`/landing?network=${network}`);
+      setFeed(data);
+      setErr("");
+      setFlash(true);
+      setTimeout(() => setFlash(false), 280);
+    } catch (e) {
+      setErr(String(e.message || e));
+    }
+  }, [api, network]);
+
   useEffect(() => {
     let alive = true;
-    const load = async () => {
-      try {
-        const data = await api(`/landing?network=${network}`);
-        if (alive) {
-          setFeed(data);
-          setErr("");
-          setFlash(true);
-          setTimeout(() => setFlash(false), 280);
-        }
-      } catch (e) {
-        if (alive) setErr(String(e.message || e));
-      }
+    const poll = async () => {
+      if (!alive) return;
+      await load();
+      if (alive) setTick((t) => t + 1);
     };
-    load();
-    const poll = feed?.poll_ms_hint || 3500;
-    const id = setInterval(() => {
-      load();
-      setTick((t) => t + 1);
-    }, poll);
+    poll();
+    const id = setInterval(poll, feed?.poll_ms_hint || 4000);
     return () => {
       alive = false;
       clearInterval(id);
     };
-  }, [api, network, feed?.poll_ms_hint]);
+  }, [load, feed?.poll_ms_hint]);
+
+  function act(action, payload = {}) {
+    if (onAction) onAction(action, payload);
+  }
+
+  function goModule(m) {
+    if (m?.action) {
+      act(m.action, { module: m.id, href: m.tab });
+    } else if (m?.tab) {
+      onNavigate(m.tab);
+    }
+  }
 
   if (err && !feed) {
     return (
@@ -48,7 +66,7 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
   if (!feed) {
     return (
       <section className="panel">
-        <p className="muted">Lighting up the live board…</p>
+        <p className="muted">Lighting up wallets · vault · desk · AI…</p>
       </section>
     );
   }
@@ -59,7 +77,16 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
   const lawStack = feed.law_stack || {};
   const pillars = feed.pillars || {};
   const enforce = feed.enforcement_demo || {};
+  const apps = feed.apps || {};
+  const modules = apps.modules || [];
+  const wallets = apps.wallets || {};
+  const vault = apps.vault || {};
+  const desk = apps.desk || {};
+  const ai = apps.ai || {};
+  const daily = apps.daily || {};
+  const projects = apps.projects || {};
   const marks = market.marks || {};
+  const route = vault.latest_route || null;
 
   return (
     <section className={`panel landing-live ${flash ? "pulse-update" : ""}`}>
@@ -67,27 +94,28 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
         <span className="live-dot" />
         <b>LIVE</b>
         <span className="muted sm">
-          {feed.headline} · poll #{tick} · {(feed.elapsed_ms || 0).toFixed(0)}ms
+          {feed.headline} · #{tick} · {(feed.elapsed_ms || 0).toFixed(0)}ms
         </span>
-        <span className="badge on">{lawStack.law_count || 0} laws embedded</span>
+        <span className="badge on">{lawStack.law_count || 0} laws</span>
+        <span className={`badge ${wallets.linked ? "on" : "warn"}`}>
+          {wallets.linked || 0} wallets
+        </span>
+        <span className={`badge ${vault.deployed ? "on" : "warn"}`}>
+          vault {vault.deployed ? "set" : "—"}
+        </span>
+        <span className="badge on">{projects.count || 0} apps</span>
         <span className="muted sm">
-          THESIS consults {enforce.laws_consulted ?? "—"} · ok=
-          {String(enforce.ok ?? "—")}
+          THESIS laws {enforce.laws_consulted ?? "—"} · ok={String(enforce.ok ?? "—")}
         </span>
-        <a
-          className="link sm"
-          href={feed.docs?.best_practices}
-          target="_blank"
-          rel="noreferrer"
-        >
-          docs.monad.xyz/best-practices
+        <a className="link sm" href={feed.docs?.best_practices} target="_blank" rel="noreferrer">
+          best-practices
         </a>
       </div>
 
       <div className="ticker-wrap">
         <div className="ticker" key={`t-${tick}`}>
-          {(feed.ticker || []).map((t) => (
-            <span key={t.symbol} className={`tick ${t.side}`}>
+          {(feed.ticker || []).concat(feed.ticker || []).map((t, i) => (
+            <span key={`${t.symbol}-${i}`} className={`tick ${t.side}`}>
               <em>{t.symbol}</em>{" "}
               {typeof t.price === "number"
                 ? t.price.toLocaleString(undefined, { maximumFractionDigits: 4 })
@@ -98,37 +126,56 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
               </small>
             </span>
           ))}
-          {(feed.ticker || []).map((t) => (
-            <span key={`${t.symbol}-2`} className={`tick ${t.side}`}>
-              <em>{t.symbol}</em>{" "}
-              {typeof t.price === "number"
-                ? t.price.toLocaleString(undefined, { maximumFractionDigits: 4 })
-                : t.price}
-            </span>
-          ))}
         </div>
+      </div>
+
+      {/* App module grid — real product surfaces */}
+      <div className="app-modules">
+        {modules.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            className={`app-mod status-${m.status || "live"}`}
+            disabled={busy}
+            onClick={() => goModule(m)}
+          >
+            <span className="eyebrow">{m.id}</span>
+            <b>{m.title}</b>
+            <span className="metric">{m.metric}</span>
+            <span className="muted sm detail">{m.detail}</span>
+            {(m.laws || []).slice(0, 1).map((l) => (
+              <span key={l.id} className="law-chip mini">
+                <em>{l.id}</em>
+              </span>
+            ))}
+            <span className="cta-line">{m.cta}</span>
+          </button>
+        ))}
       </div>
 
       <div className="hero-card land-hero">
         <div>
-          <span className="eyebrow">MONAD DEFI COMPANY · COMMAND CENTER</span>
+          <span className="eyebrow">MONAD DEFI COMPANY · FULL STACK LIVE</span>
           <h2>{feed.tagline}</h2>
           <p className="muted">{brief.narrative || brief.coach_headline}</p>
           <div className="chips">
-            <button type="button" className="forge" disabled={busy} onClick={onRunCompany}>
-              STAFF THE COMPANY →
+            <button type="button" className="forge" disabled={busy} onClick={() => act("run_company")}>
+              STAFF COMPANY →
             </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("desk")}>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("connect_wallet")}>
+              Link wallet
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("desk_arena")}>
               Desk arena
             </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("ai")}>
-              AI node
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("vault_route")}>
+              Vault route
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
+              Forge app
             </button>
             <button type="button" className="ghost" onClick={() => onNavigate("hq")}>
-              Full HQ
-            </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("academy")}>
-              Academy
+              HQ
             </button>
           </div>
         </div>
@@ -148,20 +195,28 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
               {Number(market.day_pnl || 0).toFixed(2)}
             </b>
           </div>
+          <div className="kv">
+            <span>Wallets</span>
+            <b>{wallets.linked || 0}</b>
+          </div>
+          <div className="kv">
+            <span>Vault</span>
+            <b className="mono muted sm">
+              {vault.address ? `${vault.address.slice(0, 8)}…` : "not set"}
+            </b>
+          </div>
+          <div className="kv">
+            <span>Packages</span>
+            <b>{projects.count || 0}</b>
+          </div>
           {Object.entries(marks)
-            .slice(0, 4)
+            .slice(0, 3)
             .map(([sym, px]) => (
               <div className="kv" key={sym}>
                 <span>{sym}</span>
                 <b className="mono">{Number(px).toFixed(4)}</b>
               </div>
             ))}
-          <div className="kv">
-            <span>Gas limit demo</span>
-            <b className="mono muted sm">
-              {market.gas_demo?.estimated_gas}→{market.gas_demo?.recommended_gas_limit}
-            </b>
-          </div>
         </div>
       </div>
 
@@ -181,14 +236,241 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
         ))}
       </div>
 
+      {/* Real product panels */}
+      <div className="grid4">
+        <article className="result app-panel">
+          <label>WALLETS · PUBLIC ONLY</label>
+          <p className="muted sm">{wallets.teach}</p>
+          {(wallets.laws || []).map((l) => (
+            <div key={l.id} className="law-chip on">
+              <em>{l.id}</em>
+              <span>{l.as_used || l.rule}</span>
+            </div>
+          ))}
+          {(wallets.links || []).length === 0 ? (
+            <p className="muted sm">No wallets linked yet.</p>
+          ) : (
+            (wallets.links || []).map((w) => (
+              <div key={w.link_id} className="proto">
+                <b>
+                  {w.kind} · {w.label || w.address?.slice(0, 10)}
+                </b>
+                <p className="muted sm mono">
+                  {w.address?.slice(0, 14)}… · {w.chain}
+                </p>
+                <p className="muted sm">
+                  {Object.entries(w.balances || {})
+                    .map(([s, a]) => `${s}:${a}`)
+                    .join(" · ") || "no attested balances"}
+                </p>
+              </div>
+            ))
+          )}
+          <div className="chips tight">
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("connect_wallet", { kind: "metamask" })}>
+              MetaMask
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("connect_wallet", { kind: "phantom" })}>
+              Phantom
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("manual_wallet")}>
+              Watch-only
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("sync_twins")}>
+              Sync twins
+            </button>
+          </div>
+        </article>
+
+        <article className="result app-panel">
+          <label>SOVEREIGN VAULT</label>
+          <p className="muted sm">{vault.teach}</p>
+          <div className="kv">
+            <span>Address</span>
+            <b className="mono sm">{vault.address || "not recorded"}</b>
+          </div>
+          <div className="kv">
+            <span>Status</span>
+            <b>{vault.status}</b>
+          </div>
+          <div className="kv">
+            <span>Routable tickets</span>
+            <b>{vault.routable_tickets || 0}</b>
+          </div>
+          {(vault.laws || []).map((l) => (
+            <div key={l.id} className="law-chip">
+              <em>{l.id}</em>
+              <span>{l.as_used || l.rule}</span>
+            </div>
+          ))}
+          {route && (
+            <div className="proto featured">
+              <span className="eyebrow">LATEST ROUTE SIM</span>
+              <b className={route.would_execute ? "up" : "down"}>
+                {route.would_execute ? "WOULD EXECUTE" : "BLOCKED / SIM"}
+              </b>
+              <p className="muted sm">{route.narrative}</p>
+              {(route.steps || []).slice(0, 3).map((s) => (
+                <p key={s.id} className="muted sm">
+                  {s.ok ? "✓" : "✗"} {s.id}: {s.detail}
+                </p>
+              ))}
+            </div>
+          )}
+          <div className="chips tight">
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("vault_route")}>
+              Vault route sim
+            </button>
+            <button type="button" className="ghost" onClick={() => onNavigate("desk")}>
+              Open desk
+            </button>
+            <button type="button" className="ghost" onClick={() => onNavigate("codex")}>
+              Deployment
+            </button>
+          </div>
+        </article>
+
+        <article className="result app-panel">
+          <label>DESK · POSITIONS · TICKETS</label>
+          <p className="muted sm">{desk.teach}</p>
+          <div className="kv">
+            <span>Equity / cash</span>
+            <b>
+              {Number(desk.equity || 0).toFixed(0)} / {Number(desk.cash_usdc || 0).toFixed(0)}
+            </b>
+          </div>
+          <div className="kv">
+            <span>Tickets A/R</span>
+            <b>
+              {desk.ticket_stats?.accepted || 0}/{desk.ticket_stats?.rejected || 0}
+            </b>
+          </div>
+          {(desk.positions || []).slice(0, 3).map((p) => (
+            <div key={p.venue_id + p.pair} className="proto">
+              <b>
+                {p.pair} · {p.venue_id}
+              </b>
+              <span className="muted sm">
+                qty {Number(p.qty).toFixed(3)} · uPnL {Number(p.unrealized_pnl).toFixed(2)}
+              </span>
+            </div>
+          ))}
+          {(desk.tickets_recent || []).slice(0, 4).map((t) => (
+            <div
+              key={t.ticket_id}
+              className={`proto ${t.status === "risk_rejected" ? "no" : "yes"}`}
+            >
+              <b>
+                {t.side} {t.pair}
+              </b>
+              <span className="muted sm">
+                {t.status} · {t.venue_id}
+              </span>
+              {(t.status === "risk_accepted" ||
+                t.status === "paper_filled" ||
+                t.status === "routed_sim") && (
+                <button
+                  type="button"
+                  className="ghost"
+                  disabled={busy}
+                  onClick={() => act("vault_route", { ticketId: t.ticket_id })}
+                >
+                  Route vault
+                </button>
+              )}
+            </div>
+          ))}
+          <div className="chips tight">
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("desk_arena")}>
+              Run arena
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("refresh_marks")}>
+              Refresh marks
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("run_strategy", { id: "market-make" })}>
+              Market-make
+            </button>
+          </div>
+          {(desk.laws || []).map((l) => (
+            <div key={l.id} className="law-chip">
+              <em>{l.id}</em>
+              <span>{l.as_used || l.rule}</span>
+            </div>
+          ))}
+        </article>
+
+        <article className="result app-panel">
+          <label>AI NODE · SANDBOX TWINS</label>
+          <p className="muted sm">{ai.teach}</p>
+          <div className="kv">
+            <span>Node</span>
+            <b className="mono sm">{(ai.node_id || "…").slice(0, 12)}</b>
+          </div>
+          <div className="kv">
+            <span>Twins</span>
+            <b>{ai.twin_count || 0}</b>
+          </div>
+          <div className="kv">
+            <span>Real keys</span>
+            <b className="up">NEVER</b>
+          </div>
+          {Object.entries(ai.twins_preview || {}).map(([sym, amt]) => (
+            <div key={sym} className="proto">
+              <b>{sym}</b>
+              <span className="muted sm">{Number(amt).toFixed?.(4) ?? amt}</span>
+            </div>
+          ))}
+          {(ai.laws || []).map((l) => (
+            <div key={l.id} className="law-chip on">
+              <em>{l.id}</em>
+              <span>{l.as_used || l.rule}</span>
+            </div>
+          ))}
+          <div className="chips tight">
+            <button type="button" className="ghost" onClick={() => onNavigate("ai")}>
+              Open AI node
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("sync_twins")}>
+              Sync twins
+            </button>
+          </div>
+          <label>FORGED APPS</label>
+          <p className="muted sm">{projects.teach}</p>
+          {(projects.projects || []).slice(0, 4).map((p) => (
+            <button
+              key={p.project_id}
+              type="button"
+              className="proto project-btn"
+              disabled={busy}
+              onClick={() => act("open_project", { projectId: p.project_id })}
+            >
+              <b>{p.name || p.project_id}</b>
+              <span className="muted sm">
+                {(p.categories || []).join(", ") || p.network || "package"}
+              </span>
+            </button>
+          ))}
+          <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
+            Forge new app
+          </button>
+        </article>
+      </div>
+
       <div className="grid3">
         <article className="result">
-          <label>AI DAILY BRIEF ANALYSIS</label>
+          <label>AI DAILY BRIEF · FROM REAL STATE</label>
           <p className="cert" style={{ fontSize: "1rem" }}>
             {brief.coach_headline || "Company online"}
           </p>
-          <p className="muted sm">{brief.pitch}</p>
           <ul className="pillars">
+            <li>
+              Wallets linked: {brief.wallet_linked ?? wallets.linked ?? 0} · Vault:{" "}
+              {brief.vault_deployed || vault.deployed ? "recorded" : "not set"}
+            </li>
+            <li>
+              Desk equity {Number(brief.desk_equity ?? desk.equity ?? 0).toFixed(2)} · Packages{" "}
+              {brief.project_count ?? projects.count ?? 0}
+            </li>
             {(brief.bullets || []).map((b) => (
               <li key={b}>{b}</li>
             ))}
@@ -199,8 +481,19 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
               <p className="muted sm">{brief.gas_tip.body}</p>
             </div>
           )}
-          <label>Coach tips</label>
-          {(brief.tips || []).map((t, i) => (
+          <label>Daily missions</label>
+          {(daily.missions || []).slice(0, 5).map((m) => (
+            <div key={m.id} className={`proto ${m.done ? "yes" : ""}`}>
+              <b>
+                {m.done ? "✓" : "○"} {m.title || m.id}
+              </b>
+              <span className="muted sm">+{m.xp || 0} XP</span>
+            </div>
+          ))}
+          <button type="button" className="ghost" onClick={() => onNavigate("home")}>
+            Open DAILY
+          </button>
+          {(brief.tips || []).slice(0, 3).map((t, i) => (
             <div key={i} className="proto">
               <b>
                 {t.kind || "tip"}: {t.title}
@@ -208,15 +501,11 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
               <p className="muted sm">{t.body}</p>
             </div>
           ))}
-          <p className="muted sm law-note">
-            Brief is governed by <em>intel.teach-on-action</em> +{" "}
-            <em>intel.no-hallucinated-apy</em> — no invented yields.
-          </p>
         </article>
 
         <article>
           <label>
-            TEACHING AS YOU OPERATE · rotates every {teach.rotation_seconds || 20}s
+            TEACHING AS YOU OPERATE · {teach.rotation_seconds || 20}s rotate
           </label>
           <div className="proto featured">
             <span className="eyebrow">BEST PRACTICE · MONAD DOCS</span>
@@ -230,6 +519,11 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
             <p className="muted sm">
               <b>Do:</b> {teach.best_practice?.do}
             </p>
+            {(teach.best_practice?.apps || []).length > 0 && (
+              <p className="muted sm">
+                Touches: {(teach.best_practice.apps || []).join(" · ")}
+              </p>
+            )}
             {(teach.best_practice?.laws_explained || []).map((l) => (
               <div key={l.id} className="law-chip on">
                 <em>{l.id}</em>
@@ -237,21 +531,13 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
               </div>
             ))}
             {teach.best_practice?.docs && (
-              <a
-                className="link"
-                href={teach.best_practice.docs}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a className="link" href={teach.best_practice.docs} target="_blank" rel="noreferrer">
                 docs.monad.xyz best practices →
               </a>
             )}
-            {teach.next_best_practice && (
-              <p className="muted sm up-next">Next up: {teach.next_best_practice}</p>
-            )}
           </div>
           <div className="proto">
-            <span className="eyebrow">COOL MOVE</span>
+            <span className="eyebrow">COOL MOVE · REAL APP ACTION</span>
             <b>{teach.cool_move?.title}</b>
             <p className="muted sm">{teach.cool_move?.body}</p>
             {teach.cool_move?.teach && (
@@ -268,7 +554,11 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
             <button
               type="button"
               className="ghost"
-              onClick={() => onNavigate(teach.cool_move?.href || "hq")}
+              disabled={busy}
+              onClick={() => {
+                if (teach.cool_move?.action) act(teach.cool_move.action);
+                else onNavigate(teach.cool_move?.href || "hq");
+              }}
             >
               {teach.cool_move?.cta || "Go"}
             </button>
@@ -276,7 +566,7 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
         </article>
 
         <article className="result">
-          <label>LIVE STREAM · LAWS AS USED</label>
+          <label>LIVE STREAM · LAWS AS APPS FIRE</label>
           <div className="stream">
             {(feed.stream || []).map((s, i) => (
               <div key={`${s.kind}-${i}-${tick % 3}`} className={`stream-item kind-${s.kind}`}>
@@ -306,38 +596,29 @@ export function Landing({ api, network, onNavigate, onRunCompany, busy }) {
                     <b>Do:</b> {s.do}
                   </p>
                 )}
-                {s.docs && (
-                  <a className="link sm" href={s.docs} target="_blank" rel="noreferrer">
-                    source docs →
-                  </a>
-                )}
-                {s.cta && (
+                {(s.cta || s.action) && (
                   <button
                     type="button"
                     className="ghost"
-                    onClick={() => onNavigate(s.href || "hq")}
+                    disabled={busy}
+                    onClick={() => {
+                      if (s.action) act(s.action);
+                      else onNavigate(s.href || "hq");
+                    }}
                   >
-                    {s.cta}
+                    {s.cta || s.action}
                   </button>
                 )}
               </div>
             ))}
           </div>
-          <label>ALWAYS-ON ECOSYSTEM LAWS</label>
+          <label>ALWAYS-ON LAWS</label>
           {(teach.active_laws || []).map((l) => (
             <div key={l.id} className="law-chip on">
               <em>{l.id}</em>
               <span>{l.as_used || l.rule}</span>
             </div>
           ))}
-          <label>VENUES</label>
-          <div className="caps">
-            {(market.venues || []).map((v) => (
-              <span key={v.id} className="badge on">
-                {v.name}
-              </span>
-            ))}
-          </div>
           <p className="muted sm law-note">{lawStack.doctrine}</p>
         </article>
       </div>

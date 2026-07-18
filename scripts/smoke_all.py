@@ -84,7 +84,29 @@ def main() -> int:
 
     land = c.get("/landing").json()
     assert land.get("ticker") and land.get("teaching_now")
-    print("landing laws", land.get("law_stack", {}).get("law_count"))
+    apps = land.get("apps") or {}
+    assert "wallets" in apps and "vault" in apps and "desk" in apps
+    assert "ai" in apps and "projects" in apps and "modules" in apps
+    assert len(apps["modules"]) >= 6
+    print(
+        "landing laws",
+        land.get("law_stack", {}).get("law_count"),
+        "wallets",
+        apps["wallets"].get("linked"),
+        "vault",
+        apps["vault"].get("deployed"),
+        "projects",
+        apps["projects"].get("count"),
+        "modules",
+        len(apps["modules"]),
+    )
+
+    # wallets + vault route path exist
+    wl = c.get("/wallets").json()
+    assert "links" in wl and wl.get("security", {}).get("stores_private_keys") is False
+    desk = c.get("/desk").json()
+    assert "tickets_recent" in desk
+    print("wallets/desk integrated ok")
 
     print("SMOKE_OK")
     return 0

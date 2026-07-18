@@ -705,7 +705,81 @@ function App() {
           network={network}
           busy={busy}
           onNavigate={setTab}
-          onRunCompany={runCompany}
+          onAction={async (action, payload = {}) => {
+            try {
+              if (action === "run_company") return runCompany();
+              if (action === "connect_wallet")
+                return connectBrowserWallet(payload.kind || "metamask");
+              if (action === "manual_wallet") return manualLinkWallet();
+              if (action === "sync_twins") {
+                setBusy(true);
+                setErr("");
+                try {
+                  const syn = await api("/wallets/sync-twins", { method: "POST", body: "{}" });
+                  setSandbox(await api("/sandbox"));
+                  setWallets(await api("/wallets"));
+                  setAiNode(await api("/ai"));
+                  flash(`Synced ${syn.synced?.length || 0} twins`);
+                } finally {
+                  setBusy(false);
+                }
+                return;
+              }
+              if (action === "desk_arena") return runDeskArena();
+              if (action === "refresh_marks") return refreshMarks();
+              if (action === "run_strategy") return runStrategy(payload.id || "market-make");
+              if (action === "forge") {
+                setTab("studio");
+                return runPipeline();
+              }
+              if (action === "open_project") {
+                if (payload.projectId) return openProject(payload.projectId);
+                setTab("ide");
+                return;
+              }
+              if (action === "vault_route") {
+                let tid = payload.ticketId;
+                if (!tid) {
+                  const d = desk || (await api("/desk"));
+                  const t = (d.tickets_recent || []).find((x) =>
+                    ["risk_accepted", "paper_filled", "routed_sim"].includes(x.status)
+                  );
+                  tid = t?.ticket_id;
+                }
+                if (!tid) {
+                  // seed a routable path: run arena then route first accepted
+                  await runDeskArena();
+                  const d2 = await api("/desk");
+                  const t2 = (d2.tickets_recent || []).find((x) =>
+                    ["risk_accepted", "paper_filled", "routed_sim"].includes(x.status)
+                  );
+                  if (t2?.ticket_id) return routeVault(t2.ticket_id);
+                  flash("No routable ticket yet — accept one on DESK");
+                  setTab("desk");
+                  return;
+                }
+                setTab("desk");
+                return routeVault(tid);
+              }
+              if (action === "ai_chat") {
+                setTab("ai");
+                return;
+              }
+              if (action === "daily" || action === "gas") {
+                setTab("home");
+                return;
+              }
+              if (action === "academy") {
+                setTab("academy");
+                return;
+              }
+              // module tiles without special action
+              if (payload.href) setTab(payload.href);
+            } catch (e) {
+              setErr(String(e.message || e));
+              setBusy(false);
+            }
+          }}
         />
       )}
 
