@@ -1,0 +1,299 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [4 0 R 6 0 R 8 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+5 0 obj
+<< /Length 2054 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+(# THESIS Platform ? Full Sovereign Ops Report) Tj
+T*
+( ) Tj
+T*
+(**Version:** 2.7.0 · **Network:** monad-testnet) Tj
+T*
+(**Generated:** 2026-07-18T17:20:23.990438+00:00) Tj
+T*
+(**Doctrine:** Agents propose. Laws decide. Owner signs. Receipts remember.) Tj
+T*
+(**Vault:** not recorded) Tj
+T*
+(**Receipt tip:** 0bc70dfc8fa2cbc08256) Tj
+T*
+( ) Tj
+T*
+(---) Tj
+T*
+( ) Tj
+T*
+(## Doctrine) Tj
+T*
+( ) Tj
+T*
+(Agents propose. Laws decide. Owner signs. Receipts remember.) Tj
+T*
+(Product THESIS Platform v2.7.0) Tj
+T*
+(Network: monad-testnet) Tj
+T*
+( ) Tj
+T*
+(## Daily brief \(morning seatbelt\)) Tj
+T*
+( ) Tj
+T*
+(You have operating equity ? 9995 USDC-eq and cash ? 9995. 100% appears idle. MON mark ?) Tj
+T*
+(1.00024. Day desk PnL 0.0. One idle-capital action may be worth reviewing.) Tj
+T*
+(? Equity ? 9994.94) Tj
+T*
+(? Cash ? 9994.99 \(100% idle\)) Tj
+T*
+(? Day PnL: 0.0) Tj
+T*
+(? Wallets linked: 18) Tj
+T*
+(? Sandbox twins: 3) Tj
+T*
+(? Gas: You pay the gas limit) Tj
+T*
+(? Constitution: liquid?30%, max protocol 20%, leverage OFF) Tj
+T*
+( ) Tj
+T*
+(## Dual law stack \(LawBook + owner constitution\)) Tj
+T*
+( ) Tj
+T*
+(Runtime laws: 26) Tj
+T*
+(On-chain seed aligned: 25/25) Tj
+T*
+(Domains: ['system_self', 'monad_network', 'protocols', 'intelligence', 'execution']) Tj
+T*
+(Veto: sys.nomos-veto · Reject is a feature.) Tj
+T*
+( ) Tj
+T*
+(## SovereignVault access) Tj
+T*
+( ) Tj
+T*
+(Deployed address: \(not recorded ? run deploy or POST /deployment\)) Tj
+T*
+(Execution: policy-gated · simulation first · owner signature required.) Tj
+T*
+(No silent broadcast \(exec.no-silent-broadcast\).) Tj
+T*
+( ) Tj
+T*
+(## Ecosystem catalog) Tj
+T*
+( ) Tj
+T*
+(Tokens: 2) Tj
+T*
+(Infra notes: [{"id": "rpc", "name": "Public RPC", "mainnet": "https://rpc.monad.xyz",) Tj
+T*
+("testnet": "https://testnet-rpc.monad.xyz"}, {"id": "explorer", "name": "MonadVision",) Tj
+T*
+("mainnet": "https://monadvision.com", "testnet": "https://testnet.monadvision.com"},) Tj
+T*
+({"id": "explorer2", "name": "Monadscan", "mainnet": "https://monadscan.com", "testnet":) Tj
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+7 0 obj
+<< /Length 2014 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+("https://testnet.monadscan.com"}, {"id": "faucet", "name": "Testnet faucet", "mainnet":) Tj
+T*
+("", "testnet": "https://testnet.monad.xyz"}, {"id": "docs", "name": "Monad docs",) Tj
+T*
+("mainnet": "https://docs.monad.xyz", "testnet": "https://docs.monad.xyz"}, {"id":) Tj
+T*
+("protocols", "name": "Protocols repo", "mainnet":) Tj
+T*
+("https://github.com/monad-crypto/protocols", "testnet":) Tj
+T*
+("https://github.com/monad-crypto/protocols"}, {"id": "tokens", "name": "Token list",) Tj
+T*
+("mainnet": "https://gith) Tj
+T*
+(Never invent addresses \(monad.no-invent-addresses\).) Tj
+T*
+( ) Tj
+T*
+(## Trading desk) Tj
+T*
+( ) Tj
+T*
+(Equity: 9994.941975 · Cash USDC: 9994.9925) Tj
+T*
+(Day PnL: 0.0 · Paper mode: True) Tj
+T*
+(Arena: POST /desk/arena · REJECT is a feature.) Tj
+T*
+( ) Tj
+T*
+(## Company OS / HQ) Tj
+T*
+( ) Tj
+T*
+(Pitch: THESIS gives one person a miniature DeFi company for Monad: research, compete) Tj
+T*
+(strategies, block unsafe actions, explain, execute with approval, and track the result.) Tj
+T*
+(Inbox items: 23) Tj
+T*
+(Workflow: SENSUS ? AGORA ? NOMOS ? MATHESIS ? PRAXIS ? ?) Tj
+T*
+( ) Tj
+T*
+(## Daily loop) Tj
+T*
+( ) Tj
+T*
+(Level 2 · XP 280 · Streak 1) Tj
+T*
+(Missions: 5) Tj
+T*
+( ) Tj
+T*
+(## Monad gas coach) Tj
+T*
+( ) Tj
+T*
+(You pay the gas limit: On Monad, gas_paid = gas_limit × price. A huge MetaMask fallback) Tj
+T*
+(limit can overcharge you even if the tx is cheap.) Tj
+T*
+(Demo limit: 86000 \(estimate 80000\)) Tj
+T*
+( ) Tj
+T*
+(## Agent / AI node \(sovereign\)) Tj
+T*
+( ) Tj
+T*
+(Node: None) Tj
+T*
+(Real key access: False) Tj
+T*
+(Sandbox only: True) Tj
+T*
+(Agent can open terminal tools + request PDF reports ? never keys.) Tj
+T*
+( ) Tj
+T*
+(## Competition scorecard) Tj
+T*
+( ) Tj
+T*
+(Grade WINNER · 100% \(14/14\)) Tj
+T*
+(? Solves a personal problem \(Spark prompt\)) Tj
+T*
+(? Onchain path \(SovereignVault / PolicyKernel\)) Tj
+T*
+(? Live API \(not vaporware\)) Tj
+T*
+(? Reject is a feature \(NOMOS / desk arena\)) Tj
+T*
+(? Monad-specific gas doctrine) Tj
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 3 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 751 >>
+stream
+BT
+/F1 10 Tf
+14 TL
+50 800 Td
+(? Runtime-embedded ecosystem laws) Tj
+T*
+(? Wallets public-only; AI no real keys) Tj
+T*
+(? Company OS departments + SLAs) Tj
+T*
+(? Real app packages in workspace) Tj
+T*
+(? Daily habit loop \(XP/streak/missions\)) Tj
+T*
+(? Public GitHub) Tj
+T*
+(? Explainability + teach as you use) Tj
+T*
+(? Focused shippable tools + MCP for any AI) Tj
+T*
+(? Dual stack deeper than allowlist-only agent wallets) Tj
+T*
+( ) Tj
+T*
+(## Forged packages) Tj
+T*
+( ) Tj
+T*
+(71 workspace projects under projects/) Tj
+T*
+( ) Tj
+T*
+(## Wallets \(public only\)) Tj
+T*
+( ) Tj
+T*
+(Linked: 18) Tj
+T*
+(Stores private keys: False) Tj
+T*
+( ) Tj
+T*
+(---) Tj
+T*
+( ) Tj
+T*
+(*Generated by THESIS Platform · Owner remains sovereign · REJECT is a feature.*) Tj
+ET
+endstream
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000127 00000 n 
+0000000197 00000 n 
+0000000323 00000 n 
+0000002429 00000 n 
+0000002555 00000 n 
+0000004621 00000 n 
+0000004747 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+5549
+%%EOF

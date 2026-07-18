@@ -75,6 +75,11 @@ class AINode(BaseModel):
             "desk.propose_ticket",
             "coach.next",
             "sandbox.status",
+            "terminal.exec",
+            "report.full",
+            "brief.daily",
+            "vault.status",
+            "workflow.run",
         ]
     )
     created_at: float = 0.0
@@ -270,13 +275,73 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
         for t in (c.get("tips") or [])[:2]:
             replies.append(f"- {t['title']}: {t['body']}")
 
+    if any(k in low for k in ("brief", "morning", "seatbelt")):
+        from .company.os import morning_brief
+
+        b = morning_brief()
+        actions.append({"tool": "brief.daily", "result": {"bullets": len(b.get("bullets") or [])}})
+        replies.append(f"**Daily brief:** {b.get('narrative') or b.get('headline')}")
+        for x in (b.get("bullets") or [])[:5]:
+            replies.append(f"- {x}")
+
+    if any(k in low for k in ("vault", "sovereignvault", "capital gate")):
+        from .vault_route import _load_vault_address
+
+        v = _load_vault_address()
+        actions.append({"tool": "vault.status", "result": {"vault": v or None}})
+        replies.append(
+            f"**SovereignVault:** {v or 'not recorded yet'}. "
+            "Policy-gated execute · simulation first · you sign. "
+            "Open TERM → `vault` or DESK vault route after accept."
+        )
+
+    if any(k in low for k in ("report", "pdf", "download report", "full report")):
+        from .reports import write_full_report
+
+        rep = write_full_report(network, fmt="both")
+        actions.append(
+            {
+                "tool": "report.full",
+                "result": {
+                    "pdf": (rep.get("download") or {}).get("pdf"),
+                    "md": (rep.get("download") or {}).get("markdown"),
+                },
+            }
+        )
+        dl = rep.get("download") or {}
+        replies.append(
+            f"**Full report ready.** PDF: `{dl.get('pdf')}` · Markdown: `{dl.get('markdown')}`. "
+            "Download from TERM / REPORTS — I cannot email keys or files with secrets."
+        )
+
+    if any(k in low for k in ("workflow", "terminal", "run morning")):
+        from .terminal import exec_line
+
+        wf = "workflow morning" if "morning" in low or "workflow" in low else "status"
+        if "judge" in low:
+            wf = "workflow judge"
+        if "risk" in low:
+            wf = "workflow risk"
+        tr = exec_line(wf, network=network)
+        actions.append({"tool": "workflow.run", "result": {"command": wf, "ok": tr.get("ok")}})
+        replies.append(f"**Terminal workflow** `{wf}`:\n```\n{(tr.get('text') or '')[:1200]}\n```")
+
+    if any(k in low for k in ("arena", "reject", "nomos")):
+        from .terminal import exec_line
+
+        cmd = "nomos" if "nomos" in low else "arena"
+        tr = exec_line(cmd, network=network)
+        actions.append({"tool": "terminal.exec", "result": {"command": cmd, "ok": tr.get("ok")}})
+        replies.append(f"**{cmd}:**\n```\n{(tr.get('text') or '')[:900]}\n```")
+
     if not replies:
         replies.append(
             "**THESIS Ecosystem Node online** (sandbox mode). "
-            "I can: explain Monad gas, map ecosystem tokens, sync digital twins from Phantom/MetaMask, "
-            "simulate twin spends, and coach daily risk habits. "
-            "I cannot export keys or send real chain txs without your explicit promote step. "
-            "Try: *sync twins*, *gas tip*, *show balances*, *simulate trade*."
+            "I can: daily brief, vault status, ecosystem lookup, gas, twin sync, "
+            "desk/NOMOS arena, tailored workflows, and **full PDF reports**. "
+            "Open the **TERM** tab for the sovereign web terminal. "
+            "I cannot export keys or send real chain txs without your promote step. "
+            "Try: *daily brief*, *vault*, *report pdf*, *workflow morning*, *sync twins*."
         )
 
     text = "\n\n".join(replies)

@@ -270,10 +270,23 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         "tab": "tools",
         "primitives": ["law", "market", "intel", "company"],
         "description": (
-            "Nine+ focused tools for humans and any AI (MCP). Easy path: laws → reject → gas → win_path."
+            "Focused tools for humans and any AI (MCP). Easy path: laws → reject → gas → win_path."
         ),
         "entry": "GET /tools",
         "actions": ["list", "easy_path", "reject_demo", "win_path"],
+    },
+    {
+        "id": "app.terminal",
+        "name": "Sovereign terminal",
+        "kind": "product",
+        "tab": "term",
+        "primitives": ["law", "capital", "market", "intel", "company"],
+        "description": (
+            "Embedded web terminal: vault, ecosystem, daily briefs, workflows, full PDF reports. "
+            "Not a system shell. Agent + platform share commands."
+        ),
+        "entry": "GET /terminal",
+        "actions": ["status", "exec", "report"],
     },
     {
         "id": "app.local_ai",
@@ -585,6 +598,15 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
         ("app.tools", "easy_path"): tools_easy,
         ("app.tools", "reject_demo"): tools_reject,
         ("app.tools", "win_path"): tools_win,
+        ("app.terminal", "status"): lambda network="monad-testnet", **_k: __import__(
+            "thesis_forge.terminal", fromlist=["terminal_banner"]
+        ).terminal_banner(network),
+        ("app.terminal", "exec"): lambda command="status", network="monad-testnet", **kw: __import__(
+            "thesis_forge.terminal", fromlist=["exec_line"]
+        ).exec_line(command or kw.get("params", {}).get("command") or "status", network=network),
+        ("app.terminal", "report"): lambda network="monad-testnet", **_k: __import__(
+            "thesis_forge.reports", fromlist=["write_full_report"]
+        ).write_full_report(network, fmt="both"),
         ("app.cloud", "pipeline"): _cloud_pipeline,
         ("app.cloud", "run"): _system_run,
         ("app.shell", "system"): _system_status,

@@ -243,6 +243,37 @@ def main() -> int:
         (lb.get("onchain_seed") or {}).get("count"),
     )
 
+    term = c.get("/terminal").json()
+    assert term.get("sovereign") is True and term.get("system_shell") is False
+    tev = c.post("/terminal/exec", json={"command": "brief"}).json()
+    assert tev.get("ok") and tev.get("text")
+    tev2 = c.post("/terminal/exec", json={"command": "vault"}).json()
+    assert tev2.get("ok")
+    tev3 = c.post("/terminal/exec", json={"command": "ecosystem"}).json()
+    assert tev3.get("ok")
+    rep = c.post("/reports/full", json={"network": "monad-testnet", "format": "both"}).json()
+    assert rep.get("ok") and (rep.get("download") or {}).get("pdf")
+    pdf_name = (rep.get("files") or {}).get("pdf_name")
+    assert pdf_name
+    dl = c.get(f"/reports/download/{pdf_name}")
+    assert dl.status_code == 200 and len(dl.content) > 100
+    assert dl.content[:4] == b"%PDF"
+    ai_rep = c.post("/ai/chat", json={"message": "generate full report pdf please"}).json()
+    assert ai_rep.get("answer") and any(
+        a.get("tool") == "report.full" for a in (ai_rep.get("actions") or [])
+    )
+    print(
+        "terminal",
+        "brief_ok",
+        tev.get("ok"),
+        "report_pdf",
+        pdf_name[:28],
+        "bytes",
+        len(dl.content),
+        "agent_report",
+        True,
+    )
+
     print("SMOKE_OK")
     return 0
 

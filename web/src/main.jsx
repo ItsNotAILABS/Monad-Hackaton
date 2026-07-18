@@ -7,6 +7,7 @@ import { PolyglotHub } from "./PolyglotHub.jsx";
 import { UseCases } from "./UseCases.jsx";
 import { Nomos } from "./Nomos.jsx";
 import { Tools } from "./Tools.jsx";
+import { Terminal } from "./Terminal.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -771,6 +772,9 @@ function App() {
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("tools")}>
           Tools
         </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("term")}>
+          Term
+        </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
           Local AI
         </button>
@@ -806,6 +810,7 @@ function App() {
           ["live", "PLATFORM"],
           ["usecases", "USE CASES"],
           ["tools", "TOOLS"],
+          ["term", "TERM"],
           ["cloud", "CLOUD"],
           ["poly", "POLYGLOT"],
           ["local", "LOCAL AI"],
@@ -870,6 +875,10 @@ function App() {
           onNavigate={setTab}
           onRunSystem={runSystem}
         />
+      )}
+
+      {tab === "term" && (
+        <Terminal api={api} network={network} busy={busy} onNavigate={setTab} />
       )}
 
       {tab === "usecases" && (

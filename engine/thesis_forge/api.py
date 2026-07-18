@@ -9,7 +9,7 @@ from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import __version__
@@ -99,6 +99,8 @@ from .use_cases import use_case_by_id, use_cases_payload
 from .nomos import nomos_payload, run_nomos_arena
 from .tools import get_tool, mcp_tool_list, run_tool, tools_catalog
 from .lawbook import lawbook_payload
+from .terminal import exec_line, terminal_banner, terminal_history
+from .reports import list_reports, resolve_report_file, write_full_report
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -328,6 +330,8 @@ class ToolRunIn(BaseModel):
     objective: str | None = None
     estimated_gas: int | None = None
     message: str | None = None
+    command: str | None = None
+    format: str | None = None
     run_cloud: bool = False
     run_company: bool = True
     run_desk: bool = True
@@ -338,6 +342,59 @@ class ToolRunIn(BaseModel):
 def lawbook_get(network: str = Query("monad-testnet")):
     """Dual law stack: on-chain LawBook seed ↔ runtime ecosystem laws."""
     return lawbook_payload(network)
+
+
+class TerminalExecIn(BaseModel):
+    command: str = Field(..., min_length=1, max_length=2000)
+    network: str = "monad-testnet"
+
+
+class ReportFullIn(BaseModel):
+    network: str = "monad-testnet"
+    format: str = "both"  # pdf | md | both
+
+
+@app.get("/terminal")
+def terminal_get(network: str = Query("monad-testnet")):
+    """Sovereign embedded web terminal — THESIS commands only (no OS shell)."""
+    return terminal_banner(network)
+
+
+@app.get("/terminal/history")
+def terminal_hist(limit: int = Query(40, ge=1, le=200)):
+    return {"history": terminal_history(limit)}
+
+
+@app.post("/terminal/exec")
+def terminal_exec(body: TerminalExecIn):
+    """Run one sovereign terminal command (vault, brief, ecosystem, report, …)."""
+    return exec_line(body.command, network=body.network)
+
+
+@app.get("/reports")
+def reports_list():
+    """List generated full reports (markdown + PDF)."""
+    return list_reports()
+
+
+@app.post("/reports/full")
+def reports_full(body: ReportFullIn | None = None):
+    """Generate FULL platform report (daily brief, vault, laws, desk, scorecard…)."""
+    b = body or ReportFullIn()
+    fmt = b.format if b.format in ("pdf", "md", "both", "markdown") else "both"
+    if fmt == "markdown":
+        fmt = "md"
+    return write_full_report(b.network, fmt=fmt)
+
+
+@app.get("/reports/download/{filename}")
+def reports_download(filename: str):
+    """Download a generated report file (PDF or markdown)."""
+    path = resolve_report_file(filename)
+    if not path:
+        raise HTTPException(404, "report not found")
+    media = "application/pdf" if path.suffix == ".pdf" else "text/markdown"
+    return FileResponse(path, filename=path.name, media_type=media)
 
 
 @app.get("/tools")
@@ -378,6 +435,10 @@ def tools_run(tool_id: str, body: ToolRunIn | None = None):
         params["estimated_gas"] = b.estimated_gas
     if b.message is not None:
         params["message"] = b.message
+    if b.command is not None:
+        params["command"] = b.command
+    if b.format is not None:
+        params["format"] = b.format
     params.setdefault("run_cloud", b.run_cloud)
     params.setdefault("run_company", b.run_company)
     params.setdefault("run_desk", b.run_desk)
@@ -819,6 +880,11 @@ def health():
             "/tools/{id}/run",
             "/tools/mcp",
             "/lawbook",
+            "/terminal",
+            "/terminal/exec",
+            "/reports",
+            "/reports/full",
+            "/reports/download/{file}",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",

@@ -190,6 +190,34 @@ def _run_lawbook(**params) -> Dict[str, Any]:
     }
 
 
+def _run_report(**params) -> Dict[str, Any]:
+    from .reports import write_full_report
+
+    fmt = params.get("format") or "both"
+    out = write_full_report(params.get("network") or "monad-testnet", fmt=fmt)
+    dl = out.get("download") or {}
+    return {
+        "ok": True,
+        "proof": f"pdf={dl.get('pdf')} md={dl.get('markdown')}",
+        "download": dl,
+        "files": out.get("files"),
+        "sections": len((out.get("report") or {}).get("sections") or []),
+    }
+
+
+def _run_terminal(**params) -> Dict[str, Any]:
+    from .terminal import exec_line
+
+    cmd = params.get("command") or params.get("message") or "status"
+    r = exec_line(str(cmd), network=params.get("network") or "monad-testnet")
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": (r.get("text") or "")[:200],
+        "text": r.get("text"),
+        "command": cmd,
+    }
+
+
 def _run_easy_path(**params) -> Dict[str, Any]:
     """Judge-friendly 60s path: laws → reject → gas → win_path (inner handlers, one outer receipt)."""
     steps = [
@@ -363,6 +391,32 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Video-only demos with no live multi-step API",
         "handler": "easy_path",
     },
+    {
+        "id": "full_report",
+        "name": "Full PDF / MD report",
+        "kind": "report",
+        "who": "user + agent + any AI",
+        "seconds": 8,
+        "do": "Generate full ops report (brief, vault, laws, desk, scorecard) + downloads",
+        "api": "POST /tools/full_report/run",
+        "mcp": "thesis_full_report",
+        "proof": "download pdf + markdown",
+        "beats_crowd": "Demos without exportable audit packs",
+        "handler": "full_report",
+    },
+    {
+        "id": "terminal",
+        "name": "Sovereign terminal command",
+        "kind": "terminal",
+        "who": "user + agent + any AI",
+        "seconds": 5,
+        "do": "Run one THESIS terminal command (brief, vault, workflow…)",
+        "api": "POST /tools/terminal/run",
+        "mcp": "thesis_terminal",
+        "proof": "command output",
+        "beats_crowd": "Chat without a real command surface",
+        "handler": "terminal",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -377,6 +431,8 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "judge": _run_judge,
     "lawbook": _run_lawbook,
     "easy_path": _run_easy_path,
+    "full_report": _run_report,
+    "terminal": _run_terminal,
 }
 
 
