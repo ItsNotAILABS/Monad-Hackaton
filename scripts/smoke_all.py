@@ -177,6 +177,10 @@ def main() -> int:
         (mesh.get("synthesis") or {}).get("winner_agent"),
     )
 
+    uc = c.get("/use-cases").json()
+    assert uc.get("count") == 20 and len(uc.get("use_cases") or []) == 20
+    print("use cases", uc["count"])
+
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
     print("proof pack ok vaporware", j.get("vaporware"))

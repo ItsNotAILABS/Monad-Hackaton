@@ -397,6 +397,8 @@ def test_api_surface():
     assert "julia" in pg and "node" in pg and "python" in pg
     py = c.post("/polyglot/run", json={"lang": "python", "cmd": "intel", "params": {}}).json()
     assert py.get("ok")
+    uc = c.get("/use-cases").json()
+    assert uc.get("count") == 20
     laws = c.get("/laws").json()
     assert laws.get("embedded") and laws.get("law_count", 0) >= 15
     land = c.get("/landing").json()

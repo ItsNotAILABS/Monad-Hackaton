@@ -1,195 +1,255 @@
-# THESIS Platform (v2.6)
+<p align="center">
+  <img src="docs/assets/thesis-icon.jpg" alt="THESIS Platform" width="120" height="120" />
+</p>
 
-**Polyglot Monad HQ:** React web · Python API · Julia intel · Node/WASM · Solidity on-chain · PowerShell ops.
+<h1 align="center">THESIS Platform</h1>
 
-**▶ RUN SYSTEM** = laws → cloud engines → desk → vault → company → **polyglot mesh**.
+<p align="center">
+  <strong>Your Monad DeFi company OS</strong> — agents propose, laws decide, receipts remember.<br/>
+  Hosted web HQ · cloud engines · polyglot intelligence · on-chain vault.
+</p>
 
-| Layer | Stack |
-|-------|--------|
-| **UI** | React (PLATFORM · CLOUD · **POLYGLOT** · LOCAL AI · HQ · DESK…) |
-| **API** | Python FastAPI · `/system/run` · `/engines/*` · `/polyglot/*` |
-| **Julia** | Spectral · Monte Carlo VaR · portfolio · gas · agent utility |
-| **Node** | Agent rank · native WASM · WebGPU info · Julia relay |
-| **Browser** | WebGPU probe · WASM · Transformers.js local AI |
-| **Onchain** | Solidity: SovereignVault · PolicyKernel · LawBook… on Monad |
-| **Ops** | PowerShell `run_all.ps1` · `run_polyglot.ps1` |
+<p align="center">
+  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/version-2.6-6d4aff?style=for-the-badge&labelColor=0a0b12" alt="Version" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ee6a6?style=for-the-badge&labelColor=0a0b12" alt="License" /></a>
+  <a href="https://buildanything.so/hackathons/spark"><img src="https://img.shields.io/badge/Spark-Build%20Anything-f0b429?style=for-the-badge&labelColor=0a0b12" alt="Spark" /></a>
+  <a href="https://docs.monad.xyz/"><img src="https://img.shields.io/badge/chain-Monad-836EF9?style=for-the-badge&labelColor=0a0b12" alt="Monad" /></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node" />
+  <img src="https://img.shields.io/badge/Julia-1.12-9558B2?style=flat-square&logo=julia&logoColor=white" alt="Julia" />
+  <img src="https://img.shields.io/badge/Solidity-0.8.26-363636?style=flat-square&logo=solidity&logoColor=white" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+  <img src="https://img.shields.io/badge/WASM-WebGPU-654FF0?style=flat-square&logo=webassembly&logoColor=white" alt="WASM" />
+  <img src="https://img.shields.io/badge/Transformers.js-local%20AI-FF6F00?style=flat-square&logo=huggingface&logoColor=white" alt="Transformers.js" />
+  <img src="https://img.shields.io/badge/PowerShell-ops-5391FE?style=flat-square&logo=powershell&logoColor=white" alt="PowerShell" />
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#product-surfaces">Surfaces</a> ·
+  <a href="#api">API</a> ·
+  <a href="#security">Security</a> ·
+  <a href="docs/USE_CASES.md">20 use cases</a> ·
+  <a href="docs/SPARK.md">Spark notes</a>
+</p>
+
+---
+
+<p align="center">
+  <img src="docs/assets/thesis-hero.jpg" alt="THESIS Platform hero — command center for Monad DeFi" width="100%" />
+</p>
+
+<p align="center"><em>Agents propose. Laws decide. Receipts remember. Owner signs.</em></p>
+
+---
+
+## Why THESIS
+
+| Everyday pain | What THESIS does |
+|---------------|------------------|
+| Tab hell every morning | **▶ RUN SYSTEM** — one path across laws, cloud, desk, vault, company |
+| Fat gas on Monad (pay the **limit**) | Gas engine + Julia gas coach (~7.5% margin, 21k transfers) |
+| Agents without brakes | Desk arena **REJECT** with reasons — feature, not failure |
+| AI that wants your keys | Public wallet link · sandbox **twins only** · never seeds |
+| Tutorials that don't stick | Teach-as-you-operate + law chips mid-action |
+
+**Roommate test:** *“A 20-minute multi-app workflow becomes one managed, explained mission.”*
+
+Built for [**Spark · Build Anything**](https://buildanything.so/hackathons/spark) on [**Monad**](https://docs.monad.xyz/).
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="docs/assets/thesis-architecture.jpg" alt="THESIS polyglot architecture layers" width="100%" />
+</p>
+
+| Layer | Runtime | Role |
+|-------|---------|------|
+| **HQ UI** | React + Vite | PLATFORM · CLOUD · POLYGLOT · LOCAL AI · HQ · DESK · USE CASES |
+| **API host** | Python FastAPI | `/system/run` · `/engines/*` · `/polyglot/*` · company · desk · laws |
+| **Cloud engines** | Python | chain · gas · law · research · index · docs · security · polyglot |
+| **Julia** | stdlib-only | Spectral · Monte Carlo VaR/CVaR · portfolio · gas · agent utility |
+| **Node** | ES modules | Agent rank · native WASM · WebGPU info · Julia relay |
+| **Browser AI** | Transformers.js | Local embeddings · memory · teach · PDF/Excel · extension ZIP |
+| **On-chain** | Solidity 0.8.26 | `SovereignVault` · `PolicyKernel` · `ReceiptChain` · LawBook… |
+| **Ops** | PowerShell | `run_all.ps1` · `run_polyglot.ps1` · transformers assets |
+
+```
+Browser (React HQ)
+    │  sticky ▶ RUN SYSTEM
+    ├─► FastAPI  ──JSON-RPC──►  Monad (SovereignVault / PolicyKernel)
+    ├─► Julia + Node polyglot mesh
+    └─► Local AI (on-device, no cloud LLM)
+```
+
+---
+
+## Product surfaces
+
+| Tab | What you use it for |
+|-----|---------------------|
+| **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
+| **USE CASES** | 20 runnable scenarios mapped to Spark asks |
+| **CLOUD** | Live Monad engines (chain, gas, research, docs) |
+| **POLYGLOT** | Julia · Node · Python · WebGPU · WASM |
+| **LOCAL AI** | Transformers.js · security teach · exports · extension |
+| **HQ** | Company OS — brief, inbox, mission approve |
+| **DESK** | Tickets, arena REJECT, vault route sim, paper PnL |
+| **AI** | Sandbox node + twin wallet (public keys only) |
+| **STUDIO / IDE** | Forge packages into workspace |
+| **ACADEMY** | Failure-first labs |
+| **CODEX** | Protocols, tokens, deployment |
+| **PROOF** | Judge scorecard · vaporware = false |
+
+---
+
+## Quick start
+
+### One-shot (Windows)
 
 ```powershell
-powershell -File scripts/run_all.ps1      # API :8043 + web :5173
-powershell -File scripts/run_polyglot.ps1 # Julia+Node+Python smoke
+powershell -File scripts/run_all.ps1
+# → API http://127.0.0.1:8043
+# → Web http://127.0.0.1:5173
 ```
 
-See [docs/POLYGLOT.md](docs/POLYGLOT.md) · [docs/UNIFIED.md](docs/UNIFIED.md) · [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md).
-
-Thesis still runs a **Company OS** (GM + departments) and a **trading desk** as apps on that platform. Owner remains sovereign. AI uses twins only — never real keys.
-
-Roommate test: *“A 20-minute multi-app workflow becomes one managed, explained mission on one runtime.”*
-
-### Quick platform check
-
-```bash
-curl http://127.0.0.1:8043/platform
-curl -X POST http://127.0.0.1:8043/platform/apps/app.desk/invoke -H "content-type: application/json" -d "{\"action\":\"arena\"}"
-```
-
-Optional proof pack (hackathon/judges): [docs/SPARK.md](docs/SPARK.md) · `GET /judge`
-
-### Company OS (v1.0 commercial core)
-
-| Surface | Meaning |
-|---------|---------|
-| **HQ** | Command center — brief, inbox, mission room, performance |
-| **POST /company/run** | THESIS GM staffs SENSUS→AGORA→NOMOS→MATHESIS→PRAXIS→CUSTOS→ACADEMY→NERVUS |
-| **Constitution** | Owner laws (30% liquid, no leverage, max 20% protocol, …) |
-| **SLA** | Each department reports latency vs commercial service level |
-
-See [docs/COMPANY_OS.md](docs/COMPANY_OS.md).
-
-### AI + wallets (safety architecture)
-
-| Layer | Behavior |
-|-------|----------|
-| **User wallets** | Phantom / MetaMask / WC / watch-only — **public address + balances only** |
-| **Sandbox** | Isolation technology; kill switch freezes AI |
-| **AI secure wallet** | Holds **digital twins** of your coins, syncable, not real keys |
-| **AI ecosystem node** | DeFi tools inside sandbox; cannot export seeds or auto-broadcast |
-| **Promote** | Twin → chain only with **your** signature |
-
-Production workstation for [Spark · Build Anything](https://buildanything.so/hackathons/spark) on [Monad](https://docs.monad.xyz/).
-
-| | |
-|--|--|
-| **Charter** | [CHARTER.md](CHARTER.md) |
-| **Explainability** | [docs/EXPLAINABILITY_CONTRACT.md](docs/EXPLAINABILITY_CONTRACT.md) |
-| **Deploy** | [DEPLOYMENT.md](DEPLOYMENT.md) |
-| **Repo** | https://github.com/ItsNotAILABS/Monad-Hackaton |
-
----
-
-## Product (not a toast demo)
-
-| Surface | What it does |
-|---------|----------------|
-| **HOME** | **Daily loop** — missions, streak, XP, badges, gas coach, coach intel |
-| **STUDIO / PIPELINE** | 11-stage build with explainability events |
-| **IDE** | Generated multi-file package (Solidity hints, TS config, AGENT.md, lawbook) |
-| **NOMOS** | Auto multi-agent propose + arena (REJECT is a feature) |
-| **DESK** | Trading business — tickets, strategies, paper PnL, vault route |
-| **ACADEMY** | Failure-first labs (learn DeFi by using it safely) |
-| **CODEX** | Protocols + **mainnet tokens** (MONSKILLS addresses) + infra |
-| **JUDGE** | Proof panel for humans / Spark AI judging agent |
-| **CHAIN** | `SovereignVault` gated by `PolicyKernel` + `ReceiptChain` |
-
-### Spark alignment
-
-| Everyday pain | THESIS |
-|---------------|--------|
-| DeFi jargon until you get rekt | Academy + desk rejects teach by doing |
-| 20 min re-checking every bot | Desk arena + lawbook automate the no |
-| Fat gas limits on Monad | Gas coach: pay **limit**, ~7.5% buffer |
-| Tab hell every morning | HOME streak keeps one daily open |
-
-### Trading desk (business)
-
-- **Desk limits**: max ticket / open / position notional, daily loss, perps/short toggles  
-- **NOMOS coupling**: every ticket also evaluated as a policy `Action`  
-- **Venues**: Kuru, Uniswap-style AMM, Perpl, LeverUp, Birdeye (analytics), THESIS vault (gate)  
-- **Paper book**: cash, positions, realized/unrealized PnL, receipts  
-- **Live fills**: operator-only later — browser never holds venue API keys
-
----
-
-## Quick start (Windows)
+### Manual
 
 ```powershell
 # API
 cd engine
 python -m pip install -e ".[dev]"
+$env:PYTHONPATH = "."
 python -m uvicorn thesis_forge.api:app --reload --port 8043
 
-# Web (other terminal)
+# Web (second terminal)
 cd web
 npm install
 npm run dev
 ```
 
-Or: `powershell -File scripts/run_workstation.ps1 -Both`
+### Smoke (no browser)
 
-Smoke:
-
-```bash
-cd engine && pytest -q
-python ../scripts/smoke_all.py
+```powershell
+cd engine
+$env:PYTHONPATH = "."
+python -m pytest -q
+cd ..
+python scripts/smoke_all.py
+powershell -File scripts/run_polyglot.ps1
 ```
+
+### First 60 seconds in the UI
+
+1. Sticky bar **▶ RUN SYSTEM**  
+2. **DESK** — open rejects  
+3. **HQ** — mission awaiting approval  
+4. **POLYGLOT** — Run polyglot mesh  
+5. **USE CASES** — 20 asks with **Open in app**  
 
 ---
 
-## API (v0.5)
+## API (highlights)
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/home` | Daily missions, streak, XP, gas coach |
-| POST | `/home/mission` | Complete mission → XP / badges |
-| GET | `/intelligence/coach` | Next-best-action tips |
-| GET | `/ecosystem` | Tokens + infra (Monskills addresses) |
-| POST | `/gas/margin` | Monad gas-limit margin (~7.5%) |
-| POST | `/pipeline` | Full build path — events + codegen + arena |
-| POST | `/arena/auto` | Propose agents + arbitrate |
-| GET | `/desk` | Trading book snapshot |
-| POST | `/desk/arena` | Trading-agent arena |
-| POST | `/desk/ticket` | Risk-gate a trade ticket |
-| POST | `/desk/fill/{id}` | Paper fill |
-| POST | `/desk/marks/refresh` | Live marks |
-| POST | `/desk/strategies/{id}` | market-make · inventory · take-profit |
-| POST | `/desk/vault-route/{id}` | Vault execute simulation |
-| POST | `/academy/grade` | Grade lab |
-| GET | `/judge` | Judge proof panel |
+| `GET` | `/health` | Operational + version |
+| `GET` | `/system` | Cross-surface status |
+| `POST` | `/system/run` | Full product orchestration |
+| `GET` | `/engines` | Cloud engine catalog |
+| `POST` | `/engines/{id}/run` | Run chain / gas / law / research… |
+| `POST` | `/engines/pipeline` | Multi-engine cloud path |
+| `GET` | `/polyglot` | Julia · Node · Python catalog |
+| `POST` | `/polyglot/mesh` | Full polyglot intelligence mesh |
+| `GET` | `/use-cases` | 20 use cases JSON |
+| `POST` | `/company/run` | Staff Company OS |
+| `POST` | `/desk/arena` | Trading rejects + accepts |
+| `GET` | `/judge` | Spark / AI judge pack |
+| `GET` | `/landing` | Live market + teach feed |
 
-OpenAPI: http://127.0.0.1:8043/docs
-
----
-
-## Demo script (≤3 min)
-
-1. Problem — blank-check agents  
-2. STUDIO → **Run full pipeline** — show events + package count  
-3. IDE — open `docs/AGENT.md` + lawbook  
-4. NOMOS — REJECT reasons + winner  
-5. ACADEMY — pass slippage lab  
-6. JUDGE panel + vault address when deployed  
-
----
-
-## Deploy (Monad official path)
+OpenAPI: [http://127.0.0.1:8043/docs](http://127.0.0.1:8043/docs)
 
 ```bash
-# WSL + Monad Foundry: https://docs.monad.xyz/guides/deploy-smart-contract/foundry
-export PRIVATE_KEY=0x…
-./scripts/deploy.sh testnet
-# → receipts/deployment.json  ·  Spark field = SovereignVault
-```
-
-Networks: testnet **10143** · mainnet **143**
-
----
-
-## Tests
-
-```bash
-cd engine && pytest -q          # 11+ tests
-cd web && npm run build
-cd contracts && forge test      # after forge-std install
+curl -s http://127.0.0.1:8043/health
+curl -s -X POST http://127.0.0.1:8043/system/run \
+  -H "content-type: application/json" \
+  -d "{\"network\":\"monad-testnet\",\"run_cloud\":false}"
 ```
 
 ---
 
-## Spark submission
+## On-chain (Monad)
 
-| Field | Value |
-|-------|--------|
-| Name | THESIS — Monad AI Workstation |
-| Github | https://github.com/ItsNotAILABS/Monad-Hackaton |
-| Contract | `SovereignVault` |
-| Category | Testnet (or Mainnet if deployed) |
+| Contract | Role |
+|----------|------|
+| **SovereignVault** | Spark primary submission — policy-gated `execute` |
+| **PolicyKernel** | Owner policy, agents, targets, daily cap |
+| **ReceiptChain** | Hash-linked audit spine |
+| **LawBook** | Ecosystem law registry |
+| **TwinLedger** | Digital twin balances (no custody of keys) |
+| **ThesisFactory** | Deploy full stack in one tx |
 
-**Not audited. No production TVL.**
+```bash
+cd contracts
+# forge install foundry-rs/forge-std --no-commit
+# forge build && forge test -vv
+```
+
+Details: [contracts/README.md](contracts/README.md) · [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
+## Security
+
+| Rule | Enforcement |
+|------|-------------|
+| No private keys / seeds in API or AI | Wallet link rejects secrets · security engines block paste |
+| AI never auto-broadcasts | Sandbox twins · promote requires owner signature |
+| Exact approvals preferred | `ExactAllowance` · `proto.exact-approval` |
+| Monad gas discipline | Pay **limit** · ~7.5% margin · hardcode 21k transfers |
+| Reject is a feature | Desk arena + NOMOS explain reasons |
+
+Doctrine: **Owner remains sovereign.**
+
+---
+
+## Documentation
+
+| Doc | Contents |
+|-----|----------|
+| [docs/UNIFIED.md](docs/UNIFIED.md) | One-product wiring |
+| [docs/USE_CASES.md](docs/USE_CASES.md) | **20 use cases** |
+| [docs/POLYGLOT.md](docs/POLYGLOT.md) | Julia · Node · WASM · WebGPU |
+| [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md) | Server engines + Monad RPC |
+| [docs/LOCAL_AI.md](docs/LOCAL_AI.md) | Browser Transformers.js |
+| [docs/COMPANY_OS.md](docs/COMPANY_OS.md) | Departments + SLAs |
+| [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
+| [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
+| [CHARTER.md](CHARTER.md) | Product charter |
+
+---
+
+## Repository
+
+| | |
+|--|--|
+| **Org** | [ItsNotAILABS](https://github.com/ItsNotAILABS) |
+| **Repo** | [Monad-Hackaton](https://github.com/ItsNotAILABS/Monad-Hackaton) |
+| **License** | [MIT](LICENSE) |
+| **Primary contract** | `SovereignVault` |
+
+---
+
+<p align="center">
+  <img src="docs/assets/thesis-icon.jpg" width="48" height="48" alt="" />
+  <br/>
+  <sub>THESIS Platform · MIT · Built for Monad · Spark 2026</sub>
+</p>

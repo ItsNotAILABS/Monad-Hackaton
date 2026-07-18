@@ -95,6 +95,7 @@ from .engines import engine_catalog, get_engine, list_engines, run_engine
 from .engines.orchestrator import run_cloud_pipeline
 from .unified import run_system, system_status
 from .polyglot import polyglot_catalog, polyglot_mesh, run_polyglot
+from .use_cases import use_case_by_id, use_cases_payload
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -285,6 +286,20 @@ class PolyglotMeshIn(BaseModel):
     estimated_gas: int = 80_000
     series: list[float] | None = None
     agents: list[dict[str, Any]] | None = None
+
+
+@app.get("/use-cases")
+def use_cases_list():
+    """20 product use cases mapped to Spark / platform asks."""
+    return use_cases_payload()
+
+
+@app.get("/use-cases/{uc_id}")
+def use_cases_one(uc_id: int):
+    u = use_case_by_id(uc_id)
+    if not u:
+        raise HTTPException(404, "use case not found")
+    return u
 
 
 @app.get("/polyglot")

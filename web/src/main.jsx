@@ -4,6 +4,7 @@ import { Landing } from "./Landing.jsx";
 import { LocalAI } from "./local-ai/LocalAI.jsx";
 import { CloudEngines } from "./CloudEngines.jsx";
 import { PolyglotHub } from "./PolyglotHub.jsx";
+import { UseCases } from "./UseCases.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -762,6 +763,9 @@ function App() {
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("poly")}>
           Polyglot
         </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("usecases")}>
+          Use cases
+        </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
           Local AI
         </button>
@@ -795,6 +799,7 @@ function App() {
       <nav className="tabs">
         {[
           ["live", "PLATFORM"],
+          ["usecases", "USE CASES"],
           ["cloud", "CLOUD"],
           ["poly", "POLYGLOT"],
           ["local", "LOCAL AI"],
@@ -821,16 +826,16 @@ function App() {
             <span className="eyebrow">START HERE · USABLE IN 60s</span>
             <ol className="pillars start-steps">
               <li>
-                <b>▶ RUN SYSTEM</b> — laws + desk + vault sim + company (top bar)
+                <b>▶ RUN SYSTEM</b> — laws + desk + vault + company + polyglot
               </li>
               <li>
-                <b>CLOUD</b> — live Monad gas / chain pulse / research
+                <b>USE CASES</b> — 20 asks mapped to real buttons
               </li>
               <li>
-                <b>LOCAL AI</b> — teach security, remember notes, export PDF/Excel
+                <b>CLOUD / POLYGLOT / LOCAL AI</b> — engines + Julia/Node + browser AI
               </li>
               <li>
-                <b>DESK</b> — see rejects · <b>HQ</b> — approve mission
+                <b>DESK / HQ</b> — rejects + mission approve
               </li>
             </ol>
           </div>
@@ -838,17 +843,33 @@ function App() {
             <button type="button" className="forge" disabled={busy} onClick={runSystem}>
               ▶ RUN SYSTEM NOW
             </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("usecases")}>
+              20 use cases
+            </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
-              Open cloud
+              Cloud
             </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
-              Open local AI
-            </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("desk")}>
-              Open desk
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("poly")}>
+              Polyglot
             </button>
           </div>
         </div>
+      )}
+
+      {tab === "usecases" && (
+        <UseCases
+          api={api}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+          onAction={async (action, payload = {}) => {
+            if (action === "desk_arena") return runDeskArena();
+            if (action === "run_company") return runCompany();
+            if (action === "connect_wallet")
+              return connectBrowserWallet(payload.kind || "metamask");
+            if (action === "run_system") return runSystem();
+          }}
+        />
       )}
 
       {tab === "cloud" && (

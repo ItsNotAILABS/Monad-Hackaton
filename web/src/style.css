@@ -851,6 +851,19 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   .use-bar-meta { width: 100%; margin-left: 0; }
 }
 
+.uc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 0 12px 14px;
+}
+.uc-card h3 {
+  letter-spacing: -0.02em;
+}
+@media (max-width: 900px) {
+  .uc-grid { grid-template-columns: 1fr; }
+}
+
 
 @media (max-width: 1400px) {
   .app-modules { grid-template-columns: repeat(4, 1fr); }
