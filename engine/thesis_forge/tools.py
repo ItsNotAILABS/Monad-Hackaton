@@ -261,6 +261,26 @@ def _run_x_draft(**params) -> Dict[str, Any]:
     }
 
 
+def _run_edge(**params) -> Dict[str, Any]:
+    from .edge_workers import edge_run_local
+
+    r = edge_run_local(
+        params.get("agent") or "seatbelt",
+        params.get("action") or "brief",
+        network=params.get("network") or "monad-testnet",
+        goal=params.get("goal") or params.get("message") or "",
+        note=params.get("note") or "",
+        stt=params.get("stt") or "",
+    )
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": ((r.get("result") or {}).get("summary") or "")[:160],
+        "mode": r.get("mode"),
+        "result": r.get("result"),
+        "edge": r.get("edge"),
+    }
+
+
 def _run_hybrid(**params) -> Dict[str, Any]:
     from .hybrid import run_hybrid_node
 
@@ -621,6 +641,19 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Spam bots — we draft from real rejects/morning/signals",
         "handler": "x_draft",
     },
+    {
+        "id": "edge",
+        "name": "Cloudflare edge agent (local sim)",
+        "kind": "edge",
+        "who": "user + agent + any AI",
+        "seconds": 5,
+        "do": "Route seatbelt/signals/nomos/x/horizon like CF Workers (local or deploy edge/)",
+        "api": "POST /edge/run",
+        "mcp": "thesis_edge",
+        "proof": "agent summary",
+        "beats_crowd": "One fat AI server in one region",
+        "handler": "edge",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -644,6 +677,7 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "brief": _run_builder_brief,
     "agent_step": _run_agent_step,
     "x_draft": _run_x_draft,
+    "edge": _run_edge,
 }
 
 

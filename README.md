@@ -123,7 +123,7 @@ Browser (React HQ)
 | **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
 | **TOOLS** | Shippable actions + MCP for any AI |
 | **TERM** | Sovereign web terminal · vault · ecosystem · PDF reports |
-| **HYBRID** | Novel tech: **Web Workers + blockchain** (off-main-thread agents) |
+| **HYBRID** | **CF edge agents** + browser workers + node + chain |
 | **USE CASES** | 20 runnable scenarios mapped to Spark asks |
 | **CLOUD** | Live Monad engines (chain, gas, research, docs) |
 | **POLYGLOT** | Julia · Node · Python · WebGPU · WASM |
@@ -215,6 +215,8 @@ powershell -File scripts/run_polyglot.ps1
 | `POST` | `/agent/step` | Delta attention → fast decode → evolve |
 | `POST` | `/x/from-actions` | Draft X post from real user actions |
 | `GET` | `/x/queue` | Marketing draft queue + intent URLs |
+| `GET` | `/edge` | Cloudflare Workers agent catalog |
+| `POST` | `/edge/run` | Local edge sim (same agents as CF) |
 | `POST` | `/company/run` | Staff Company OS |
 | `POST` | `/arena/auto` | Propose agents + arbitrate (REJECT demo) |
 | `POST` | `/desk/arena` | Trading rejects + accepts |
@@ -285,6 +287,8 @@ Doctrine: **Owner remains sovereign.**
 | [docs/TERMINAL.md](docs/TERMINAL.md) | Sovereign terminal + PDF reports |
 | [docs/HYBRID_WORKERS.md](docs/HYBRID_WORKERS.md) | **Web Worker + blockchain hybrid** |
 | [docs/MONADBUILDER.md](docs/MONADBUILDER.md) | **Product brand · AI morning · habits** |
+| [docs/EDGE_WORKERS.md](docs/EDGE_WORKERS.md) | **Cloudflare Workers edge AI agents** |
+| [docs/DELTA_AI.md](docs/DELTA_AI.md) | Long-horizon delta attention AI |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |

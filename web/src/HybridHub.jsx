@@ -78,21 +78,42 @@ export function HybridHub({ api, network, busy: parentBusy, onNavigate, onRunSys
     setBusy(true);
     setErr("");
     try {
-      const [browser, signals, auto] = await Promise.all([
+      const [browser, signals, auto, edge] = await Promise.all([
         runHybrid("pulse", {}),
         api("/signals").catch(() => null),
         api("/auto/loop", { method: "POST", body: JSON.stringify({ network }) }).catch(() => null),
+        api("/edge/run", {
+          method: "POST",
+          body: JSON.stringify({ agent: "seatbelt", action: "brief", network }),
+        }).catch(() => null),
       ]);
       setOut({
         source: "hybrid-full",
-        novel_tech: "blockchain + web-worker hybrid",
+        novel_tech: "cloudflare-edge + browser-worker + node + chain",
         browser: browser.result || browser,
         browser_worker: browser.worker,
         browser_ms: browser.elapsed_ms,
         signals_n: signals?.n,
         auto_headline: auto?.headline,
+        edge_sim: edge?.result || edge,
         chain_broadcast: false,
       });
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runEdge(agent = "seatbelt", action = "brief") {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api("/edge/run", {
+        method: "POST",
+        body: JSON.stringify({ agent, action, network }),
+      });
+      setOut({ source: "edge-local-sim", ...data });
     } catch (e) {
       setErr(String(e.message || e));
     } finally {
@@ -107,9 +128,9 @@ export function HybridHub({ api, network, busy: parentBusy, onNavigate, onRunSys
           <span className="eyebrow">NOVEL TECH · BLOCKCHAIN + WEB WORKER HYBRID</span>
           <h3>Parallel agents off the main thread</h3>
           <p className="muted sm">
-            <b>Web Workers</b> are background JS processes that run outside the UI thread — so arena
-            scoring, signal boards, catalog crawls, and crypto fingerprints never freeze HQ. Chain
-            law / vault / auto-exec stay on the API host; workers mirror policy for instant UX.
+            <b>Web Workers</b> run off the UI thread. <b>Cloudflare Workers</b> run small AI agents on
+            the global edge (~300+ cities) and call the central API for dual-stack law. Node
+            worker_threads + Monad contracts complete the multi-device stack.
           </p>
           <p className="muted sm">
             Browser worker:{" "}
@@ -139,6 +160,12 @@ export function HybridHub({ api, network, busy: parentBusy, onNavigate, onRunSys
           </button>
           <button type="button" className="ghost" disabled={disabled} onClick={() => runServer("pulse")}>
             NODE WORKER
+          </button>
+          <button type="button" className="ghost" disabled={disabled} onClick={() => runEdge("seatbelt", "brief")}>
+            EDGE SEATBELT
+          </button>
+          <button type="button" className="ghost" disabled={disabled} onClick={() => runEdge("nomos", "arena")}>
+            EDGE NOMOS
           </button>
         </div>
       </div>
@@ -174,21 +201,28 @@ export function HybridHub({ api, network, busy: parentBusy, onNavigate, onRunSys
           <label>ARCHITECTURE</label>
           <ol className="pillars start-steps">
             <li>
-              <b>Browser Worker</b> — evaluate / arena / signals / crawl / fingerprint
+              <b>Cloudflare Workers</b> — small edge agents in ~300+ cities → origin API
             </li>
             <li>
-              <b>Main thread</b> — React HQ, wallet connect, sticky RUN SYSTEM
+              <b>Browser Worker</b> — evaluate / arena / delta / signals (UI free)
             </li>
             <li>
-              <b>API host</b> — dual law stack, auto paper loop, vault sim
+              <b>Main thread</b> — React HQ, STT mic, sticky AI Morning
             </li>
             <li>
-              <b>Node worker_threads</b> — polyglot bridge heavy rank (optional)
+              <b>API host (origin)</b> — dual law stack, auto paper, vault sim
+            </li>
+            <li>
+              <b>Node worker_threads</b> — polyglot hybrid rank
             </li>
             <li>
               <b>Monad</b> — PolicyKernel · LawBook · SovereignVault (owner signs)
             </li>
           </ol>
+          <p className="muted sm">
+            Deploy: <code>cd edge && npx wrangler deploy</code> · set{" "}
+            <code>ORIGIN_API</code> to your public FastAPI URL
+          </p>
           <p className="muted sm">
             {(server?.description || cat?.doctrine) && (
               <>{server?.description || cat?.doctrine}</>

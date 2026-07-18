@@ -48,6 +48,7 @@ COMMANDS: Dict[str, Dict[str, str]] = {
     "hybrid": {"usage": "hybrid [op]", "desc": "Node worker_threads hybrid (pulse/arena/bench)"},
     "agent": {"usage": "agent [goal…]", "desc": "Long-horizon delta-attention step (or AI chat)"},
     "x": {"usage": "x [action]", "desc": "Draft X marketing post from actions"},
+    "edge": {"usage": "edge [agent] [action]", "desc": "Cloudflare edge agent (local sim)"},
     "doctrine": {"usage": "doctrine", "desc": "Print platform doctrine"},
     "whoami": {"usage": "whoami", "desc": "Sovereign operator context (no keys)"},
 }
@@ -475,6 +476,34 @@ def cmd_x(args: List[str], network: str) -> Dict[str, Any]:
     return _out(True, lines, d)
 
 
+def cmd_edge(args: List[str], network: str) -> Dict[str, Any]:
+    from .edge_workers import edge_catalog, edge_run_local
+
+    if not args or args[0] in ("help", "list", "catalog"):
+        c = edge_catalog()
+        lines = [
+            "=== CLOUDFLARE EDGE AGENTS ===",
+            c.get("description", "")[:220],
+            f"Deploy: {c.get('deploy', {}).get('path')} · wrangler deploy",
+        ]
+        for a in c.get("agents") or []:
+            lines.append(f"  {a['id']:<10} {a['path']} · {', '.join(a.get('actions') or [])}")
+        lines.append("Run: edge seatbelt brief | edge nomos arena | edge x draft | edge horizon step")
+        return _out(True, lines, c)
+    agent = args[0]
+    action = args[1] if len(args) > 1 else "brief"
+    r = edge_run_local(agent, action, network=network)
+    res = r.get("result") or {}
+    lines = [
+        f"=== EDGE · {agent}/{action} · {r.get('mode')} ===",
+        str(res.get("summary") or res.get("brief_text") or res.get("answer") or ""),
+        f"ok={r.get('ok')} · production=cloudflare-workers (~300+ cities)",
+    ]
+    if res.get("intent_url"):
+        lines.append(f"intent: {res.get('intent_url')}")
+    return _out(bool(r.get("ok")), lines, r)
+
+
 def cmd_signals(args: List[str], network: str) -> Dict[str, Any]:
     from .signals import generate_signals
 
@@ -645,6 +674,8 @@ def exec_line(line: str, *, network: str = "monad-testnet", record: bool = True)
         "agent": lambda: cmd_agent(args, network),
         "x": lambda: cmd_x(args, network),
         "tweet": lambda: cmd_x(args, network),
+        "edge": lambda: cmd_edge(args, network),
+        "cf": lambda: cmd_edge(args, network),
         "signals": lambda: cmd_signals(args, network),
         "signal": lambda: cmd_signals(args, network),
         "auto": lambda: cmd_auto(args, network),

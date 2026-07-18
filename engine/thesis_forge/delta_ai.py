@@ -33,8 +33,14 @@ _EVOLVE = _ROOT / "receipts" / "delta_ai_evolve.json"
 # Sense channels (messy multimodal without fake vision servers)
 SENSES = ("text", "market", "law", "gas", "desk", "habit", "note", "stt", "chain")
 
-# Devices in the hybrid stack
-DEVICES = ("python_host", "browser_worker", "node_worker", "policy_kernel")
+# Devices in the hybrid stack (multi-device native)
+DEVICES = (
+    "cloudflare_edge",
+    "python_host",
+    "browser_worker",
+    "node_worker",
+    "policy_kernel",
+)
 
 
 def _load_json(path: Path, default: dict) -> dict:
@@ -156,10 +162,15 @@ def multi_device_plan(goal: str, attention: Dict[str, Any]) -> List[Dict[str, An
     weights = attention.get("weights") or {}
     plan = [
         {
+            "device": "cloudflare_edge",
+            "role": "nearest-colo agent entry (Workers) → origin tools",
+            "ops": ["seatbelt", "signals", "nomos", "x", "horizon"],
+        },
+        {
             "device": "python_host",
             "role": "orchestrate + dual-stack law + paper auto",
             "ops": ["laws", "auto_loop", "builder", "x_draft"],
-        }
+        },
     ]
     if weights.get("market", 0) > 0.12 or weights.get("desk", 0) > 0.12:
         plan.append(

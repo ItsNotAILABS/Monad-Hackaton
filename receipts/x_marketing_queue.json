@@ -2,6 +2,24 @@
   "schema": "monadbuilder.x_queue.v1",
   "items": [
     {
+      "id": "x-dd04447b0f",
+      "action": "reject",
+      "text": "REJECT is a feature. Desk arena blocked 2 bad plan(s) under dual-stack law. That's MonadBuilder on Monad \u2014 brakes before capital. #Monad #MonadBuilder #BuildOnMonad #DeFi #Spark",
+      "intent_url": "https://twitter.com/intent/tweet?text=REJECT%20is%20a%20feature.%20Desk%20arena%20blocked%202%20bad%20plan%28s%29%20under%20dual-stack%20law.%20That%27s%20MonadBuilder%20on%20Monad%20%E2%80%94%20brakes%20before%20capital.%20%23Monad%20%23MonadBuilder%20%23BuildOnMonad%20%23DeFi%20%23Spark",
+      "network": "monad-testnet",
+      "detail": {
+        "n_rejected": 2
+      },
+      "status": "draft",
+      "created_at": 1784398874.984231,
+      "marketing": {
+        "for_user": true,
+        "for_ecosystem": true,
+        "ecosystem": "Monad",
+        "product": "MonadBuilder HQ"
+      }
+    },
+    {
       "id": "x-2e13c3abcc",
       "action": "reject",
       "text": "REJECT is a feature. Desk arena blocked 2 bad plan(s) under dual-stack law. That's MonadBuilder on Monad \u2014 brakes before capital. #Monad #MonadBuilder #BuildOnMonad #DeFi #Spark",

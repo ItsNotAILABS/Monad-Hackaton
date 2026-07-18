@@ -338,6 +338,22 @@ def main() -> int:
         (xd.get("text") or "")[:40],
     )
 
+    edge = c.get("/edge").json()
+    assert edge.get("novel_tech") and edge.get("agents")
+    er = c.post("/edge/run", json={"agent": "seatbelt", "action": "brief"}).json()
+    assert er.get("ok") and (er.get("result") or {}).get("agent") == "seatbelt"
+    er2 = c.post("/edge/run", json={"agent": "nomos", "action": "arena"}).json()
+    assert er2.get("ok")
+    print(
+        "edge",
+        "agents",
+        len(edge.get("agents") or []),
+        "brief_ok",
+        er.get("ok"),
+        "nomos",
+        (er2.get("result") or {}).get("summary", "")[:40],
+    )
+
     print("SMOKE_OK")
     return 0
 

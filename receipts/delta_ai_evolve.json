@@ -3,18 +3,13 @@
     "schema": "monadbuilder.self_evolve.v1",
     "ok": true,
     "changes": {
-      "morning_loop": {
-        "from": 0.5,
-        "to": 0.55,
-        "delta": 0.05
-      },
       "gas_discipline": {
-        "to": 0.54
+        "to": 0.56
       }
     },
     "skills": {
       "reject_is_feature": 1.05,
-      "gas_discipline": 0.54,
+      "gas_discipline": 0.56,
       "signal_trading": 0.3,
       "morning_loop": 0.55,
       "x_marketing": 0.2,
@@ -48,6 +43,15 @@
         },
         "gas_discipline": {
           "to": 0.54
+        }
+      }
+    },
+    {
+      "ts": 1784398878.429112,
+      "intent": "agent.general",
+      "changes": {
+        "gas_discipline": {
+          "to": 0.56
         }
       }
     }

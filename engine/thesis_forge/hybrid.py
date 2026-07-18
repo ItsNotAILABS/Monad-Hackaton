@@ -31,10 +31,18 @@ def hybrid_catalog() -> Dict[str, Any]:
         ),
         "layers": [
             {
+                "id": "cloudflare_edge",
+                "runtime": "Cloudflare Workers (global edge ~300+ cities)",
+                "path": "edge/src/router.js",
+                "ops": ["seatbelt", "signals", "nomos", "x", "horizon"],
+                "entry": "cd edge && npx wrangler deploy",
+                "note": "Small AI agents near the user; call ORIGIN_API for dual-stack truth",
+            },
+            {
                 "id": "browser_worker",
                 "runtime": "Web Worker (module)",
                 "path": "web/src/workers/thesis.worker.js",
-                "ops": ["pulse", "arena", "evaluate", "signals", "crawl", "agents", "fingerprint", "bench"],
+                "ops": ["pulse", "arena", "evaluate", "signals", "crawl", "agents", "fingerprint", "bench", "delta"],
                 "freezes_ui": False,
             },
             {
@@ -47,21 +55,23 @@ def hybrid_catalog() -> Dict[str, Any]:
             {
                 "id": "api_chain",
                 "runtime": "FastAPI + Monad contracts",
-                "ops": ["auto/loop", "signals", "nomos", "vault route", "lawbook"],
+                "ops": ["auto/loop", "signals", "nomos", "vault route", "lawbook", "agent/step"],
                 "note": "Source of truth for laws + paper auto-exec + owner-gated chain",
             },
         ],
         "why_novel": [
-            "Most hackathon AI bots run all scoring on the main thread or only on server",
-            "THESIS splits: parallel workers for intelligence UX + dual-stack chain for final law",
-            "Same reject-is-a-feature mirror in the browser worker for instant feedback",
+            "Not one fat AI server — many edge agents + browser/node workers + dual-stack origin",
+            "Cloudflare runs the Worker in the colo closest to the request",
+            "Edge never bypasses NOMOS: law and capital stay on origin + chain",
+            "Same reject-is-a-feature from edge → origin → desk arena",
         ],
         "apis": {
             "catalog": "GET /hybrid",
+            "edge": "GET /edge · POST /edge/run (local sim) · wrangler deploy for real edge",
             "node_run": "POST /hybrid/run",
             "browser": "HybridHub tab · runHybrid(op) in web/src/workers/hybrid.js",
         },
-        "docs": "docs/HYBRID_WORKERS.md",
+        "docs": ["docs/HYBRID_WORKERS.md", "docs/EDGE_WORKERS.md"],
     }
 
 

@@ -1,7 +1,7 @@
 {
   "schema": "monadbuilder.agent_state.v1",
-  "horizon_goal": "morning seatbelt",
-  "step": 2,
+  "horizon_goal": "safe ops",
+  "step": 3,
   "working_memory": [
     {
       "step": 1,
@@ -16,6 +16,13 @@
       "intent": "habit.morning",
       "efficiency": 0.556,
       "ts": 1784398313.3034046
+    },
+    {
+      "step": 3,
+      "goal": "safe ops",
+      "intent": "agent.general",
+      "efficiency": 0.556,
+      "ts": 1784398878.4306185
     }
   ],
   "episodic": [
@@ -34,11 +41,19 @@
       "efficiency": 0.556,
       "ts": 1784398313.3034046,
       "exec_n": 2
+    },
+    {
+      "step": 3,
+      "goal": "safe ops",
+      "intent": "agent.general",
+      "efficiency": 0.556,
+      "ts": 1784398878.4306185,
+      "exec_n": 2
     }
   ],
   "skills": {
     "reject_is_feature": 1.05,
-    "gas_discipline": 0.54,
+    "gas_discipline": 0.56,
     "signal_trading": 0.3,
     "morning_loop": 0.55,
     "x_marketing": 0.2,
@@ -61,8 +76,8 @@
     },
     "deltas": {
       "chain": {
-        "prev_hash": "fa4ef0a6e15e833a",
-        "cur_hash": "f93ac9d52a242889",
+        "prev_hash": "f93ac9d52a242889",
+        "cur_hash": "056dc200c8d8d2f9",
         "kind": "delta"
       }
     },
@@ -106,6 +121,15 @@
         },
         "gas_discipline": {
           "to": 0.54
+        }
+      }
+    },
+    {
+      "ts": 1784398878.429112,
+      "intent": "agent.general",
+      "changes": {
+        "gas_discipline": {
+          "to": 0.56
         }
       }
     }
@@ -163,7 +187,7 @@
     "note": "",
     "stt": "",
     "chain": {
-      "receipt_tip": "d87ffb10b5eb9bb1",
+      "receipt_tip": "d3f90fce4b8c074c",
       "network": "monad-testnet"
     }
   },

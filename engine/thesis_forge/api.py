@@ -114,6 +114,7 @@ from .x_marketing import (
     mark_posted,
     x_catalog,
 )
+from .edge_workers import edge_catalog, edge_run_local
 
 app = FastAPI(
     title=f"{PRODUCT} API",
@@ -595,6 +596,38 @@ def x_mark(body: XMarkIn):
     if not out.get("ok"):
         raise HTTPException(404, out.get("error") or "not found")
     return out
+
+
+class EdgeRunIn(BaseModel):
+    agent: str = "seatbelt"
+    action: str = "brief"
+    network: str = "monad-testnet"
+    goal: str = ""
+    note: str = ""
+    stt: str = ""
+    message: str = ""
+    execute: bool = True
+
+
+@app.get("/edge")
+def edge_get():
+    """Cloudflare Workers edge AI agents catalog (+ local simulator)."""
+    return edge_catalog()
+
+
+@app.post("/edge/run")
+def edge_run(body: EdgeRunIn | None = None):
+    """Local edge simulator — same agent routing as CF Workers without deploy."""
+    b = body or EdgeRunIn()
+    return edge_run_local(
+        b.agent,
+        b.action,
+        network=b.network,
+        goal=b.goal or b.message,
+        note=b.note,
+        stt=b.stt,
+        execute=b.execute,
+    )
 
 
 @app.get("/tools")
@@ -1105,6 +1138,8 @@ def health():
             "/x/draft",
             "/x/from-actions",
             "/x/queue",
+            "/edge",
+            "/edge/run",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",
