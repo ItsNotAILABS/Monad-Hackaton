@@ -1,6 +1,6 @@
-# THESIS × MonadBuilder — Integration Plan
+# THESIS × MonadBuilder++ — Integration Plan
 
-**Goal:** Merge the THESIS Python engine (GitHub) with the MonadBuilder React frontend (Replit) into one unified hackathon submission.
+**Goal:** Merge the THESIS Python engine (GitHub) with the MonadBuilder+ React frontend (Replit) into one unified hackathon submission.
 
 ---
 
@@ -8,7 +8,7 @@
 
 | System | What it is | Where it lives |
 |---|---|---|
-| **MonadBuilder frontend** | Polished React/Vite dApp builder — drag-drop components, preview, publish | `artifacts/monad-builder/` |
+| **MonadBuilder+ frontend** | Polished React/Vite dApp builder — drag-drop components, preview, publish | `artifacts/monad-builder/` |
 | **Express API** | Node.js CRUD for projects + templates + workspace file exec | `artifacts/api-server/` |
 | **THESIS engine** | Python FastAPI — chain engine, gas coach, laws, agents, trading desk, company OS, terminal, MCP tools | GitHub `engine/thesis_forge/` → needs Replit artifact |
 
@@ -109,7 +109,7 @@ OPENAI_API_KEY=        # optional — local AI only; engine works without it
 
 ---
 
-## What the MonadBuilder frontend already has built
+## What the MonadBuilder+ frontend already has built
 
 ### `src/lib/engine.ts`
 - `engineApi(path, opts)` — typed fetch wrapper, catches network errors gracefully
@@ -143,9 +143,9 @@ VITE_THESIS_ENGINE=/engine
 
 ## The unified pitch
 
-> **"Build it with MonadBuilder. Run it with THESIS."**
+> **"Build it with MonadBuilder+. Run it with THESIS."**
 >
-> MonadBuilder lets anyone ship a Monad dApp UI in minutes — no code, drag and drop.
+> MonadBuilder+ lets anyone ship a Monad dApp UI in minutes — no code, drag and drop.
 > THESIS is the operating system that governs how it runs — agents propose, laws decide, receipts remember.
 > Together: the first full-stack no-code + governed-ops platform for Monad.
 

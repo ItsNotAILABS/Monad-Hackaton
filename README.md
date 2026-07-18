@@ -1,4 +1,4 @@
-# Monad App Builder
+# MonadBuilder+
 
 > No-code drag-and-drop dApp builder for the Monad ecosystem.
 
@@ -10,7 +10,7 @@
 
 A visual workspace where anyone can assemble a Monad dApp from pre-built Web3 components — without writing a single line of code. Built for the [Spark hackathon](https://buildanything.so/hackathons/spark) by BuildAnything.
 
-**The personal problem it solves:** Getting a dApp idea on Monad means days of setup before a single user can touch it — wallet adapters, RPC config, chain IDs, web3 plumbing. Monad App Builder collapses that to minutes.
+**The personal problem it solves:** Getting a dApp idea on Monad means days of setup before a single user can touch it — wallet adapters, RPC config, chain IDs, web3 plumbing. MonadBuilder+ collapses that to minutes.
 
 ---
 

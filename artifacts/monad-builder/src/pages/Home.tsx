@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Zap, Layout, Blocks, Rocket, ArrowRight, ExternalLink, Cpu, Clock, Shield, Copy, CheckCheck } from "lucide-react";
+import {
+  Zap, Layout, Blocks, Rocket, ArrowRight, ExternalLink,
+  Cpu, Clock, Shield, Copy, CheckCheck, Layers, Terminal,
+} from "lucide-react";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
+import { DailyBrief } from "@/components/home/DailyBrief";
 import { useState } from "react";
 
 // Real Monad Mainnet data — source: docs.monad.xyz
@@ -14,14 +18,14 @@ const MONAD_NETWORK = {
   blockTime: "400ms",
   finality: "800ms",
   rpcUrls: [
-    { url: "https://rpc.monad.xyz", provider: "QuickNode" },
+    { url: "https://rpc.monad.xyz",  provider: "QuickNode" },
     { url: "https://rpc1.monad.xyz", provider: "Alchemy" },
     { url: "https://rpc2.monad.xyz", provider: "Goldsky" },
     { url: "https://rpc3.monad.xyz", provider: "Ankr" },
   ],
   explorers: [
     { name: "MonadVision", url: "https://monadvision.com" },
-    { name: "Monadscan", url: "https://monadscan.com" },
+    { name: "Monadscan",   url: "https://monadscan.com" },
   ],
   wrappedMON: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
   version: "v0.14.5 / MONAD_NINE",
@@ -32,11 +36,7 @@ function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <button
-      onClick={() => {
-        navigator.clipboard.writeText(value);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      }}
+      onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
       className="ml-2 text-white/30 hover:text-primary transition-colors"
     >
       {copied ? <CheckCheck className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
@@ -51,10 +51,9 @@ export default function Home() {
     <div className="min-h-screen flex flex-col relative overflow-hidden">
       <Navbar />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <main className="flex-1 flex flex-col items-center justify-center pt-20 pb-32 px-4 relative z-10">
 
-        {/* Background glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/20 blur-[150px] rounded-full pointer-events-none" />
 
         <motion.div
@@ -65,30 +64,38 @@ export default function Home() {
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-white/80 text-sm mb-8">
             <Zap className="w-4 h-4 text-primary" />
-            <span>The fastest way to build on Monad — Chain ID {MONAD_NETWORK.chainId}</span>
+            <span>Build it. Govern it. Ship it on Monad — Chain ID {MONAD_NETWORK.chainId}</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white leading-tight">
-            Build unhinged dApps <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">at the speed of thought.</span>
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-white leading-tight">
+            MonadBuilder<span className="text-primary">+</span>
           </h1>
 
-          <p className="text-xl text-white/60 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-            No limits. No corporate guardrails. Just a hyper-optimized drag-and-drop workspace
-            designed for the Monad ecosystem. Drag. Drop. Deploy.
+          <p className="text-xl md:text-2xl text-white/60 mb-4 max-w-3xl mx-auto font-light leading-relaxed">
+            No-code dApp builder. THESIS OS governance engine.
+            <br className="hidden md:block" />
+            <span className="text-white/40">Agents propose · Laws decide · Receipts remember · Owner signs.</span>
           </p>
 
-          <div className="flex items-center justify-center gap-4">
+          <p className="text-base text-white/35 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Drag-and-drop your dApp UI. Let THESIS govern how it runs — gas coaching, 
+            multi-agent proposals, onchain law enforcement — all on Monad's 10,000 TPS chain.
+          </p>
+
+          <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link href="/dashboard" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold bg-primary text-primary-foreground shadow-[0_0_20px_rgba(131,110,249,0.5)] hover:shadow-[0_0_40px_rgba(131,110,249,0.8)] hover:bg-primary/90 transition-all gap-2">
               Start Building <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/templates" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold border border-white/20 text-white hover:bg-white/5 transition-all">
-              Browse Templates
+            <Link href="/platform" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold border border-primary/30 text-primary hover:bg-primary/10 transition-all gap-2">
+              <Layers className="w-5 h-5" /> THESIS Platform
+            </Link>
+            <Link href="/templates" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold border border-white/15 text-white/60 hover:bg-white/5 transition-all">
+              Templates
             </Link>
           </div>
         </motion.div>
 
-        {/* Monad Network Stats */}
+        {/* Monad network stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -96,9 +103,9 @@ export default function Home() {
           className="mt-16 grid grid-cols-3 gap-6 max-w-3xl mx-auto"
         >
           {[
-            { icon: Cpu, label: "Throughput", value: MONAD_NETWORK.tps + " TPS", color: "text-primary" },
-            { icon: Clock, label: "Block Time", value: MONAD_NETWORK.blockTime, color: "text-secondary" },
-            { icon: Shield, label: "Finality", value: MONAD_NETWORK.finality, color: "text-primary" },
+            { icon: Cpu,   label: "Throughput", value: MONAD_NETWORK.tps + " TPS", color: "text-primary" },
+            { icon: Clock, label: "Block Time",  value: MONAD_NETWORK.blockTime,    color: "text-secondary" },
+            { icon: Shield,label: "Finality",    value: MONAD_NETWORK.finality,     color: "text-primary" },
           ].map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="text-center p-5 rounded-2xl border border-white/5 bg-white/[0.02]">
               <Icon className={`w-6 h-6 ${color} mx-auto mb-2`} />
@@ -108,7 +115,7 @@ export default function Home() {
           ))}
         </motion.div>
 
-        {/* Community Stats */}
+        {/* Community stats */}
         {stats && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -116,55 +123,140 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.25 }}
             className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto border border-white/10 bg-black/40 backdrop-blur-xl p-8 rounded-2xl"
           >
-            <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-white mb-2">{stats.totalProjects}</div>
-              <div className="text-sm text-white/50 font-medium uppercase tracking-wider">Total Projects</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-primary mb-2">{stats.publishedProjects}</div>
-              <div className="text-sm text-white/50 font-medium uppercase tracking-wider">Published</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-secondary mb-2">{stats.totalTemplates}</div>
-              <div className="text-sm text-white/50 font-medium uppercase tracking-wider">Templates</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-white mb-2">{stats.recentProjects.length}</div>
-              <div className="text-sm text-white/50 font-medium uppercase tracking-wider">Active Builders</div>
-            </div>
+            {[
+              { value: stats.totalProjects,           label: "Total Projects",  color: "text-white" },
+              { value: stats.publishedProjects,        label: "Published",       color: "text-primary" },
+              { value: stats.totalTemplates,           label: "Templates",       color: "text-secondary" },
+              { value: stats.recentProjects?.length,   label: "Active Builders", color: "text-white" },
+            ].map(({ value, label, color }) => (
+              <div key={label} className="text-center">
+                <div className={`text-4xl font-mono font-bold ${color} mb-2`}>{value ?? 0}</div>
+                <div className="text-sm text-white/50 font-medium uppercase tracking-wider">{label}</div>
+              </div>
+            ))}
           </motion.div>
         )}
 
-        {/* Features grid */}
+        {/* ── What is MonadBuilder+ ── */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          transition={{ duration: 0.8, delay: 0.35 }}
+          className="mt-32 max-w-5xl mx-auto w-full"
         >
-          <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-            <Layout className="w-10 h-10 text-primary mb-4" />
-            <h3 className="text-xl font-bold text-white mb-2">Visual Canvas</h3>
-            <p className="text-white/60">Drag and drop Web3 primitives onto a pixel-perfect canvas. No code required.</p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Two systems. One platform.
+            </h2>
+            <p className="text-white/45 max-w-xl mx-auto">
+              MonadBuilder<span className="text-primary">+</span> ships the dApp UI. 
+              THESIS OS governs how it runs. Together on Monad.
+            </p>
           </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Builder side */}
+            <div className="p-7 rounded-2xl border border-primary/20 bg-primary/[0.04]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Layout className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">MonadBuilder+</div>
+                  <div className="text-xs text-white/40">No-code dApp builder</div>
+                </div>
+              </div>
+              <ul className="space-y-2.5 text-sm text-white/60">
+                {[
+                  "Drag-and-drop Web3 components onto a visual canvas",
+                  "Wallet connect, token swap, NFT gallery, DAO vote — pre-wired for Monad",
+                  "One-click publish with live preview URL",
+                  "5 DeFi / NFT / DAO / Token templates to start from",
+                ].map(t => (
+                  <li key={t} className="flex gap-2">
+                    <span className="text-primary mt-0.5 shrink-0">▸</span> {t}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/dashboard" className="mt-5 inline-flex items-center gap-1.5 text-sm text-primary font-medium hover:text-primary/70 transition-colors">
+                Open Builder <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* THESIS side */}
+            <div className="p-7 rounded-2xl border border-violet-500/20 bg-violet-500/[0.04]">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-violet-400" />
+                </div>
+                <div>
+                  <div className="font-bold text-white">THESIS OS</div>
+                  <div className="text-xs text-white/40">DeFi governance engine</div>
+                </div>
+              </div>
+              <ul className="space-y-2.5 text-sm text-white/60">
+                {[
+                  "Multi-agent proposals — agents suggest, laws filter, owner approves",
+                  "Gas coach: pay limit × price on Monad — ~7.5% margin enforced",
+                  "Onchain law enforcement: SovereignVault + PolicyKernel + ReceiptChain",
+                  "16 MCP tools usable by you, your AI, or any external agent",
+                ].map(t => (
+                  <li key={t} className="flex gap-2">
+                    <span className="text-violet-400 mt-0.5 shrink-0">▸</span> {t}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/platform" className="mt-5 inline-flex items-center gap-1.5 text-sm text-violet-400 font-medium hover:text-violet-300 transition-colors">
+                Open Platform <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ── Feature grid ── */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.45 }}
+          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+        >
           <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
             <Blocks className="w-10 h-10 text-secondary mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Monad Primitives</h3>
-            <p className="text-white/60">Built-in components for token swaps, NFT galleries, DAO votes, and wallet connections — all pre-wired for Monad Mainnet.</p>
+            <p className="text-white/60">14 components across Web3, Layout, and Content — every one pre-wired to Monad Mainnet, Chain ID 143.</p>
+          </div>
+          <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+            <Terminal className="w-10 h-10 text-primary mb-4" />
+            <h3 className="text-xl font-bold text-white mb-2">Workspace Terminal</h3>
+            <p className="text-white/60">Upload files and ZIPs, run Python against Monad RPC, check balances and blocks — all from the browser.</p>
           </div>
           <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
             <Rocket className="w-10 h-10 text-primary mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Instant Deploy</h3>
-            <p className="text-white/60">Push to production in seconds. Live preview URLs automatically generated.</p>
+            <p className="text-white/60">Push to production in seconds. Live preview URLs automatically generated and publicly shareable.</p>
           </div>
         </motion.div>
 
-        {/* Network Info Panel */}
+        {/* ── Daily Brief ── */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-32 max-w-4xl mx-auto w-full"
+          transition={{ duration: 0.6, delay: 0.55 }}
+          className="mt-24 max-w-2xl mx-auto w-full"
+        >
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-white mb-1">Today's Brief</h2>
+            <p className="text-white/35 text-sm">AI-delivered by THESIS OS · resets daily</p>
+          </div>
+          <DailyBrief />
+        </motion.div>
+
+        {/* ── Monad Network Panel ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.65 }}
+          className="mt-24 max-w-4xl mx-auto w-full"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
@@ -172,12 +264,11 @@ export default function Home() {
             <span className="text-xs text-white/30 font-mono ml-auto">{MONAD_NETWORK.version}</span>
           </div>
           <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden divide-y divide-white/5">
-            {/* Chain info row */}
             <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/5">
               {[
-                { label: "Chain ID", value: String(MONAD_NETWORK.chainId) },
-                { label: "Currency", value: MONAD_NETWORK.currency },
-                { label: "Max Contract", value: MONAD_NETWORK.maxContractSize },
+                { label: "Chain ID",       value: String(MONAD_NETWORK.chainId) },
+                { label: "Currency",       value: MONAD_NETWORK.currency },
+                { label: "Max Contract",   value: MONAD_NETWORK.maxContractSize },
                 { label: "EVM Compatible", value: "Fusaka fork" },
               ].map(({ label, value }) => (
                 <div key={label} className="p-5">
@@ -187,7 +278,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* RPC endpoints */}
             <div className="p-5">
               <div className="text-xs text-white/30 uppercase tracking-widest mb-3">Public RPC Endpoints</div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -201,7 +291,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Wrapped MON + Explorers */}
             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/5">
               <div className="p-5">
                 <div className="text-xs text-white/30 uppercase tracking-widest mb-2">Wrapped MON (WMON)</div>
@@ -212,7 +301,7 @@ export default function Home() {
               </div>
               <div className="p-5">
                 <div className="text-xs text-white/30 uppercase tracking-widest mb-3">Block Explorers</div>
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   {MONAD_NETWORK.explorers.map(({ name, url }) => (
                     <a key={name} href={url} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors font-medium">

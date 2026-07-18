@@ -81,7 +81,7 @@ export default function Preview() {
         <footer className="mt-16 py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-white/30 text-xs">
             <Zap className="w-3.5 h-3.5 text-primary/50" />
-            <span>Built with <span className="text-white/50 font-medium">Monad App Builder</span></span>
+            <span>Built with <span className="text-white/50 font-medium">MonadBuilder+</span></span>
           </div>
           <div className="flex items-center gap-4 text-xs text-white/25">
             <a href="https://monadvision.com" target="_blank" rel="noopener noreferrer"

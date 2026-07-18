@@ -9,7 +9,7 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors">
           <Zap className="w-5 h-5 fill-primary" />
-          <span className="font-bold text-base tracking-tight">MonadBuilder</span>
+          <span className="font-bold text-base tracking-tight">MonadBuilder<span className="text-primary">+</span></span>
         </Link>
         <div className="flex items-center gap-6">
           <Link

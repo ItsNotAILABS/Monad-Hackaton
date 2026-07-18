@@ -9,6 +9,8 @@ import {
   getListProjectsQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey
 } from "@workspace/api-client-react";
 import { Plus, LayoutTemplate, MoreVertical, Trash2, Edit2, Play, Zap } from "lucide-react";
+import { DailyBrief } from "@/components/home/DailyBrief";
+import { HabitTracker } from "@/components/home/HabitTracker";
 import { format } from "date-fns";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -122,6 +124,12 @@ export default function Dashboard() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Daily Brief + Habit Tracker */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-10">
+          <DailyBrief />
+          <HabitTracker />
         </div>
 
         {/* Stats Bar */}

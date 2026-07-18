@@ -1,9 +1,9 @@
-# Spark Hackathon Submission — Monad App Builder
+# Spark Hackathon Submission — MonadBuilder+
 
 ---
 
 ## Project Name
-**Monad App Builder**
+**MonadBuilder+**
 
 ## One-liner
 A no-code drag-and-drop builder for shipping Monad dApps in minutes — not days.
@@ -20,7 +20,7 @@ By the time I'm done with plumbing, the momentum is gone.
 
 I'm not alone. Monad's design is built for 10,000 TPS and 400ms blocks. The bottleneck isn't the chain. It's the tooling gap between "I have an idea" and "people can use it."
 
-**Monad App Builder closes that gap.**
+**MonadBuilder+ closes that gap.**
 
 ---
 
