@@ -301,7 +301,8 @@ def main() -> int:
     brand = c.get("/brand").json()
     assert "MonadBuilder" in (brand.get("product") or "")
     br = c.get("/builder/brief").json()
-    assert br.get("ai_delivered") and br.get("ai_voice")
+    assert br.get("ai_delivered") and (br.get("brief_text") or br.get("ai_voice"))
+    assert br.get("tts") is False
     bm = c.post("/builder/morning", json={"network": "monad-testnet"}).json()
     assert bm.get("ok") is not False and bm.get("headline")
     print(

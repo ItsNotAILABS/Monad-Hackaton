@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { MicButton } from "./MicButton.jsx";
 
 /**
- * MonadBuilder HQ — easy, AI-delivered daily seatbelt.
- * Addictive helpful loop: brief → morning → XP/streak celebration.
+ * MonadBuilder HQ — easy, AI-delivered daily seatbelt (TEXT brief only — no robot TTS).
+ * Mic = speech-to-text for notes / "run my morning" commands.
  */
 export function BuilderHome({ api, network, busy: parentBusy, onNavigate, onRunSystem, onRefreshHome }) {
   const [home, setHome] = useState(null);
@@ -10,6 +11,8 @@ export function BuilderHome({ api, network, busy: parentBusy, onNavigate, onRunS
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [toast, setToast] = useState("");
+  const [note, setNote] = useState("");
+  const [sttPartial, setSttPartial] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -69,8 +72,9 @@ export function BuilderHome({ api, network, busy: parentBusy, onNavigate, onRunS
           <h3>{home?.tagline || "AI delivers your Monad day"}</h3>
           <p className="muted sm">{home?.one_liner}</p>
           <p className="muted sm doctrine-line">
-            {brief.ai_voice || "Loading your seatbelt…"}
+            {brief.brief_text || brief.ai_voice || "Loading your seatbelt…"}
           </p>
+          <p className="muted sm">Text brief only · no robot voice · mic = speech-to-text for notes/commands</p>
         </div>
         <div className="win-actions">
           <button type="button" className="forge win-btn" disabled={disabled} onClick={runMorning}>
@@ -79,8 +83,22 @@ export function BuilderHome({ api, network, busy: parentBusy, onNavigate, onRunS
           <button type="button" className="ghost" disabled={disabled} onClick={refreshBrief}>
             REFRESH BRIEF
           </button>
+          <MicButton
+            label="Dictate"
+            disabled={disabled}
+            onPartial={setSttPartial}
+            onText={(t) => {
+              setSttPartial("");
+              const low = t.toLowerCase();
+              if (low.includes("morning") || low.includes("check in") || low.includes("start my day")) {
+                runMorning();
+                return;
+              }
+              setNote((n) => (n ? `${n} ${t}` : t));
+            }}
+          />
           <button type="button" className="ghost" onClick={() => onNavigate?.("ai")}>
-            TALK TO AI
+            AI CHAT
           </button>
         </div>
       </div>
@@ -124,8 +142,17 @@ export function BuilderHome({ api, network, busy: parentBusy, onNavigate, onRunS
             </div>
           ))}
           <p className="muted sm" style={{ marginTop: 8 }}>
-            Say to AI: {(home?.ai_phrases || []).map((p) => `"${p}"`).join(" · ")}
+            Type or dictate to AI: {(home?.ai_phrases || []).map((p) => `"${p}"`).join(" · ")}
           </p>
+          <label style={{ marginTop: 10 }}>VOICE → TEXT NOTES (not brief playback)</label>
+          {sttPartial ? <p className="muted sm">…{sttPartial}</p> : null}
+          <textarea
+            className="term-input"
+            style={{ width: "100%", minHeight: 72, marginTop: 6 }}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Dictate or type operator notes…"
+          />
         </article>
         <article>
           <label>WINNING UTILITIES (EASY)</label>

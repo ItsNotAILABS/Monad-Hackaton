@@ -281,15 +281,22 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
 
             m = run_morning(network)
             actions.append({"tool": "builder.morning", "result": {"ok": m.get("ok"), "streak": (m.get("stats") or {}).get("streak")}})
-            replies.append(f"**{m.get('headline')}**\n{m.get('celebration')}\n{m.get('ai_voice')}")
+            replies.append(
+                f"**{m.get('headline')}**\n{m.get('celebration')}\n"
+                f"{m.get('brief_text') or m.get('ai_voice')}\n"
+                "_(text only — no robot voice)_"
+            )
             for s in m.get("steps") or []:
                 replies.append(f"- {s.get('id')}: {s.get('detail')}")
         else:
             from .builder import daily_ai_brief
 
             b = daily_ai_brief(network)
-            actions.append({"tool": "builder.brief", "result": {"mood": b.get("mood"), "streak": (b.get("stats") or {}).get("streak")}})
-            replies.append(f"**MonadBuilder daily brief**\n{b.get('ai_voice')}\n\n{b.get('celebration')}")
+            actions.append({"tool": "builder.brief", "result": {"mood": b.get("mood"), "streak": (b.get("stats") or {}).get("streak"), "tts": False}})
+            replies.append(
+                f"**MonadBuilder daily brief** (text only)\n"
+                f"{b.get('brief_text') or b.get('ai_voice')}\n\n{b.get('celebration')}"
+            )
             for a in (b.get("actions") or [])[:4]:
                 replies.append(f"- {a.get('label')}: {a.get('why')}")
 

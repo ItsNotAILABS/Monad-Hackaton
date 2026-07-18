@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { apiUrl } from "./api.js";
+import { MicButton } from "./MicButton.jsx";
 
 /**
  * Sovereign embedded web terminal — THESIS commands only.
@@ -170,7 +171,7 @@ export function Terminal({ api, network, busy: parentBusy, onNavigate }) {
             <div ref={bottomRef} />
           </div>
           <div className="terminal-input-row">
-            <span className="term-prompt">thesis&gt;</span>
+            <span className="term-prompt">mb&gt;</span>
             <input
               ref={inputRef}
               className="term-input"
@@ -178,14 +179,34 @@ export function Terminal({ api, network, busy: parentBusy, onNavigate }) {
               disabled={disabled}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
-              placeholder="brief | vault | ecosystem USDC | workflow judge | report pdf"
+              placeholder="brief | morning | vault | auto | report pdf"
               autoComplete="off"
               spellCheck={false}
+            />
+            <MicButton
+              label="STT"
+              disabled={disabled}
+              onPartial={(t) => setInput(t)}
+              onText={(t) => {
+                setInput(t);
+                // auto-run common spoken commands
+                const low = t.toLowerCase().trim();
+                if (
+                  ["brief", "morning", "auto", "signals", "help", "vault", "status"].some(
+                    (c) => low === c || low.startsWith(c + " ")
+                  ) ||
+                  low.startsWith("workflow ") ||
+                  low.startsWith("report ")
+                ) {
+                  setTimeout(() => exec(t), 50);
+                }
+              }}
             />
             <button type="button" className="forge" disabled={disabled || !input.trim()} onClick={() => exec()}>
               RUN
             </button>
           </div>
+          <p className="muted sm">Mic = speech-to-text for commands only · briefs stay text (no TTS)</p>
           <p className="muted sm">
             {hints.join(" · ")} · system_shell=
             {String(banner?.system_shell)} · real_keys={String(banner?.real_keys)}

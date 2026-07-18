@@ -24,12 +24,20 @@
 
 ## Addictive (helpful) loop
 
-1. **Hook** — open HQ, AI voice brief  
+1. **Hook** — open HQ, **text** AI brief (no robot TTS)  
 2. **Action** — one-tap morning (check-in · gas · REJECT · signal)  
 3. **Reward** — XP, streak, celebration copy  
 4. **Invest** — reject count + badges = identity as safe operator  
 
 Not doomscroll addiction — **capital-protecting** habit design.
+
+## Speech policy
+
+| Mode | Status |
+|------|--------|
+| **Text briefs** | Always — daily brief / morning copy is text only |
+| **Robot TTS / speechSynthesis** | **Forbidden** for product briefs |
+| **Native speech-to-text** | Yes — notes, terminal commands, AI chat dictation (Web Speech API) |
 
 ## Doctrine
 

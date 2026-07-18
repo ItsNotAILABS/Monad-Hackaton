@@ -10,6 +10,7 @@ import { Tools } from "./Tools.jsx";
 import { Terminal } from "./Terminal.jsx";
 import { HybridHub } from "./HybridHub.jsx";
 import { BuilderHome } from "./BuilderHome.jsx";
+import { MicButton } from "./MicButton.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -1731,11 +1732,12 @@ function App() {
             </article>
 
             <article className="result ai-chat">
-              <label>NODE CHAT</label>
+              <label>NODE CHAT · TEXT OUT · STT IN</label>
               <div className="chat-log">
                 {aiChatLog.length === 0 && (
                   <p className="muted sm">
-                    Try: “sync twins”, “gas tip”, “show balances”, “simulate trade”, “ecosystem USDC”
+                    Type or dictate: “daily brief”, “run my morning”, “sync twins”, “show a reject”.
+                    Replies are text only — no robot voice.
                   </p>
                 )}
                 {aiChatLog.map((m, i) => (
@@ -1755,10 +1757,19 @@ function App() {
                     sendAiChat();
                   }
                 }}
+                placeholder="Type or use mic (speech-to-text)…"
               />
-              <button type="button" className="forge" disabled={busy} onClick={sendAiChat}>
-                Send to AI node →
-              </button>
+              <div className="chips tight" style={{ marginTop: 8 }}>
+                <MicButton
+                  label="Dictate"
+                  disabled={busy}
+                  onPartial={(t) => setAiInput(t)}
+                  onText={(t) => setAiInput(t)}
+                />
+                <button type="button" className="forge" disabled={busy} onClick={sendAiChat}>
+                  Send to AI node →
+                </button>
+              </div>
             </article>
 
             <article className="result">

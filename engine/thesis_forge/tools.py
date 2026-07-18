@@ -209,11 +209,13 @@ def _run_builder_brief(**params) -> Dict[str, Any]:
     b = daily_ai_brief(params.get("network") or "monad-testnet")
     return {
         "ok": True,
-        "proof": (b.get("ai_voice") or "")[:160],
+        "proof": (b.get("brief_text") or b.get("ai_voice") or "")[:160],
         "mood": b.get("mood"),
         "actions": b.get("actions"),
         "stats": b.get("stats"),
         "celebration": b.get("celebration"),
+        "format": "text",
+        "tts": False,
     }
 
 
@@ -544,11 +546,11 @@ TOOLS: List[Dict[str, Any]] = [
         "kind": "habit",
         "who": "user + agent",
         "seconds": 3,
-        "do": "AI voice brief: mood, actions, top signal, gas",
+        "do": "Text-only AI brief: mood, actions, top signal, gas (no robot TTS)",
         "api": "GET /builder/brief",
         "mcp": "thesis_brief",
-        "proof": "ai_voice",
-        "beats_crowd": "Static dashboards without a speaking seatbelt",
+        "proof": "brief_text",
+        "beats_crowd": "Static dashboards without a daily seatbelt",
         "handler": "brief",
     },
 ]

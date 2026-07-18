@@ -62,16 +62,17 @@ def daily_ai_brief(network: str = "monad-testnet") -> Dict[str, Any]:
     if float(day_pnl or 0) < 0:
         mood = "careful"
 
-    ai_voice = (
-        f"Good morning. I'm your {PRODUCT_SHORT} seatbelt. "
+    # TEXT ONLY — never TTS / robot voice. Speech-to-text is for input (notes/exec), not brief playback.
+    brief_text = (
+        f"Good morning. {PRODUCT_SHORT} seatbelt · "
         f"Level {level} · {xp} XP · streak {streak}. "
     )
     if mood == "on_fire":
-        ai_voice += "Streak is hot — keep the loop tiny so you don't break it. "
+        brief_text += "Streak is hot — keep the loop tiny so you don't break it. "
     elif mood == "careful":
-        ai_voice += "Desk is red — shrink size, celebrate rejects, no hero tickets. "
+        brief_text += "Desk is red — shrink size, celebrate rejects, no hero tickets. "
     else:
-        ai_voice += "Three micro-missions. Under five minutes. Then you're free. "
+        brief_text += "Three micro-missions. Under five minutes. Then you're free. "
 
     gas_tip = (gas.get("tip") or {})
     actions: List[Dict[str, Any]] = [
@@ -116,8 +117,14 @@ def daily_ai_brief(network: str = "monad-testnet") -> Dict[str, Any]:
         "network": network,
         "ai_delivered": True,
         "easy": True,
+        "format": "text",
+        "tts": False,
+        "speech_to_text": True,
+        "speech_to_text_for": ["notes", "executions", "terminal", "ai_chat"],
         "mood": mood,
-        "ai_voice": ai_voice,
+        "brief_text": brief_text,
+        # alias kept for older clients — still plain text, never spoken
+        "ai_voice": brief_text,
         "celebration": celebration,
         "tagline": TAGLINE,
         "doctrine": DOCTRINE,
@@ -144,9 +151,9 @@ def daily_ai_brief(network: str = "monad-testnet") -> Dict[str, Any]:
         "missions_today": h.get("missions") or [],
         "badges": h.get("badges") or [],
         "addictive_loop": {
-            "hook": "Open HQ → AI brief speaks",
-            "action": "One tap morning (3 missions)",
-            "reward": "XP + streak + celebration copy",
+            "hook": "Open HQ → read text brief (no robot TTS)",
+            "action": "One tap morning (3 missions) or speak notes/commands via STT",
+            "reward": "XP + streak + celebration text",
             "invest": "Reject count + badges compound identity",
         },
         "one_tap": "POST /builder/morning",
@@ -238,7 +245,9 @@ def run_morning(
             f"lvl {h.get('level')} · rejects {reject_n} · fills {fills}"
         ),
         "celebration": brief.get("celebration"),
-        "ai_voice": brief.get("ai_voice"),
+        "brief_text": brief.get("brief_text") or brief.get("ai_voice"),
+        "format": "text",
+        "tts": False,
         "steps": steps,
         "stats": {
             "xp": h.get("xp"),

@@ -145,9 +145,9 @@ def cmd_brief(args: List[str], network: str) -> Dict[str, Any]:
     b = daily_ai_brief(network)
     lines = [
         "=== MONADBUILDER AI BRIEF ===",
-        str(b.get("ai_voice") or ""),
+        str(b.get("brief_text") or b.get("ai_voice") or ""),
         str(b.get("celebration") or ""),
-        f"mood={b.get('mood')} streak={(b.get('stats') or {}).get('streak')} xp={(b.get('stats') or {}).get('xp')}",
+        f"mood={b.get('mood')} streak={(b.get('stats') or {}).get('streak')} xp={(b.get('stats') or {}).get('xp')} · text-only (no TTS)",
     ]
     for a in (b.get("actions") or [])[:5]:
         lines.append(f"  → {a.get('label')}: {a.get('why')}")
@@ -165,7 +165,8 @@ def cmd_morning(args: List[str], network: str) -> Dict[str, Any]:
         "=== AI MORNING ===",
         m.get("headline") or "",
         m.get("celebration") or "",
-        m.get("ai_voice") or "",
+        m.get("brief_text") or m.get("ai_voice") or "",
+        "format=text · tts=false · use mic for STT notes/commands only",
     ]
     for s in m.get("steps") or []:
         lines.append(f"  {'✓' if s.get('ok') else '·'} {s.get('id')}: {s.get('detail')}")
