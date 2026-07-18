@@ -8,6 +8,13 @@ import {AgentRegistry} from "../src/AgentRegistry.sol";
 import {ProposalBook} from "../src/ProposalBook.sol";
 import {ExecutionRouter} from "../src/ExecutionRouter.sol";
 import {SovereignVault} from "../src/SovereignVault.sol";
+import {LawBook} from "../src/LawBook.sol";
+import {TwinLedger} from "../src/TwinLedger.sol";
+import {CompanyRegistry} from "../src/CompanyRegistry.sol";
+import {GasPolicy} from "../src/GasPolicy.sol";
+import {ThesisMulticall} from "../src/ThesisMulticall.sol";
+import {ExactAllowance} from "../src/ExactAllowance.sol";
+import {ThesisFactory} from "../src/ThesisFactory.sol";
 
 /// @notice Monad-native THESIS kernel deploy (testnet 10143 / mainnet 143).
 /// Docs: https://docs.monad.xyz/guides/deploy-smart-contract/foundry
@@ -24,6 +31,17 @@ contract Deploy is Script {
         ProposalBook proposals = new ProposalBook();
         ExecutionRouter router = new ExecutionRouter();
         SovereignVault vault = new SovereignVault(owner, address(policy), address(receipts));
+        LawBook lawBook = new LawBook(owner);
+        TwinLedger twins = new TwinLedger(owner);
+        CompanyRegistry company = new CompanyRegistry();
+        GasPolicy gasPolicy = new GasPolicy();
+        ThesisMulticall multicall = new ThesisMulticall();
+        ExactAllowance exactAllowance = new ExactAllowance(owner);
+        ThesisFactory factory = new ThesisFactory();
+
+        receipts.setSealer(address(vault), true);
+        // optional: enable sealer gate after vault wired
+        // receipts.setSealerGate(true);
 
         vm.stopBroadcast();
 
@@ -35,6 +53,13 @@ contract Deploy is Script {
         console2.log("ProposalBook", address(proposals));
         console2.log("ExecutionRouter", address(router));
         console2.log("SovereignVault", address(vault));
+        console2.log("LawBook", address(lawBook));
+        console2.log("TwinLedger", address(twins));
+        console2.log("CompanyRegistry", address(company));
+        console2.log("GasPolicy", address(gasPolicy));
+        console2.log("ThesisMulticall", address(multicall));
+        console2.log("ExactAllowance", address(exactAllowance));
+        console2.log("ThesisFactory", address(factory));
         console2.log("PRIMARY_SUBMISSION_ADDRESS", address(vault));
     }
 }
