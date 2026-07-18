@@ -15,6 +15,13 @@ export {
   embedSafe,
   embedFallback,
   inferenceStatus,
+  loadInferenceSettings,
+  saveInferenceSettings,
+  defaultInferenceSettings,
+  resetEmbedder,
+  applyTransformersEnv,
+  probeLocalModel,
+  MODEL_PRESETS,
 } from "./inference.js";
 
 export {

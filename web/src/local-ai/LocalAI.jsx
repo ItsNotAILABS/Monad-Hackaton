@@ -3,11 +3,13 @@ import * as Local from "./index.js";
 
 /**
  * PLATFORM app: browser-local AI
- * Transformers.js · memory · security · knowledge graph · research · docs
+ * Transformers.js (custom models) · memory · security · KG · research · docs
  */
 export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
   const [manifest, setManifest] = useState(null);
   const [inf, setInf] = useState(Local.inferenceStatus());
+  const [modelCfg, setModelCfg] = useState(() => Local.loadInferenceSettings());
+  const [probe, setProbe] = useState(null);
   const [mem, setMem] = useState(null);
   const [graph, setGraph] = useState(null);
   const [sec, setSec] = useState(null);
@@ -30,6 +32,7 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
       const m = await Local.localAiManifest();
       setManifest(m);
       setInf(Local.inferenceStatus());
+      setModelCfg(Local.loadInferenceSettings());
       setMem(m.engines.memory);
       setGraph(m.engines.knowledge_graph);
       setSec(m.engines.security);
@@ -51,15 +54,30 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
     setTimeout(() => setLog(""), 4000);
   }
 
-  async function loadModel() {
+  function patchCfg(partial) {
+    const next = Local.saveInferenceSettings(partial);
+    setModelCfg(next);
+    setInf(Local.inferenceStatus());
+    return next;
+  }
+
+  async function loadModel(force = true) {
     setBusy(true);
     setErr("");
     try {
+      // Persist current form before load
+      Local.saveInferenceSettings(modelCfg);
       await Local.ensureEmbedder({
+        force,
         onProgress: () => setInf(Local.inferenceStatus()),
       });
       setInf(Local.inferenceStatus());
-      flash("Transformers.js model ready (browser cache)");
+      const s = Local.inferenceStatus();
+      flash(
+        s.settings?.offlineOnly
+          ? `Custom/local model ready · ${s.model}`
+          : `Model ready · ${s.model} (remote allowed: ${s.settings?.allowRemoteModels})`
+      );
       await refresh();
     } catch (e) {
       setErr(String(e.message || e));
@@ -67,6 +85,45 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function probeLocal() {
+    setBusy(true);
+    setErr("");
+    try {
+      const r = await Local.probeLocalModel(modelCfg.modelId, modelCfg.localModelPath);
+      setProbe(r);
+      flash(r.ok ? `Found local files · ${r.url}` : "Local model not found under /models/");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function applyOfflinePreset() {
+    patchCfg({
+      offlineOnly: true,
+      allowRemoteModels: false,
+      allowLocalModels: true,
+      localModelPath: "/models/",
+      wasmPaths: "/wasm/",
+      useBrowserCache: true,
+    });
+    flash("Offline preset: remote Hub off · /models/ · /wasm/");
+  }
+
+  function applyHubPreset() {
+    patchCfg({
+      offlineOnly: false,
+      allowRemoteModels: true,
+      allowLocalModels: true,
+      localModelPath: "/models/",
+      wasmPaths: "",
+      useBrowserCache: true,
+      modelId: "Xenova/all-MiniLM-L6-v2",
+    });
+    flash("Hub preset: remote models allowed · WASM CDN default");
   }
 
   async function saveNote() {
@@ -215,8 +272,8 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
           </p>
         </div>
         <div className="win-actions">
-          <button type="button" className="forge win-btn" disabled={disabled} onClick={loadModel}>
-            {inf.ready ? "Model ready ✓" : "Load local model"}
+          <button type="button" className="forge win-btn" disabled={disabled} onClick={() => loadModel(true)}>
+            {inf.ready ? "Reload model" : "Load model"}
           </button>
           <button type="button" className="ghost" disabled={disabled} onClick={runSecurityAudit}>
             Security audit
@@ -246,6 +303,158 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
           </div>
         ))}
       </div>
+
+      {/* Custom models (Transformers.js env) */}
+      <article className="result model-config" style={{ margin: "12px" }}>
+        <label>CUSTOM MODELS · TRANSFORMERS.JS ENV</label>
+        <p className="muted sm">
+          Mirrors Hugging Face settings: <code>env.localModelPath</code>,{" "}
+          <code>env.allowRemoteModels</code>, <code>env.backends.onnx.wasm.wasmPaths</code>. Convert
+          PyTorch → ONNX with Optimum, place under <code>public/models/</code>.
+        </p>
+        <div className="model-grid">
+          <label className="field">
+            <span>Model id (Hub id or local folder name)</span>
+            <input
+              value={modelCfg.modelId || ""}
+              onChange={(e) => setModelCfg((c) => ({ ...c, modelId: e.target.value }))}
+              placeholder="Xenova/all-MiniLM-L6-v2 or all-MiniLM-L6-v2"
+            />
+          </label>
+          <label className="field">
+            <span>localModelPath</span>
+            <input
+              value={modelCfg.localModelPath || ""}
+              onChange={(e) => setModelCfg((c) => ({ ...c, localModelPath: e.target.value }))}
+              placeholder="/models/"
+            />
+          </label>
+          <label className="field">
+            <span>wasmPaths (empty = CDN default)</span>
+            <input
+              value={modelCfg.wasmPaths || ""}
+              onChange={(e) => setModelCfg((c) => ({ ...c, wasmPaths: e.target.value }))}
+              placeholder="/wasm/"
+            />
+          </label>
+          <label className="field">
+            <span>Task</span>
+            <input
+              value={modelCfg.task || "feature-extraction"}
+              onChange={(e) => setModelCfg((c) => ({ ...c, task: e.target.value }))}
+              placeholder="feature-extraction"
+            />
+          </label>
+        </div>
+        <div className="chips tight model-toggles">
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={!!modelCfg.allowRemoteModels && !modelCfg.offlineOnly}
+              onChange={(e) =>
+                setModelCfg((c) => ({
+                  ...c,
+                  allowRemoteModels: e.target.checked,
+                  offlineOnly: e.target.checked ? false : c.offlineOnly,
+                }))
+              }
+            />
+            allowRemoteModels
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={modelCfg.allowLocalModels !== false}
+              onChange={(e) => setModelCfg((c) => ({ ...c, allowLocalModels: e.target.checked }))}
+            />
+            allowLocalModels
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={modelCfg.useBrowserCache !== false}
+              onChange={(e) => setModelCfg((c) => ({ ...c, useBrowserCache: e.target.checked }))}
+            />
+            useBrowserCache
+          </label>
+          <label className="toggle">
+            <input
+              type="checkbox"
+              checked={!!modelCfg.offlineOnly}
+              onChange={(e) =>
+                setModelCfg((c) => ({
+                  ...c,
+                  offlineOnly: e.target.checked,
+                  allowRemoteModels: e.target.checked ? false : c.allowRemoteModels,
+                  allowLocalModels: true,
+                  wasmPaths: e.target.checked ? c.wasmPaths || "/wasm/" : c.wasmPaths,
+                }))
+              }
+            />
+            offline only (no Hub)
+          </label>
+        </div>
+        <div className="chips tight">
+          <button type="button" className="ghost" disabled={disabled} onClick={() => loadModel(true)}>
+            Apply & load
+          </button>
+          <button type="button" className="ghost" disabled={disabled} onClick={probeLocal}>
+            Probe /models/
+          </button>
+          <button type="button" className="ghost" onClick={applyHubPreset}>
+            Hub preset
+          </button>
+          <button type="button" className="ghost" onClick={applyOfflinePreset}>
+            Offline preset
+          </button>
+          {(Local.MODEL_PRESETS || []).map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              className="ghost"
+              onClick={() => {
+                setModelCfg((c) => ({ ...c, modelId: p.id, task: p.task }));
+                flash(`Preset · ${p.label}`);
+              }}
+            >
+              {p.id.split("/").pop()}
+            </button>
+          ))}
+        </div>
+        <div className="kv">
+          <span>Active model</span>
+          <b className="mono sm">{inf.model || modelCfg.modelId}</b>
+        </div>
+        <div className="kv">
+          <span>State</span>
+          <b>
+            {inf.state}
+            {inf.state === "loading" ? ` ${inf.progress}%` : ""}
+            {inf.error ? ` · ${inf.error}` : ""}
+          </b>
+        </div>
+        <div className="kv">
+          <span>env applied</span>
+          <b className="muted sm mono">
+            path={inf.settings?.localModelPath} · remote={String(inf.settings?.allowRemoteModels)} ·
+            wasm={inf.settings?.wasmPaths || "CDN"}
+          </b>
+        </div>
+        {probe && (
+          <p className={`muted sm ${probe.ok ? "up" : "down"}`}>
+            Probe: {probe.ok ? `OK ${probe.url}` : `miss · ${(probe.tried || []).join(" · ")}`}
+            {!probe.ok && probe.hint ? ` — ${probe.hint}` : ""}
+          </p>
+        )}
+        <pre className="code sm doc-preview">{`# Convert with Optimum (once)
+pip install "optimum[onnxruntime]" transformers
+optimum-cli export onnx --model sentence-transformers/all-MiniLM-L6-v2 --task feature-extraction ./web/public/models/all-MiniLM-L6-v2
+
+# WASM offline
+powershell -File scripts/setup-transformers-assets.ps1
+# → web/public/wasm/  then set wasmPaths=/wasm/
+`}</pre>
+      </article>
 
       <div className="grid3">
         <article className="result">

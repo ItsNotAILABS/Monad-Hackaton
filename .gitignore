@@ -7,6 +7,12 @@ node_modules/
 dist/
 out/
 cache/
+# Large offline Transformers.js assets (generate via scripts/setup-transformers-assets.ps1)
+web/public/wasm/*.wasm
+web/public/wasm/*.mjs
+web/public/models/**
+!web/public/models/README.md
+!web/public/wasm/README.md
 broadcast/
 .DS_Store
 projects/
