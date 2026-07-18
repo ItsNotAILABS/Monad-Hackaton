@@ -79,6 +79,9 @@ function App() {
   const [receipts, setReceipts] = useState([]);
   const [desk, setDesk] = useState(null);
   const [deskArena, setDeskArena] = useState(null);
+  const [markFeed, setMarkFeed] = useState(null);
+  const [strategyRun, setStrategyRun] = useState(null);
+  const [vaultRoute, setVaultRoute] = useState(null);
   const [ticketForm, setTicketForm] = useState({
     venue_id: "kuru",
     pair: "MON/USDC",
@@ -283,6 +286,63 @@ function App() {
     try {
       setDesk(await api("/desk/reset", { method: "POST", body: "{}" }));
       setDeskArena(null);
+      setStrategyRun(null);
+      setVaultRoute(null);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshMarks() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api(`/desk/marks/refresh?network=${network}`, {
+        method: "POST",
+        body: "{}",
+      });
+      setMarkFeed(data.feed);
+      setDesk(data.desk);
+      if (data.desk?.marks?.[ticketForm.pair]) {
+        setTicketForm((f) => ({ ...f, limit_price: data.desk.marks[f.pair] }));
+      }
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function runStrategy(id) {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api(`/desk/strategies/${id}?submit=true`, {
+        method: "POST",
+        body: "{}",
+      });
+      setStrategyRun(data);
+      setDesk(data.desk);
+      setTab("desk");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function routeVault(ticketId) {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api(`/desk/vault-route/${ticketId}`, {
+        method: "POST",
+        body: "{}",
+      });
+      setVaultRoute(data);
+      if (data.desk) setDesk(data.desk);
     } catch (e) {
       setErr(String(e.message || e));
     } finally {
@@ -649,6 +709,34 @@ function App() {
               <button type="button" className="forge" disabled={busy} onClick={runDeskArena}>
                 RUN DESK ARENA (agents) →
               </button>
+              <button type="button" className="ghost block" disabled={busy} onClick={refreshMarks}>
+                Refresh live marks
+              </button>
+              {markFeed && (
+                <p className="muted sm">
+                  Marks · {markFeed.meta?.entropy || "feed"} · MON{" "}
+                  {markFeed.marks?.["MON/USDC"]?.toFixed?.(4) ?? markFeed.marks?.["MON/USDC"]}
+                </p>
+              )}
+              <label>STRATEGIES</label>
+              <div className="chips col">
+                {(desk?.strategies || [
+                  { id: "market-make", name: "Market make" },
+                  { id: "inventory", name: "Inventory" },
+                  { id: "take-profit", name: "Take profit" },
+                ]).map((s) => (
+                  <button key={s.id} type="button" className="on" disabled={busy} onClick={() => runStrategy(s.id)}>
+                    {s.name || s.id}
+                    {s.tagline ? ` — ${s.tagline}` : ""}
+                  </button>
+                ))}
+              </div>
+              {strategyRun && (
+                <p className="muted sm">
+                  Strategy {strategyRun.strategy?.id}: {strategyRun.n_accepted} accept / {strategyRun.n_rejected}{" "}
+                  reject
+                </p>
+              )}
               <button type="button" className="ghost block" disabled={busy} onClick={resetDeskBook}>
                 Reset paper book
               </button>
@@ -821,6 +909,18 @@ function App() {
                         Paper fill
                       </button>
                     )}
+                    {(t.status === "risk_accepted" ||
+                      t.status === "paper_filled" ||
+                      t.status === "routed_sim") && (
+                      <button
+                        type="button"
+                        className="ghost"
+                        disabled={busy}
+                        onClick={() => routeVault(t.ticket_id)}
+                      >
+                        Vault route sim
+                      </button>
+                    )}
                     {t.reasons?.length > 0 && t.status === "risk_rejected" && (
                       <ul>
                         {t.reasons.slice(0, 3).map((r) => (
@@ -831,6 +931,17 @@ function App() {
                   </div>
                 ))}
               </div>
+              {vaultRoute && (
+                <>
+                  <label>VAULT ROUTE</label>
+                  <Pill ok={vaultRoute.would_execute}>
+                    {vaultRoute.would_execute ? "WOULD EXECUTE" : "BLOCKED"}
+                  </Pill>
+                  <p className="muted sm">{vaultRoute.narrative}</p>
+                  {vaultRoute.cast_command && <pre className="code sm">{vaultRoute.cast_command}</pre>}
+                  {vaultRoute.next && <p className="muted sm">{vaultRoute.next}</p>}
+                </>
+              )}
               <label>Venues</label>
               <div className="proto-list" style={{ maxHeight: 160 }}>
                 {(desk?.venues || []).map((v) => (

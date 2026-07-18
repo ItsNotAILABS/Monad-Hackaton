@@ -214,9 +214,48 @@ def test_trading_desk():
     assert t2.status == "risk_rejected"
 
 
+def test_marks_strategies_vault_route():
+    from thesis_forge.marks import live_marks, apply_marks_to_desk
+    from thesis_forge.strategies import run_strategy
+    from thesis_forge.trading import TradeTicket, load_desk, paper_fill, propose_ticket, reset_desk
+    from thesis_forge.vault_route import simulate_vault_route
+
+    feed = live_marks("monad-testnet")
+    assert "MON/USDC" in feed["marks"]
+    assert feed["marks"]["MON/USDC"] > 0
+
+    desk = reset_desk()
+    apply_marks_to_desk(desk, "monad-testnet")
+    assert desk.marks.get("MON/USDC")
+
+    mm = run_strategy("market-make", submit=True)
+    assert mm["ok"] and mm["n"] >= 2
+
+    desk = load_desk()
+    t = propose_ticket(
+        desk,
+        TradeTicket(
+            agent="route-test",
+            venue_id="kuru",
+            pair="MON/USDC",
+            side="buy",
+            qty=5,
+            limit_price=1.0,
+            slippage_bps=15,
+            leverage_bps=10000,
+            rationale="vault route test",
+        ),
+    )
+    assert t.status == "risk_accepted"
+    paper_fill(desk, t.ticket_id)
+    route = simulate_vault_route(t.ticket_id)
+    assert route["ok"] and route["would_execute"]
+    assert route["calldata"]["function"].startswith("execute")
+
+
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "0.4.0"
+    assert c.get("/health").json()["version"] == "0.4.1"
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",

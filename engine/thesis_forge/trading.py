@@ -582,6 +582,12 @@ def run_desk_arena(desk: DeskState) -> Dict[str, Any]:
 def desk_snapshot(desk: DeskState | None = None) -> Dict[str, Any]:
     d = desk or load_desk()
     _revalue(d)
+    try:
+        from .strategies import list_strategies
+
+        strategies = list_strategies()
+    except Exception:
+        strategies = []
     return {
         "schema": "thesis.trading.snapshot.v1",
         "cash_usdc": d.cash_usdc,
@@ -596,12 +602,16 @@ def desk_snapshot(desk: DeskState | None = None) -> Dict[str, Any]:
         "tickets_recent": [t.model_dump(mode="json") for t in d.tickets[:25]],
         "venues": list_venues(),
         "marks": d.marks,
+        "strategies": strategies,
         "paper_mode": d.limits.paper_mode,
         "updated_at": d.updated_at,
         "business": {
             "name": "THESIS Trading Desk",
             "model": "Agent-assisted trading under desk risk + onchain vault gate",
             "live_execution": False,
+            "strategies": ["market-make", "inventory", "take-profit"],
+            "vault_route": "POST /desk/vault-route/{ticket_id}",
+            "marks_feed": "POST /desk/marks/refresh",
             "note": "Integrate exchange/venue keys only in operator runtime — never in browser.",
         },
     }

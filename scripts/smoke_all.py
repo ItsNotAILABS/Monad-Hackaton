@@ -50,6 +50,14 @@ def main() -> int:
     assert da["n_rejected"] >= 1
     print("desk arena", da["n_accepted"], "accept", da["n_rejected"], "reject")
 
+    marks = c.post("/desk/marks/refresh").json()
+    assert marks.get("ok") and marks.get("feed", {}).get("marks")
+    print("marks", marks["feed"]["marks"].get("MON/USDC"))
+
+    st = c.post("/desk/strategies/market-make").json()
+    assert st.get("ok")
+    print("strategy", st["strategy"]["id"], st["n_accepted"], "accept")
+
     print("SMOKE_OK")
     return 0
 

@@ -32,6 +32,8 @@ from .pipeline import run_pipeline
 from .policy import arena_report, evaluate
 from .receipts import recent, seal, tip
 from .rpc_probe import probe_network
+from .marks import apply_marks_to_desk, live_marks
+from .strategies import list_strategies, run_strategy
 from .trading import (
     TradeTicket,
     TradingLimits,
@@ -46,11 +48,12 @@ from .trading import (
     update_limits,
     update_policy,
 )
+from .vault_route import simulate_vault_route
 from .workspace import list_projects, load_project, save_project
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="Monad AI Workstation v0.4 — Studio · Codex · Nomos · Desk · Academy · Pipeline",
+    description="Monad AI Workstation v0.4.1 — Studio · Codex · Nomos · Desk (strategies/marks/vault-route) · Academy",
     version=__version__,
 )
 
@@ -453,6 +456,43 @@ def desk_policy(body: Policy):
 def desk_mark(body: MarkIn):
     desk = set_mark(load_desk(), body.pair, body.price)
     return desk_snapshot(desk)
+
+
+@app.get("/desk/marks")
+def desk_marks_live(network: str = Query("monad-testnet")):
+    """Live synthetic mark feed (RPC-entropy when available)."""
+    return live_marks(network)
+
+
+@app.post("/desk/marks/refresh")
+def desk_marks_refresh(network: str = Query("monad-testnet")):
+    desk = load_desk()
+    result = apply_marks_to_desk(desk, network=network)
+    return {"ok": True, **result, "desk": desk_snapshot(desk)}
+
+
+@app.get("/desk/strategies")
+def desk_strategies():
+    return {"strategies": list_strategies()}
+
+
+@app.post("/desk/strategies/{strategy_id}")
+def desk_run_strategy(strategy_id: str, submit: bool = Query(True)):
+    out = run_strategy(strategy_id, submit=submit)
+    if not out.get("ok"):
+        raise HTTPException(404, out.get("error", "strategy failed"))
+    out["desk"] = desk_snapshot()
+    return out
+
+
+@app.post("/desk/vault-route/{ticket_id}")
+def desk_vault_route(ticket_id: str):
+    """Simulate SovereignVault.execute for a desk ticket (no broadcast)."""
+    out = simulate_vault_route(ticket_id)
+    if out.get("error") and not out.get("ok"):
+        raise HTTPException(400, out["error"])
+    out["desk"] = desk_snapshot()
+    return out
 
 
 @app.post("/desk/reset")

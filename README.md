@@ -72,6 +72,9 @@ python ../scripts/smoke_all.py
 | POST | `/desk/arena` | Trading-agent arena (mm/degen/arb/whale) |
 | POST | `/desk/ticket` | Risk-gate a trade ticket |
 | POST | `/desk/fill/{id}` | Paper fill accepted ticket |
+| POST | `/desk/marks/refresh` | Live synthetic marks (+ RPC entropy) |
+| POST | `/desk/strategies/{id}` | market-make · inventory · take-profit |
+| POST | `/desk/vault-route/{id}` | Simulate `SovereignVault.execute` calldata |
 | POST | `/academy/grade` | Grade lab |
 | GET | `/workspace/projects` | List saved projects |
 | GET | `/rpc/probe` | Live Monad chainId check |
