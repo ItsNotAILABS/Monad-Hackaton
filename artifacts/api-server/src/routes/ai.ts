@@ -9,8 +9,13 @@
  */
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
+import { aiRateLimiter } from "../middlewares/rateLimiter";
 
 export const aiRouter = Router();
+
+// Apply rate limiting to all AI endpoints (40 requests / 15 min per IP)
+// Implemented in middlewares/rateLimiter.ts — uses req.ip with trust proxy
+aiRouter.use(aiRateLimiter);
 
 const MONAD_SYSTEM = `You are the MonadBuilder+ AI — an expert on:
 - MonadBuilder+: a no-code drag-and-drop dApp builder for Monad blockchain
@@ -172,36 +177,8 @@ chainRouter.get("/gas", async (_req, res) => {
   }
 });
 
-// ─── Rate limiter (in-memory, per-IP, sliding window) ─────────────────────
-const rateLimitWindows = new Map<string, number[]>();
-const RATE_LIMIT_MAX = 40;
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
-
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
-  const now = Date.now();
-  const cutoff = now - RATE_LIMIT_WINDOW_MS;
-  const hits = (rateLimitWindows.get(ip) ?? []).filter((t) => t > cutoff);
-  if (hits.length >= RATE_LIMIT_MAX) {
-    const oldest = hits[0];
-    const retryAfter = Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
-  hits.push(now);
-  rateLimitWindows.set(ip, hits);
-  return { allowed: true, retryAfter: 0 };
-}
-
-aiRouter.use((req, res, next) => {
-  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
-  const { allowed, retryAfter } = checkRateLimit(ip);
-  if (!allowed) {
-    res.status(429).json({ error: "Rate limit exceeded — too many AI requests. Please wait.", retryAfter });
-    return;
-  }
-  next();
-});
-
 // ─── Streaming chat ────────────────────────────────────────────────────────
+// Model: gpt-5.6-luna — conversational, not essay-length; 4096 tokens is plenty
 aiRouter.post("/chat", async (req, res) => {
   const { messages = [], context = "" } = req.body as {
     messages: { role: string; content: string }[];
@@ -218,8 +195,8 @@ aiRouter.post("/chat", async (req, res) => {
       : MONAD_SYSTEM;
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-5-nano",       // lightweight: conversational responses don't need heavy reasoning
-      max_completion_tokens: 4096,
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 4096, // conversational; 4096 is more than enough for chat
       messages: [
         { role: "system", content: systemContent },
         ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -239,6 +216,7 @@ aiRouter.post("/chat", async (req, res) => {
 });
 
 // ─── Component generator ──────────────────────────────────────────────────
+// Model: gpt-5.6-luna — output is a tiny JSON blob; 512 tokens is generous
 aiRouter.post("/generate-component", async (req, res) => {
   const { prompt, existingTypes = [] } = req.body as {
     prompt: string;
@@ -247,8 +225,8 @@ aiRouter.post("/generate-component", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: nano truncates JSON mid-output; mini is reliable + still cheap
-      max_completion_tokens: 1024,
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 512, // JSON component config is small; 512 is plenty
       messages: [
         {
           role: "system",
@@ -308,6 +286,7 @@ Common props by type:
 });
 
 // ─── Analyzer (contract / gas / dApp) ────────────────────────────────────
+// Model: gpt-5.6-terra — analysis requires deeper reasoning quality; 4096 tokens for structured output
 aiRouter.post("/analyze", async (req, res) => {
   const { type, data } = req.body as {
     type: "contract" | "gas" | "dapp" | "law";
@@ -327,8 +306,8 @@ aiRouter.post("/analyze", async (req, res) => {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: analysis needs some reasoning, but not the heavyweight models
-      max_completion_tokens: 4096,
+      model: "gpt-5.6-terra", // terra: analysis needs reasoning quality, not just speed
+      max_completion_tokens: 4096, // structured multi-section analysis; 4096 is sufficient
       messages: [
         { role: "system", content: MONAD_SYSTEM },
         { role: "user", content: prompts[type] ?? `Analyze: ${data}` },
@@ -348,6 +327,7 @@ aiRouter.post("/analyze", async (req, res) => {
 });
 
 // ─── Build dApp from prompt ────────────────────────────────────────────────
+// Model: gpt-5.6-terra — full dApp generation needs reasoning quality; 2048 for 5-6 component JSON
 aiRouter.post("/build-dapp", async (req, res) => {
   const { prompt } = req.body as { prompt: string };
 
@@ -358,8 +338,8 @@ aiRouter.post("/build-dapp", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: reliable JSON output; token budget raised for 5-6 component objects
-      max_completion_tokens: 3072,
+      model: "gpt-5.6-terra", // terra: full dApp layout needs coherent multi-component reasoning
+      max_completion_tokens: 2048, // 5-6 component JSON fits comfortably in 2048
       messages: [
         {
           role: "system",
@@ -449,6 +429,7 @@ Common props:
 });
 
 // ─── Audit dApp (streaming) ────────────────────────────────────────────────
+// Model: gpt-5.6-terra — structured audit with multiple reasoning sections; 4096 for thorough output
 aiRouter.post("/audit-dapp", async (req, res) => {
   const { projectName, components } = req.body as {
     projectName: string;
@@ -488,8 +469,8 @@ Be specific to the actual components listed. Do not give generic advice.`;
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: structured audit with sections needs reliable formatting
-      max_completion_tokens: 3072,
+      model: "gpt-5.6-terra", // terra: multi-section audit requires coherent reasoning quality
+      max_completion_tokens: 4096, // structured audit with 5 sections; 4096 covers it fully
       messages: [
         { role: "system", content: MONAD_SYSTEM },
         { role: "user", content: auditPrompt },
@@ -526,7 +507,7 @@ aiRouter.post("/recommend-template", async (req, res) => {
       .join("\n");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: nano produces empty JSON; mini is still fast and cheap
+      model: "gpt-5.6-luna",
       max_completion_tokens: 256,
       messages: [
         {
@@ -554,6 +535,7 @@ Return ONLY valid JSON — no markdown:
 });
 
 // ─── Refine dApp from follow-up prompt ───────────────────────────────────
+// Model: gpt-5.6-terra — refining a layout needs coherent multi-component reasoning
 aiRouter.post("/refine-dapp", async (req, res) => {
   const { projectName, currentComponents, refinementPrompt } = req.body as {
     projectName: string;
@@ -575,8 +557,8 @@ aiRouter.post("/refine-dapp", async (req, res) => {
       .join("\n") || "(canvas is empty)";
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: reliable JSON for multi-component layout
-      max_completion_tokens: 3072,
+      model: "gpt-5.6-terra", // terra: refine needs the same reasoning quality as build-dapp
+      max_completion_tokens: 2048, // updated layout is similar size to original; 2048 is sufficient
       messages: [
         {
           role: "system",
@@ -672,6 +654,7 @@ Return an updated component list that incorporates this instruction.`,
 });
 
 // ─── Script generator ─────────────────────────────────────────────────────
+// Model: gpt-5.6-luna — scripts are short and straightforward; 2048 tokens is plenty
 aiRouter.post("/script", async (req, res) => {
   const { prompt, lang = "python" } = req.body as {
     prompt: string;
@@ -685,8 +668,8 @@ aiRouter.post("/script", async (req, res) => {
         : "Generate Node.js using only built-in fetch (Node 18+). No npm installs.";
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",       // mini: script generation needs accurate stdlib-only code
-      max_completion_tokens: 1536,
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 2048, // scripts are short; 2048 covers any reasonable Monad script
       messages: [
         {
           role: "system",

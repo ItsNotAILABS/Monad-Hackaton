@@ -101,6 +101,7 @@ export default function Templates() {
   const [recommending, setRecommending] = useState(false);
   const [recommendedId, setRecommendedId] = useState<number | null>(null);
   const [recommendReason, setRecommendReason] = useState("");
+  const [recommendError, setRecommendError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Context-aware AI
@@ -120,6 +121,7 @@ export default function Templates() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setRecommending(true);
+      setRecommendError("");
       try {
         const result = await recommendTemplate(
           searchDesc,
@@ -134,7 +136,9 @@ export default function Templates() {
           setRecommendedId(result.templateId);
           setRecommendReason(result.reason);
         }
-      } catch {}
+      } catch (err: any) {
+        setRecommendError(err.message ?? "Couldn't get a recommendation — try again.");
+      }
       setRecommending(false);
     }, 600);
 
@@ -185,13 +189,13 @@ export default function Templates() {
               <input
                 type="text"
                 value={searchDesc}
-                onChange={(e) => { setSearchDesc(e.target.value); setRecommendedId(null); }}
+                onChange={(e) => { setSearchDesc(e.target.value); setRecommendedId(null); setRecommendError(""); }}
                 placeholder="Describe your dApp idea and AI will find the best template…"
                 className="flex-1 bg-transparent text-white placeholder-white/25 px-3 py-3 text-sm outline-none"
               />
               {searchDesc && (
                 <button
-                  onClick={() => { setSearchDesc(""); setRecommendedId(null); setRecommendReason(""); }}
+                  onClick={() => { setSearchDesc(""); setRecommendedId(null); setRecommendReason(""); setRecommendError(""); }}
                   className="mr-3 text-white/20 hover:text-white/50 transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -199,6 +203,11 @@ export default function Templates() {
               )}
             </div>
           </div>
+
+          {/* Recommendation error (e.g. rate limit) */}
+          {recommendError && !recommending && (
+            <p className="mt-2 text-xs text-amber-400/80 pl-1">⚠ {recommendError}</p>
+          )}
 
           {/* Recommendation result */}
           {recommendedId && recommendReason && !recommending && (

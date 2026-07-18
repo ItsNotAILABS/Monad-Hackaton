@@ -1,10 +1,11 @@
 /**
  * AI client utilities for MonadBuilder+ frontend.
  * All streaming endpoints parse SSE data: {...} lines.
+ * 429 responses are surfaced as user-readable error messages.
  *
  * Model tiers used server-side:
- *   gpt-5-nano  — chat, component gen, template match (fast, cheapest)
- *   gpt-5-mini  — analyze, build-dapp, audit, scripts (needs reliable reasoning)
+ *   gpt-5.6-luna  — chat, component gen, template match, script (fast, conversational)
+ *   gpt-5.6-terra — analyze, build-dapp, refine-dapp, audit (needs reasoning quality)
  */
 
 const AI_BASE = "/api/ai";
@@ -24,8 +25,8 @@ export class RateLimitError extends Error {
   }
 }
 
-/** Check a non-streaming response for rate limit errors. */
-async function guardJson(res: Response) {
+/** Check a non-streaming response for rate limit errors, throw RateLimitError if 429. */
+async function guardJson(res: Response): Promise<Response> {
   if (res.status === 429) {
     const body = await res.json().catch(() => ({}));
     throw new RateLimitError(body.retryAfter ?? 60);
@@ -114,6 +115,7 @@ export async function streamAnalysis(
         const payload = JSON.parse(line.slice(6));
         if (payload.content) onChunk(payload.content);
         if (payload.done) { onDone(); return; }
+        if (payload.error) { onChunk(`\n⚠ ${payload.error}`); onDone(); return; }
       } catch {}
     }
   }

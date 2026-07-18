@@ -277,8 +277,13 @@ function ScriptWriterTab() {
     if (!prompt.trim() || loading) return;
     setScript("");
     setLoading(true);
-    const result = await generateScript(prompt, lang);
-    setScript(result ?? "// Error generating script");
+    try {
+      const result = await generateScript(prompt, lang);
+      setScript(result ?? "// Error generating script");
+    } catch (err: any) {
+      // Surface rate-limit and other errors directly in the editor
+      setScript(`// ⚠ ${err.message ?? "Error generating script — try again."}`);
+    }
     setLoading(false);
   }, [prompt, lang, loading]);
 

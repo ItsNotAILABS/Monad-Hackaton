@@ -32,14 +32,19 @@ export function AIComponentPrompt({ existingTypes, onAdd }: Props) {
     setError("");
     setLastResult(null);
     setLoading(true);
-    const result = await generateComponent(t, existingTypes);
-    setLoading(false);
-    if (result) {
-      setLastResult({ type: result.type, name: result.name, reasoning: result.reasoning });
-      setPrompt("");
-      onAdd(result.type, result.props ?? {});
-    } else {
-      setError("Couldn't generate a component — try rephrasing.");
+    try {
+      const result = await generateComponent(t, existingTypes);
+      setLoading(false);
+      if (result) {
+        setLastResult({ type: result.type, name: result.name, reasoning: result.reasoning });
+        setPrompt("");
+        onAdd(result.type, result.props ?? {});
+      } else {
+        setError("Couldn't generate a component — try rephrasing.");
+      }
+    } catch (err: any) {
+      setLoading(false);
+      setError(err.message ?? "Couldn't generate a component — try rephrasing.");
     }
   }, [loading, existingTypes, onAdd]);
 

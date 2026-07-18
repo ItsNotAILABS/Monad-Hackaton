@@ -5,6 +5,9 @@
 ## Project Name
 **MonadBuilder+**
 
+## Hackathon Category
+**Best Developer Tooling / Infrastructure**
+
 ## One-liner
 A no-code drag-and-drop builder for shipping Monad dApps in minutes — not days.
 
@@ -26,7 +29,7 @@ I'm not alone. Monad's design is built for 10,000 TPS and 400ms blocks. The bott
 
 ## What It Does
 
-A visual, drag-and-drop workspace where you assemble a Monad dApp from pre-built components — no code required.
+A visual, drag-and-drop workspace where you assemble a Monad dApp from pre-built components — no code required. Describe your idea in one sentence, and the AI builds the entire dApp layout for you — then refine it, drag things around, and preview the live result.
 
 **Builder components (all pre-wired to Monad Mainnet, Chain ID 143):**
 - 🔌 Wallet Connect — MetaMask/injected, correct chain ID baked in
@@ -37,8 +40,16 @@ A visual, drag-and-drop workspace where you assemble a Monad dApp from pre-built
 - 📈 Price Chart — MON/USD chart widget
 - 📋 Transaction Feed — Recent activity with MonadVision deep links
 
+**AI features:**
+- **Instant dApp generation** — describe your idea, get a full 5-6 component layout in seconds
+- **AI component prompt** — add individual components from natural language inside the builder
+- **AI audit** — get a scored code review of your dApp against Monad best practices and THESIS OS governance rules
+- **Script writer** — generate Python/JS scripts that interact with Monad's RPC
+- **AI assistant** — floating chat widget with Monad + THESIS OS context on every page
+- **THESIS OS integration** — governance modules (EcosystemLaw, PolicyKernel, ReceiptChain) accessible from the builder
+
 **The workflow:**
-1. Pick a template (DeFi Dashboard, NFT Collection, DAO Governance, Token Landing Page, Portfolio Tracker)
+1. Pick a template (DeFi Dashboard, NFT Collection, DAO Governance, Token Landing Page, Portfolio Tracker) **or** describe your idea and let AI generate it
 2. Drag components onto the canvas, reorder freely
 3. Tweak properties in the inspector panel (token name, title, columns, etc.)
 4. Preview the live dApp in full-screen
@@ -74,6 +85,7 @@ There are 600+ people registered for this hackathon. Most of them had ideas they
 |---|---|
 | Frontend | React + Vite, Tailwind CSS, Framer Motion, shadcn/ui |
 | Backend | Express 5, Drizzle ORM, PostgreSQL |
+| AI | OpenAI via Replit AI Integrations proxy (model tiering: luna for chat/generation, terra for analysis/audit) |
 | API | OpenAPI spec, auto-generated TypeScript client |
 | Monorepo | pnpm workspaces |
 | Network | Monad Mainnet (Chain ID 143) |
@@ -83,13 +95,14 @@ There are 600+ people registered for this hackathon. Most of them had ideas they
 
 ## Demo
 
-**Live app:** [link to deployed app]
+**Live app:** _(deploy via Replit Publish to get the `.replit.app` URL — update this line after publishing)_
 
 **What to try:**
-1. Open the builder — pick the "DeFi Dashboard" template
+1. Open the builder — pick the "DeFi Dashboard" template **or** type your idea and hit "Build with AI"
 2. Drag a Token Swap component onto the canvas
 3. Hit Preview — see a fully styled Monad dApp, correctly networked
-4. Publish — get a live URL in under a second
+4. Click "AI Audit" — get a scored assessment of your dApp's production readiness
+5. Open the AI Assistant (✨ bottom-right) — ask anything about Monad or THESIS OS
 
 ---
 
