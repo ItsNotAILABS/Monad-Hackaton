@@ -743,7 +743,9 @@ def platform_status(network: str = "monad-testnet") -> Dict[str, Any]:
 
     return {
         "schema": "thesis.platform.v1",
-        "product": "THESIS Platform",
+        "product": "MonadBuilder HQ",
+        "engine": "THESIS",
+        "tagline": "AI delivers your Monad day — briefs, brakes, and wins you actually feel.",
         "version": __version__,
         "what_this_is": (
             "A Monad DeFi platform hosted as a web app: shared primitives, first-party apps, "

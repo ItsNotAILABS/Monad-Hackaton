@@ -104,10 +104,15 @@ from .reports import list_reports, resolve_report_file, write_full_report
 from .signals import generate_signals, signal_to_ticket
 from .auto_exec import auto_loop, auto_paper_from_signals, auto_strategy_run, intelligence_pulse
 from .hybrid import hybrid_catalog, run_hybrid_node
+from .brand import PRODUCT, PRODUCT_SHORT, TAGLINE, brand_payload
+from .builder import builder_home, daily_ai_brief, run_morning, utilities_catalog
 
 app = FastAPI(
-    title="THESIS Platform API",
-    description="THESIS Platform — cloud engines + app runtime for Monad-hosted web ops",
+    title=f"{PRODUCT} API",
+    description=(
+        f"{PRODUCT} — AI-delivered Monad DeFi Company OS. "
+        f"Daily briefs, seatbelt loops, signals, hybrid workers. Engine: THESIS. {TAGLINE}"
+    ),
     version=__version__,
 )
 
@@ -466,6 +471,43 @@ class HybridRunIn(BaseModel):
 def hybrid_get():
     """Novel tech: blockchain + Web Worker / Node worker_threads hybrid catalog."""
     return hybrid_catalog()
+
+
+@app.get("/brand")
+def brand_get():
+    """Product brand: MonadBuilder HQ (name collisions documented)."""
+    return brand_payload()
+
+
+@app.get("/builder")
+def builder_get(network: str = Query("monad-testnet")):
+    """MonadBuilder HQ home — easy start, AI brief, utilities."""
+    return builder_home(network)
+
+
+@app.get("/builder/brief")
+def builder_brief(network: str = Query("monad-testnet")):
+    """AI-delivered daily brief — addictive helpful seatbelt."""
+    return daily_ai_brief(network)
+
+
+@app.get("/builder/utilities")
+def builder_utilities():
+    """Winning easy utilities (one tap / one AI phrase)."""
+    return utilities_catalog()
+
+
+class BuilderMorningIn(BaseModel):
+    network: str = "monad-testnet"
+    auto_reject: bool = True
+    auto_signals: bool = True
+
+
+@app.post("/builder/morning")
+def builder_morning(body: BuilderMorningIn | None = None):
+    """One-tap AI morning: check-in + gas + REJECT + optional paper signal."""
+    b = body or BuilderMorningIn()
+    return run_morning(b.network, auto_reject=b.auto_reject, auto_signals=b.auto_signals)
 
 
 @app.post("/hybrid/run")
@@ -929,9 +971,13 @@ def health():
     dep = _load_deployment()
     return {
         "status": "operational",
-        "product": "THESIS Platform",
+        "product": PRODUCT,
+        "product_short": PRODUCT_SHORT,
+        "engine": "THESIS",
+        "tagline": TAGLINE,
         "version": __version__,
         "kind": "platform",
+        "ai_delivered": True,
         "network_default": "monad-testnet",
         "pillars": PILLARS,
         "stages": pipeline_stages(),
@@ -943,6 +989,10 @@ def health():
             "chainId": dep.get("chainId") or dep.get("chain_id"),
         },
         "endpoints": [
+            "/builder",
+            "/builder/brief",
+            "/builder/morning",
+            "/brand",
             "/platform",
             "/platform/apps",
             "/platform/apps/{id}/invoke",
@@ -992,8 +1042,9 @@ def health():
             "/judge",
         ],
         "doctrine": (
-            "THESIS Platform: shared primitives (identity, law, capital, market, intel, forge). "
-            "Apps plug in. Agents propose. Laws decide. Owner signs. Receipts remember."
+            f"{PRODUCT}: shared primitives (identity, law, capital, market, intel, forge). "
+            "Apps plug in. Agents propose. Laws decide. Owner signs. Receipts remember. "
+            "AI delivers the morning brief."
         ),
         "trading": desk_snapshot(),
         "daily": leaderboard_self(),

@@ -298,6 +298,22 @@ def main() -> int:
     assert hr.get("ok") is not False
     print("hybrid", hy.get("novel_tech"), "run_ok", hr.get("ok"))
 
+    brand = c.get("/brand").json()
+    assert "MonadBuilder" in (brand.get("product") or "")
+    br = c.get("/builder/brief").json()
+    assert br.get("ai_delivered") and br.get("ai_voice")
+    bm = c.post("/builder/morning", json={"network": "monad-testnet"}).json()
+    assert bm.get("ok") is not False and bm.get("headline")
+    print(
+        "builder",
+        brand.get("product_short"),
+        "brief_mood",
+        br.get("mood"),
+        "morning",
+        (bm.get("stats") or {}).get("streak"),
+        bm.get("celebration", "")[:40],
+    )
+
     print("SMOKE_OK")
     return 0
 

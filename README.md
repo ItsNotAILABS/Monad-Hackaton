@@ -2,15 +2,16 @@
   <img src="docs/assets/thesis-icon.jpg" alt="THESIS Platform" width="120" height="120" />
 </p>
 
-<h1 align="center">THESIS Platform</h1>
+<h1 align="center">MonadBuilder HQ</h1>
 
 <p align="center">
-  <strong>Your Monad DeFi company OS</strong> — agents propose, laws decide, receipts remember.<br/>
-  Hosted web HQ · cloud engines · polyglot intelligence · on-chain vault.
+  <strong>AI delivers your Monad day</strong> — briefs, brakes, signals, streaks.<br/>
+  Easy utilities · Company OS · dual-stack law · engine: THESIS
 </p>
 
 <p align="center">
-  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/version-2.10-6d4aff?style=for-the-badge&labelColor=0a0b12" alt="Version" /></a>
+  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/version-3.0-6d4aff?style=for-the-badge&labelColor=0a0b12" alt="Version" /></a>
+  <a href="docs/MONADBUILDER.md"><img src="https://img.shields.io/badge/product-MonadBuilder%20HQ-2ee6a6?style=for-the-badge&labelColor=0a0b12" alt="MonadBuilder" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2ee6a6?style=for-the-badge&labelColor=0a0b12" alt="License" /></a>
   <a href="https://buildanything.so/hackathons/spark"><img src="https://img.shields.io/badge/Spark-Build%20Anything-f0b429?style=for-the-badge&labelColor=0a0b12" alt="Spark" /></a>
   <a href="https://docs.monad.xyz/"><img src="https://img.shields.io/badge/chain-Monad-836EF9?style=for-the-badge&labelColor=0a0b12" alt="Monad" /></a>
@@ -49,28 +50,38 @@
 
 ---
 
-## Why THESIS
+## Why MonadBuilder HQ
 
-| Everyday pain | What THESIS does |
-|---------------|------------------|
-| Tab hell every morning | **▶ RUN SYSTEM** — one path across laws, cloud, desk, vault, company |
-| Fat gas on Monad (pay the **limit**) | Gas engine + Julia gas coach (~7.5% margin, 21k transfers) |
-| Agents without brakes | Desk arena **REJECT** with reasons — feature, not failure |
-| AI that wants your keys | Public wallet link · sandbox **twins only** · never seeds |
-| Tutorials that don't stick | Teach-as-you-operate + law chips mid-action |
+| Everyday pain | What MonadBuilder does (AI-delivered) |
+|---------------|--------------------------------------|
+| Tab hell every morning | **AI Morning** — one tap: check-in · gas · REJECT · signal |
+| Fat gas on Monad (pay the **limit**) | Daily gas tip in the brief + coach (~7.5% margin) |
+| Agents without brakes | Desk/NOMOS **REJECT** + dual-stack LawBook |
+| Boring dashboards | Addictive **streak + XP + celebration** that protects capital |
+| AI that wants keys | Twins only · owner signs · no silent broadcast |
 
 **Roommate test:** *“A 20-minute multi-app workflow becomes one managed, explained mission.”*
 
-### Easy to use (like focused winners — with brakes)
+### Name note
+
+Bare **MonadBuilder** collides with monad-revm’s type and official “Monad Builder” programs.  
+**Product brand = MonadBuilder HQ** · engine codename = **THESIS**.
+
+### Easy (AI delivers)
 
 | Who | How |
 |-----|-----|
-| **You** | **TOOLS** tab → **EASY PATH (60s)** or sticky **Tools** |
-| **In-app AI** | Sandbox node tools (twins only) |
-| **Any AI outside** | MCP: `python -m thesis_forge.mcp_server` or `POST /tools/{id}/run` |
-| **Judges** | **PROOF** → **WIN PATH** or `POST /tools/win_path/run` |
+| **You** | **BUILDER** tab → **AI MORNING** (or sticky bar) |
+| **In-app AI** | Say *daily brief* · *run my morning* · *show a reject* |
+| **Any AI outside** | MCP / `POST /builder/morning` · `GET /builder/brief` |
+| **Judges** | **PROOF** → WIN PATH |
 
-Polished single-feature winners (signals, auto-trade, agent wallets) win on demo focus. THESIS ships those as **nine tools**, then keeps **LawBook + NOMOS + owner signature**. Honest field read: [docs/VS_WINNERS.md](docs/VS_WINNERS.md) · tools: [docs/TOOLS.md](docs/TOOLS.md).
+```bash
+curl -s http://127.0.0.1:8043/builder/brief
+curl -s -X POST http://127.0.0.1:8043/builder/morning -H "content-type: application/json" -d "{}"
+```
+
+Docs: [MONADBUILDER.md](docs/MONADBUILDER.md) · [VS_WINNERS.md](docs/VS_WINNERS.md) · [TOOLS.md](docs/TOOLS.md)
 
 Built for [**Spark · Build Anything**](https://buildanything.so/hackathons/spark) on [**Monad**](https://docs.monad.xyz/).
 
@@ -107,6 +118,7 @@ Browser (React HQ)
 
 | Tab | What you use it for |
 |-----|---------------------|
+| **BUILDER** | AI daily brief + **one-tap morning** (streak/XP) |
 | **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
 | **TOOLS** | Shippable actions + MCP for any AI |
 | **TERM** | Sovereign web terminal · vault · ecosystem · PDF reports |
@@ -267,6 +279,7 @@ Doctrine: **Owner remains sovereign.**
 | [docs/LAWBOOK.md](docs/LAWBOOK.md) | On-chain LawBook + dual stack |
 | [docs/TERMINAL.md](docs/TERMINAL.md) | Sovereign terminal + PDF reports |
 | [docs/HYBRID_WORKERS.md](docs/HYBRID_WORKERS.md) | **Web Worker + blockchain hybrid** |
+| [docs/MONADBUILDER.md](docs/MONADBUILDER.md) | **Product brand · AI morning · habits** |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |

@@ -275,14 +275,23 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
         for t in (c.get("tips") or [])[:2]:
             replies.append(f"- {t['title']}: {t['body']}")
 
-    if any(k in low for k in ("brief", "morning", "seatbelt")):
-        from .company.os import morning_brief
+    if any(k in low for k in ("brief", "morning", "seatbelt", "run my morning", "start my day")):
+        if "run my morning" in low or "start my day" in low or low.strip() in ("morning", "run morning"):
+            from .builder import run_morning
 
-        b = morning_brief()
-        actions.append({"tool": "brief.daily", "result": {"bullets": len(b.get("bullets") or [])}})
-        replies.append(f"**Daily brief:** {b.get('narrative') or b.get('headline')}")
-        for x in (b.get("bullets") or [])[:5]:
-            replies.append(f"- {x}")
+            m = run_morning(network)
+            actions.append({"tool": "builder.morning", "result": {"ok": m.get("ok"), "streak": (m.get("stats") or {}).get("streak")}})
+            replies.append(f"**{m.get('headline')}**\n{m.get('celebration')}\n{m.get('ai_voice')}")
+            for s in m.get("steps") or []:
+                replies.append(f"- {s.get('id')}: {s.get('detail')}")
+        else:
+            from .builder import daily_ai_brief
+
+            b = daily_ai_brief(network)
+            actions.append({"tool": "builder.brief", "result": {"mood": b.get("mood"), "streak": (b.get("stats") or {}).get("streak")}})
+            replies.append(f"**MonadBuilder daily brief**\n{b.get('ai_voice')}\n\n{b.get('celebration')}")
+            for a in (b.get("actions") or [])[:4]:
+                replies.append(f"- {a.get('label')}: {a.get('why')}")
 
     if any(k in low for k in ("vault", "sovereignvault", "capital gate")):
         from .vault_route import _load_vault_address
@@ -379,12 +388,10 @@ def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
 
     if not replies:
         replies.append(
-            "**THESIS Ecosystem Node online** (sandbox mode). "
-            "I can: daily brief, vault status, ecosystem lookup, gas, twin sync, "
-            "desk/NOMOS arena, tailored workflows, and **full PDF reports**. "
-            "Open the **TERM** tab for the sovereign web terminal. "
-            "I cannot export keys or send real chain txs without your promote step. "
-            "Try: *daily brief*, *vault*, *report pdf*, *workflow morning*, *sync twins*."
+            "**MonadBuilder AI online** (sandbox mode · THESIS engine). "
+            "I deliver your day: *daily brief*, *run my morning*, rejects, signals, auto paper loop, PDF reports. "
+            "Open **BUILDER** or **TERM**. I never hold keys or silent-broadcast. "
+            "Try: *run my morning* · *daily brief* · *show a reject* · *auto exec*."
         )
 
     text = "\n\n".join(replies)

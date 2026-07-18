@@ -9,6 +9,7 @@ import { Nomos } from "./Nomos.jsx";
 import { Tools } from "./Tools.jsx";
 import { Terminal } from "./Terminal.jsx";
 import { HybridHub } from "./HybridHub.jsx";
+import { BuilderHome } from "./BuilderHome.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -34,7 +35,7 @@ function StatusDot({ status }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("live");
+  const [tab, setTab] = useState("builder");
   const [health, setHealth] = useState(null);
   const [judge, setJudge] = useState(null);
   const [home, setHome] = useState(null);
@@ -704,14 +705,15 @@ function App() {
       <header className="top">
         <div>
           <span className="eyebrow">
-            THESIS PLATFORM v{health?.version || "2.3"} · {health?.platform_apps ?? "…"} APPS ·{" "}
-            {network}
+            {health?.product_short || "MONADBUILDER"} HQ v{health?.version || "3"} ·{" "}
+            {health?.platform_apps ?? "…"} APPS · {network}
           </span>
           <h1>
-            THESIS <i>Platform</i>
+            MonadBuilder <i>HQ</i>
           </h1>
           <p className="tagline">
-            Kernel primitives · app runtime · browser-local AI · one lawbook. Owner signs.
+            {health?.tagline ||
+              "AI delivers your Monad day — briefs, brakes, and wins you actually feel."}
           </p>
         </div>
         <div className="top-right stats-chip">
@@ -761,6 +763,32 @@ function App() {
         <button type="button" className="forge use-run" disabled={busy} onClick={runSystem}>
           ▶ RUN SYSTEM
         </button>
+        <button
+          type="button"
+          className="ghost"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              const m = await api("/builder/morning", {
+                method: "POST",
+                body: JSON.stringify({ network }),
+              });
+              setToast(m.celebration || m.headline || "Morning done");
+              setTab("builder");
+              await refresh();
+            } catch (e) {
+              setErr(String(e.message || e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          AI Morning
+        </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("builder")}>
+          Brief
+        </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
           Cloud
         </button>
@@ -808,6 +836,7 @@ function App() {
 
       <nav className="tabs">
         {[
+          ["builder", "BUILDER"],
           ["live", "PLATFORM"],
           ["usecases", "USE CASES"],
           ["tools", "TOOLS"],
@@ -833,34 +862,42 @@ function App() {
         ))}
       </nav>
 
+      {tab === "builder" && (
+        <BuilderHome
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+          onRefreshHome={refresh}
+        />
+      )}
+
       {tab === "live" && !systemRun && (
         <div className="start-here">
           <div>
-            <span className="eyebrow">START HERE · USABLE IN 60s</span>
+            <span className="eyebrow">MONADBUILDER · START HERE · AI DELIVERS</span>
             <ol className="pillars start-steps">
               <li>
-                <b>▶ RUN SYSTEM</b> — laws + desk + vault + company + polyglot
+                <b>BUILDER</b> — AI brief + one-tap morning (streak + XP)
               </li>
               <li>
-                <b>TOOLS</b> — easy path: reject · gas · win_path (like focused winners, with brakes)
+                <b>AI MORNING</b> — sticky bar runs check-in · gas · reject · signal
               </li>
               <li>
-                <b>USE CASES</b> — 20 asks mapped to real buttons
+                <b>TERM / TOOLS</b> — auto loop · signals · PDF · hybrid workers
               </li>
               <li>
-                <b>DESK / HQ / PROOF</b> — rejects + mission approve + scorecard
+                <b>PROOF</b> — win path for Spark judges
               </li>
             </ol>
           </div>
           <div className="chips tight">
-            <button type="button" className="forge" disabled={busy} onClick={runSystem}>
-              ▶ RUN SYSTEM NOW
+            <button type="button" className="forge" disabled={busy} onClick={() => setTab("builder")}>
+              OPEN BUILDER
             </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("tools")}>
-              Tools (easy)
-            </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("usecases")}>
-              20 use cases
+            <button type="button" className="ghost" disabled={busy} onClick={runSystem}>
+              ▶ RUN SYSTEM
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => setTab("judge")}>
               PROOF

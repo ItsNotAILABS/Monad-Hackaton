@@ -190,6 +190,33 @@ def _run_lawbook(**params) -> Dict[str, Any]:
     }
 
 
+def _run_builder_morning(**params) -> Dict[str, Any]:
+    from .builder import run_morning
+
+    r = run_morning(params.get("network") or "monad-testnet")
+    return {
+        "ok": bool(r.get("ok")),
+        "proof": r.get("headline"),
+        "celebration": r.get("celebration"),
+        "stats": r.get("stats"),
+        "steps": r.get("steps"),
+    }
+
+
+def _run_builder_brief(**params) -> Dict[str, Any]:
+    from .builder import daily_ai_brief
+
+    b = daily_ai_brief(params.get("network") or "monad-testnet")
+    return {
+        "ok": True,
+        "proof": (b.get("ai_voice") or "")[:160],
+        "mood": b.get("mood"),
+        "actions": b.get("actions"),
+        "stats": b.get("stats"),
+        "celebration": b.get("celebration"),
+    }
+
+
 def _run_hybrid(**params) -> Dict[str, Any]:
     from .hybrid import run_hybrid_node
 
@@ -498,6 +525,32 @@ TOOLS: List[Dict[str, Any]] = [
         "beats_crowd": "Main-thread-only scoring that freezes UI",
         "handler": "hybrid",
     },
+    {
+        "id": "morning",
+        "name": "AI morning (one tap)",
+        "kind": "habit",
+        "who": "user + agent",
+        "seconds": 15,
+        "do": "Check-in + gas + REJECT + paper signal — addictive helpful loop",
+        "api": "POST /builder/morning",
+        "mcp": "thesis_morning",
+        "proof": "streak + xp headline",
+        "beats_crowd": "Feature piles with no daily habit",
+        "handler": "morning",
+    },
+    {
+        "id": "brief",
+        "name": "Daily AI brief",
+        "kind": "habit",
+        "who": "user + agent",
+        "seconds": 3,
+        "do": "AI voice brief: mood, actions, top signal, gas",
+        "api": "GET /builder/brief",
+        "mcp": "thesis_brief",
+        "proof": "ai_voice",
+        "beats_crowd": "Static dashboards without a speaking seatbelt",
+        "handler": "brief",
+    },
 ]
 
 _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
@@ -517,6 +570,8 @@ _HANDLERS: Dict[str, Callable[..., Dict[str, Any]]] = {
     "signals": _run_signals,
     "auto_loop": _run_auto_loop,
     "hybrid": _run_hybrid,
+    "morning": _run_builder_morning,
+    "brief": _run_builder_brief,
 }
 
 

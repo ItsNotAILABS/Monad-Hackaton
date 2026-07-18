@@ -57,22 +57,25 @@ PERSONAL_PROBLEM = {
 
 
 SOLUTION = {
-    "one_liner": "Your miniature DeFi company for Monad — agents propose, laws decide, receipts remember.",
-    "product": "THESIS Company OS",
+    "one_liner": (
+        "MonadBuilder HQ — AI delivers your Monad day: briefs, brakes, signals, and streaks. "
+        "Agents propose, laws decide, you sign."
+    ),
+    "product": "MonadBuilder HQ",
+    "engine": "THESIS",
     "what_it_is": (
-        "Not a toast demo. A live workstation: Company OS + trading desk + SovereignVault "
-        "gate + AI sandbox twins + wallet link (public only) + daily seatbelt + forged app "
-        "packages — all under one runtime ecosystem lawbook."
+        "Easy AI-delivered Company OS for Monad: daily brief + one-tap morning, "
+        "winner-class signals + auto paper exec, dual-stack LawBook brakes, "
+        "sovereign terminal, hybrid Web Workers — all under owner signature."
     ),
     "surfaces": [
-        "LIVE — constant market + laws taught as used + AI brief",
-        "HQ — staff departments on one objective",
-        "DESK — tickets, arena REJECT as a feature, paper PnL, vault route sim",
-        "AI NODE — digital twins, never real keys",
-        "WALLETS — Phantom/MetaMask public link → twin sync",
-        "STUDIO/IDE — 11-stage pipeline → real package files",
-        "ACADEMY — failure-first labs",
-        "JUDGE — proof panel for humans + AI judges",
+        "BUILDER — AI daily brief + one-tap morning (addictive helpful loop)",
+        "TERM — sovereign commands: brief, auto, signals, report pdf",
+        "HYBRID — Web Workers off main thread (novel tech)",
+        "DESK — REJECT is a feature + paper auto fills",
+        "AI NODE — twins only; say “run my morning”",
+        "HQ — staff Company OS departments",
+        "PROOF — win path for judges",
     ],
 }
 
@@ -387,10 +390,16 @@ def competition_pack(network: str = "monad-testnet") -> Dict[str, Any]:
         "schema": "thesis.competition.v2",
         "hackathon": HACKATHON,
         "version": __version__,
-        "product": "THESIS — Monad DeFi Company OS",
+        "product": "MonadBuilder HQ",
+        "engine": "THESIS",
         "repo": "https://github.com/ItsNotAILABS/Monad-Hackaton",
-        "doctrine": "Agents propose. Laws decide. Receipts remember.",
+        "doctrine": "Agents propose. Laws decide. Owner signs. Receipts remember.",
         "winning_claim": WINNING_CLAIM,
+        "easy_ai": {
+            "brief": "GET /builder/brief",
+            "morning": "POST /builder/morning",
+            "say_to_ai": ["daily brief", "run my morning", "show a reject", "auto exec"],
+        },
         "personal_problem": PERSONAL_PROBLEM,
         "solution": SOLUTION,
         "differentiation": DIFFERENTIATION,

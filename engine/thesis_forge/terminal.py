@@ -24,7 +24,8 @@ COMMANDS: Dict[str, Dict[str, str]] = {
     "help": {"usage": "help [cmd]", "desc": "List commands or detail one"},
     "clear": {"usage": "clear", "desc": "Clear terminal history (session)"},
     "status": {"usage": "status", "desc": "Platform pulse: laws, desk, vault, AI"},
-    "brief": {"usage": "brief", "desc": "Daily morning brief (tailored seatbelt)"},
+    "brief": {"usage": "brief", "desc": "AI daily brief (MonadBuilder seatbelt)"},
+    "morning": {"usage": "morning", "desc": "One-tap AI morning: checkin+gas+reject+signal"},
     "daily": {"usage": "daily", "desc": "Daily loop XP / streak / missions"},
     "vault": {"usage": "vault", "desc": "SovereignVault address + policy gate status"},
     "ecosystem": {"usage": "ecosystem [token]", "desc": "Ecosystem catalog / token lookup"},
@@ -139,22 +140,36 @@ def cmd_status(args: List[str], network: str) -> Dict[str, Any]:
 
 
 def cmd_brief(args: List[str], network: str) -> Dict[str, Any]:
-    from .company.os import morning_brief
-    from .intelligence import coach
+    from .builder import daily_ai_brief
 
-    b = morning_brief()
-    c = coach(network)
+    b = daily_ai_brief(network)
     lines = [
-        "=== DAILY BRIEF ===",
-        str(b.get("narrative") or b.get("headline") or "Brief ready."),
+        "=== MONADBUILDER AI BRIEF ===",
+        str(b.get("ai_voice") or ""),
+        str(b.get("celebration") or ""),
+        f"mood={b.get('mood')} streak={(b.get('stats') or {}).get('streak')} xp={(b.get('stats') or {}).get('xp')}",
     ]
-    for x in (b.get("bullets") or [])[:10]:
-        lines.append(f"  • {x}")
-    lines.append("")
-    lines.append(f"Coach: {c.get('headline')}")
-    for t in (c.get("tips") or [])[:3]:
-        lines.append(f"  → {t.get('title')}: {t.get('body')}")
-    return _out(True, lines, {"brief": b, "coach": c})
+    for a in (b.get("actions") or [])[:5]:
+        lines.append(f"  → {a.get('label')}: {a.get('why')}")
+    if b.get("signal_top"):
+        s = b["signal_top"]
+        lines.append(f"Top signal: {s.get('side')} {s.get('symbol')} score={s.get('score')}")
+    return _out(True, lines, b)
+
+
+def cmd_morning(args: List[str], network: str) -> Dict[str, Any]:
+    from .builder import run_morning
+
+    m = run_morning(network)
+    lines = [
+        "=== AI MORNING ===",
+        m.get("headline") or "",
+        m.get("celebration") or "",
+        m.get("ai_voice") or "",
+    ]
+    for s in m.get("steps") or []:
+        lines.append(f"  {'✓' if s.get('ok') else '·'} {s.get('id')}: {s.get('detail')}")
+    return _out(bool(m.get("ok")), lines, m)
 
 
 def cmd_daily(args: List[str], network: str) -> Dict[str, Any]:
@@ -569,6 +584,7 @@ def exec_line(line: str, *, network: str = "monad-testnet", record: bool = True)
         "clear": lambda: _clear(),
         "status": lambda: cmd_status(args, network),
         "brief": lambda: cmd_brief(args, network),
+        "morning": lambda: cmd_morning(args, network),
         "daily": lambda: cmd_daily(args, network),
         "vault": lambda: cmd_vault(args, network),
         "ecosystem": lambda: cmd_ecosystem(args, network),
@@ -646,7 +662,7 @@ def _clear() -> Dict[str, Any]:
 def terminal_banner(network: str = "monad-testnet") -> Dict[str, Any]:
     return {
         "schema": "thesis.terminal.v1",
-        "product": "THESIS Sovereign Terminal",
+        "product": "MonadBuilder Terminal",
         "version": __version__,
         "doctrine": DOCTRINE,
         "network": network,

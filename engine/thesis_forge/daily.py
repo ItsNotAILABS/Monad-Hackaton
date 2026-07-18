@@ -163,9 +163,13 @@ def home(network: str = "monad-testnet") -> Dict[str, Any]:
     total_n = len(missions)
     return {
         "schema": "thesis.home.v1",
+        "product": "MonadBuilder HQ",
         "pitch": {
             "problem": "DeFi is confusing, crypto workflow is tedious, agents need brakes.",
-            "solution": "THESIS is your daily seatbelt: learn by doing, auto-reject bad plans, one home for the Monad ecosystem.",
+            "solution": (
+                "MonadBuilder HQ is your daily AI seatbelt: learn by doing, auto-reject bad plans, "
+                "one home for the Monad ecosystem — AI delivers the morning."
+            ),
             "roommate": "This saved me 20 minutes of re-checking bots and stopped a fat gas limit bill.",
         },
         "day": day,
