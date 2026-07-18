@@ -12,6 +12,25 @@ from .index_engine import IndexEngine
 from .law_engine import LawEngine
 from .research_engine import ResearchEngine
 from .security_engine import SecurityEngine
+from .base import CloudEngine as _CE
+
+
+class PolyglotEngine(_CE):
+    id = "polyglot"
+    name = "Polyglot Engine"
+    kind = "intel"
+    description = "Julia + Node + Python mesh: risk, spectral, agents, WASM"
+    requires_chain = False
+
+    def run(self, params=None):
+        from ..polyglot import polyglot_mesh, run_polyglot
+
+        p = params or {}
+        op = (p.get("op") or "mesh").lower()
+        if op == "mesh":
+            return polyglot_mesh(p)
+        return run_polyglot(p.get("lang") or "julia", p.get("cmd") or "pulse", p.get("params") or p)
+
 
 _ENGINES: Dict[str, CloudEngine] = {}
 
@@ -32,6 +51,7 @@ def _ensure() -> None:
         IndexEngine,
         DocEngine,
         SecurityEngine,
+        PolyglotEngine,
     ):
         _register(cls)
 

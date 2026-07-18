@@ -195,12 +195,34 @@ def run_system(
     )
     mark("security.scan", bool(sec.get("ok")), {"clean": (sec.get("result") or {}).get("clean")})
 
-    # 7) Snapshot surfaces
+    # 7) Polyglot mesh (Julia + Node + Python) — soft
+    poly = None
+    try:
+        from .polyglot import polyglot_mesh
+
+        desk_eq = float((desk_snapshot() or {}).get("equity") or 10000)
+        poly = polyglot_mesh(
+            {
+                "equity": desk_eq,
+                "estimated_gas": estimated_gas,
+                "vol": 0.02,
+            }
+        )
+        mark(
+            "polyglot.mesh",
+            bool(poly.get("ok")),
+            poly.get("synthesis"),
+            soft=True,
+        )
+    except Exception as exc:
+        mark("polyglot.mesh", True, {"soft_fail": str(exc)[:200]}, soft=True)
+
+    # 8) Snapshot surfaces
     status = system_status(network)
     brief = morning_brief()
     dep = _deployment()
 
-    # Hard steps must pass; soft (cloud RPC) can warn without failing product path
+    # Hard steps must pass; soft (cloud RPC / polyglot) can warn without failing product path
     hard = [s for s in steps if not s.get("soft")]
     ok = all(s.get("ok") for s in hard) if hard else all(s.get("ok") for s in steps)
     seal(
@@ -218,7 +240,7 @@ def run_system(
         "network": network,
         "elapsed_ms": (time.time() - t0) * 1000,
         "headline": (
-            "SYSTEM LINKED — laws · cloud · desk · vault · company"
+            "SYSTEM LINKED — laws · cloud · desk · vault · company · polyglot"
             if ok
             else "SYSTEM RUN finished with issues — inspect steps"
         ),
@@ -257,7 +279,9 @@ def run_system(
         if company
         else None,
         "security": sec.get("result"),
+        "polyglot": poly,
         "next": [
+            {"tab": "poly", "label": "Polyglot Julia/Node/WebGPU"},
             {"tab": "cloud", "label": "Inspect cloud engines"},
             {"tab": "desk", "label": "Desk tickets / vault route"},
             {"tab": "hq", "label": "Company mission room"},
@@ -266,7 +290,7 @@ def run_system(
         ],
         "receipt_tip": tip()[:20],
         "recent_receipts": len(recent(8)),
-        "locality": "cloud+platform",
+        "locality": "cloud+platform+polyglot",
         "hosted_web_app": True,
         "on_chain_story": "SovereignVault + PolicyKernel on Monad; engines on API host; UI is HQ",
     }

@@ -1,18 +1,25 @@
-# THESIS Platform (v2.5)
+# THESIS Platform (v2.6)
 
-**One product:** web HQ + cloud engines + local AI + onchain vault.  
-**▶ RUN SYSTEM** links laws → cloud → desk → vault sim → company.
+**Polyglot Monad HQ:** React web · Python API · Julia intel · Node/WASM · Solidity on-chain · PowerShell ops.
 
-| Layer | Meaning |
-|-------|---------|
-| **Unified** | `POST /system/run` · PLATFORM **▶ RUN SYSTEM** |
-| **Primitives** | identity · law · capital · market · intel · forge · company · learn · local_ai · cloud |
-| **Cloud engines** | chain · gas · law · research · index · docs · security |
-| **Onchain** | SovereignVault + PolicyKernel + … on Monad |
-| **Local AI** | Transformers.js · teach · PDF/Excel · extension |
-| **Shell** | PLATFORM = kernel + market + system run result |
+**▶ RUN SYSTEM** = laws → cloud engines → desk → vault → company → **polyglot mesh**.
 
-See [docs/UNIFIED.md](docs/UNIFIED.md) · [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md) · [docs/LOCAL_AI.md](docs/LOCAL_AI.md).
+| Layer | Stack |
+|-------|--------|
+| **UI** | React (PLATFORM · CLOUD · **POLYGLOT** · LOCAL AI · HQ · DESK…) |
+| **API** | Python FastAPI · `/system/run` · `/engines/*` · `/polyglot/*` |
+| **Julia** | Spectral · Monte Carlo VaR · portfolio · gas · agent utility |
+| **Node** | Agent rank · native WASM · WebGPU info · Julia relay |
+| **Browser** | WebGPU probe · WASM · Transformers.js local AI |
+| **Onchain** | Solidity: SovereignVault · PolicyKernel · LawBook… on Monad |
+| **Ops** | PowerShell `run_all.ps1` · `run_polyglot.ps1` |
+
+```powershell
+powershell -File scripts/run_all.ps1      # API :8043 + web :5173
+powershell -File scripts/run_polyglot.ps1 # Julia+Node+Python smoke
+```
+
+See [docs/POLYGLOT.md](docs/POLYGLOT.md) · [docs/UNIFIED.md](docs/UNIFIED.md) · [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md).
 
 Thesis still runs a **Company OS** (GM + departments) and a **trading desk** as apps on that platform. Owner remains sovereign. AI uses twins only — never real keys.
 

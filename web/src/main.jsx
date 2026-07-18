@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Landing } from "./Landing.jsx";
 import { LocalAI } from "./local-ai/LocalAI.jsx";
 import { CloudEngines } from "./CloudEngines.jsx";
+import { PolyglotHub } from "./PolyglotHub.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -758,6 +759,9 @@ function App() {
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
           Cloud
         </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("poly")}>
+          Polyglot
+        </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
           Local AI
         </button>
@@ -792,6 +796,7 @@ function App() {
         {[
           ["live", "PLATFORM"],
           ["cloud", "CLOUD"],
+          ["poly", "POLYGLOT"],
           ["local", "LOCAL AI"],
           ["hq", "HQ"],
           ["home", "DAILY"],
@@ -848,6 +853,16 @@ function App() {
 
       {tab === "cloud" && (
         <CloudEngines
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+        />
+      )}
+
+      {tab === "poly" && (
+        <PolyglotHub
           api={api}
           network={network}
           busy={busy}

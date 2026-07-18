@@ -163,6 +163,20 @@ def main() -> int:
         (unified.get("company") or {}).get("status"),
     )
 
+    pg = c.get("/polyglot").json()
+    assert pg.get("python", {}).get("available") is True
+    mesh = c.post("/polyglot/mesh", json={"equity": 10000, "estimated_gas": 80000}).json()
+    assert mesh.get("ok")
+    print(
+        "polyglot",
+        "julia",
+        pg.get("julia", {}).get("available"),
+        "node",
+        pg.get("node", {}).get("available"),
+        "mesh",
+        (mesh.get("synthesis") or {}).get("winner_agent"),
+    )
+
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
     print("proof pack ok vaporware", j.get("vaporware"))

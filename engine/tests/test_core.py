@@ -353,7 +353,7 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "2.5.1"
+    assert c.get("/health").json()["version"] == "2.6.0"
     assert c.get("/health").json().get("kind") == "platform"
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"
@@ -392,6 +392,11 @@ def test_api_surface():
     ).json()
     assert run.get("ok") and run.get("steps")
     assert any(s.get("step") == "desk.arena" for s in run["steps"])
+    # polyglot catalog always present
+    pg = c.get("/polyglot").json()
+    assert "julia" in pg and "node" in pg and "python" in pg
+    py = c.post("/polyglot/run", json={"lang": "python", "cmd": "intel", "params": {}}).json()
+    assert py.get("ok")
     laws = c.get("/laws").json()
     assert laws.get("embedded") and laws.get("law_count", 0) >= 15
     land = c.get("/landing").json()

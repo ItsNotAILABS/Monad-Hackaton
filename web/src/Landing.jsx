@@ -179,7 +179,10 @@ export function Landing({
             ▶ RUN SYSTEM
           </button>
           <button type="button" className="ghost" disabled={busy} onClick={() => onNavigate("cloud")}>
-            Cloud engines
+            Cloud
+          </button>
+          <button type="button" className="ghost" disabled={busy} onClick={() => onNavigate("poly")}>
+            Polyglot
           </button>
           <button type="button" className="ghost" disabled={busy} onClick={() => onNavigate("local")}>
             Local AI
@@ -234,6 +237,16 @@ export function Landing({
           )}
           {system.brief?.narrative && (
             <p className="muted sm">{system.brief.narrative}</p>
+          )}
+          {system.polyglot?.synthesis && (
+            <div className="proto" style={{ marginTop: 8 }}>
+              <span className="eyebrow">POLYGLOT</span>
+              <b>
+                {system.polyglot.synthesis.winner_agent || "mesh"} · gas{" "}
+                {system.polyglot.synthesis.recommended_gas_limit ?? "—"} · VaR{" "}
+                {Number(system.polyglot.synthesis.var || 0).toFixed(1)}
+              </b>
+            </div>
           )}
           <div className="chips tight">
             {(system.next || []).map((n) => (
@@ -431,6 +444,9 @@ export function Landing({
             </button>
             <button type="button" className="ghost" onClick={() => onNavigate("cloud")}>
               Cloud
+            </button>
+            <button type="button" className="ghost" onClick={() => onNavigate("poly")}>
+              Polyglot
             </button>
             <button type="button" className="ghost" onClick={() => onNavigate("local")}>
               Local AI

@@ -94,6 +94,7 @@ from .platform import get_app, invoke_app, list_apps, platform_status
 from .engines import engine_catalog, get_engine, list_engines, run_engine
 from .engines.orchestrator import run_cloud_pipeline
 from .unified import run_system, system_status
+from .polyglot import polyglot_catalog, polyglot_mesh, run_polyglot
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -264,7 +265,54 @@ class SystemRunIn(BaseModel):
 @app.get("/system")
 def system_get(network: str = Query("monad-testnet")):
     """Unified product status — all surfaces in one payload."""
-    return system_status(network)
+    st = system_status(network)
+    st["polyglot"] = polyglot_catalog()
+    return st
+
+
+# ── Polyglot intelligence (Julia · Node · Python · WASM relay) ────
+
+
+class PolyglotRunIn(BaseModel):
+    lang: str = "julia"
+    cmd: str = "pulse"
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class PolyglotMeshIn(BaseModel):
+    equity: float = 10000
+    vol: float = 0.02
+    estimated_gas: int = 80_000
+    series: list[float] | None = None
+    agents: list[dict[str, Any]] | None = None
+
+
+@app.get("/polyglot")
+def polyglot_get():
+    """Catalog of embedded polyglot runtimes."""
+    return polyglot_catalog()
+
+
+@app.post("/polyglot/run")
+def polyglot_run_api(body: PolyglotRunIn | None = None):
+    b = body or PolyglotRunIn()
+    return run_polyglot(b.lang, b.cmd, b.params)
+
+
+@app.post("/polyglot/mesh")
+def polyglot_mesh_api(body: PolyglotMeshIn | None = None):
+    """Run Julia + Node + Python intelligence mesh together."""
+    b = body or PolyglotMeshIn()
+    params: dict[str, Any] = {
+        "equity": b.equity,
+        "vol": b.vol,
+        "estimated_gas": b.estimated_gas,
+    }
+    if b.series is not None:
+        params["series"] = b.series
+    if b.agents is not None:
+        params["agents"] = b.agents
+    return polyglot_mesh(params)
 
 
 @app.post("/system/run")
@@ -662,6 +710,9 @@ def health():
             "/platform/primitives",
             "/system",
             "/system/run",
+            "/polyglot",
+            "/polyglot/run",
+            "/polyglot/mesh",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",
