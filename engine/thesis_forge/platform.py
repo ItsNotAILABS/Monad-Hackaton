@@ -256,9 +256,12 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         "kind": "law",
         "tab": "nomos",
         "primitives": ["law", "market"],
-        "description": "Multi-agent propose + policy arbitration",
-        "entry": "POST /arena/auto",
-        "actions": ["arena"],
+        "description": (
+            "Auto multi-agent propose + arena. REJECT is a feature. "
+            "Dual law stack (owner constitution + ecosystem). Owner signs."
+        ),
+        "entry": "GET /nomos",
+        "actions": ["status", "arena", "run"],
     },
     {
         "id": "app.local_ai",
@@ -515,6 +518,16 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
     def enforce(department: str = "THESIS", **kw):
         return enforce_on_department(department, kw.get("context") or {"network": kw.get("network") or "monad-testnet"})
 
+    def nomos_status(network: str = "monad-testnet", **_kw):
+        from .nomos import nomos_payload
+
+        return nomos_payload(network)
+
+    def nomos_run(**_kw):
+        from .nomos import run_nomos_arena
+
+        return run_nomos_arena()
+
     return {
         ("app.shell", "status"): status,
         ("app.shell", "health"): health,
@@ -533,7 +546,9 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
         ("app.studio", "open_project"): forge_open,
         ("app.academy", "list_quests"): academy_list,
         ("app.daily", "home"): daily_home_fn,
+        ("app.nomos", "status"): nomos_status,
         ("app.nomos", "arena"): desk_arena,  # desk arena is the live reject surface
+        ("app.nomos", "run"): nomos_run,
         ("app.cloud", "pipeline"): _cloud_pipeline,
         ("app.cloud", "run"): _system_run,
         ("app.shell", "system"): _system_status,

@@ -181,6 +181,25 @@ def main() -> int:
     assert uc.get("count") == 20 and len(uc.get("use_cases") or []) == 20
     print("use cases", uc["count"])
 
+    nom = c.get("/nomos").json()
+    assert nom.get("department") == "NOMOS"
+    assert nom.get("reject_is_a_feature") is True
+    assert nom.get("doctrine")
+    assert (nom.get("ecosystem") or {}).get("law_count", 0) >= 1
+    nr = c.post("/nomos/run", json=body).json()
+    assert nr.get("n_rejected", 0) >= 1
+    assert nr.get("reject_is_a_feature") is True
+    print(
+        "nomos",
+        nom.get("tagline", "")[:40],
+        "reject",
+        nr.get("n_rejected"),
+        "accept",
+        nr.get("n_accepted"),
+        "winner",
+        (nr.get("winner") or {}).get("action", {}).get("agent"),
+    )
+
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
     print("proof pack ok vaporware", j.get("vaporware"))

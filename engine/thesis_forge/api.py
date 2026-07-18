@@ -96,6 +96,7 @@ from .engines.orchestrator import run_cloud_pipeline
 from .unified import run_system, system_status
 from .polyglot import polyglot_catalog, polyglot_mesh, run_polyglot
 from .use_cases import use_case_by_id, use_cases_payload
+from .nomos import nomos_payload, run_nomos_arena
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -300,6 +301,24 @@ def use_cases_one(uc_id: int):
     if not u:
         raise HTTPException(404, "use case not found")
     return u
+
+
+@app.get("/nomos")
+def nomos_get(network: str = Query("monad-testnet")):
+    """NOMOS department: multi-agent propose + arena. REJECT is a feature."""
+    return nomos_payload(network)
+
+
+@app.post("/nomos/run")
+def nomos_run(request: BuildRequest | None = None):
+    """Propose agents + arbitrate under dual law stack (owner Policy + ecosystem)."""
+    req = request or BuildRequest(
+        name="NOMOS Arena",
+        objective="Coordinate Monad portfolio under dual law stack; reject unlawful paths.",
+        categories=["vault", "dex", "lending"],
+        network="monad-testnet",
+    )
+    return run_nomos_arena(req)
 
 
 @app.get("/polyglot")
@@ -728,6 +747,8 @@ def health():
             "/polyglot",
             "/polyglot/run",
             "/polyglot/mesh",
+            "/nomos",
+            "/nomos/run",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",
@@ -736,6 +757,7 @@ def health():
             "/pipeline",
             "/forge",
             "/arena",
+            "/arena/auto",
             "/company",
             "/company/run",
             "/laws",

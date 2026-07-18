@@ -423,6 +423,10 @@ def test_api_surface():
     ar = c.post("/arena/auto", json=body)
     assert ar.status_code == 200
     assert ar.json()["n_rejected"] >= 1
+    nom = c.get("/nomos").json()
+    assert nom["department"] == "NOMOS" and nom["reject_is_a_feature"] is True
+    nr = c.post("/nomos/run", json=body).json()
+    assert nr["n_rejected"] >= 1
     g = c.post(
         "/academy/grade",
         json={"quest_id": "slippage-trap", "selected_action_index": 1, "understood": True},

@@ -26,7 +26,7 @@ Competition / PROOF tabs are **optional views** on top of the platform. They are
 
 ## First-party apps
 
-`app.shell` · `app.wallets` · `app.desk` · `app.vault` · `app.ai` · `app.company` · `app.studio` · `app.academy` · `app.daily` · `app.nomos`
+`app.shell` · `app.wallets` · `app.desk` · `app.vault` · `app.ai` · `app.company` · `app.studio` · `app.academy` · `app.daily` · `app.nomos` ([docs/NOMOS.md](./NOMOS.md) — propose + arena, REJECT is a feature)
 
 Forged packages appear as `pkg.{project_id}` after STUDIO pipeline.
 

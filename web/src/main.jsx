@@ -5,6 +5,7 @@ import { LocalAI } from "./local-ai/LocalAI.jsx";
 import { CloudEngines } from "./CloudEngines.jsx";
 import { PolyglotHub } from "./PolyglotHub.jsx";
 import { UseCases } from "./UseCases.jsx";
+import { Nomos } from "./Nomos.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -1566,78 +1567,19 @@ function App() {
       )}
 
       {tab === "nomos" && (
-        <section className="panel">
-          <div className="grid2">
-            <article>
-              <label>LAWBOOK</label>
-              {[
-                ["max_slippage_bps", "Max slippage (bps)"],
-                ["max_protocol_exposure_bps", "Max exposure (bps)"],
-                ["min_liquid_reserve_bps", "Min reserve (bps)"],
-                ["max_leverage_bps", "Max leverage (bps)"],
-                ["max_action_value", "Max action value"],
-              ].map(([k, lab]) => (
-                <div className="field" key={k}>
-                  <span>{lab}</span>
-                  <input
-                    type="number"
-                    value={policy[k]}
-                    onChange={(e) => setPolicy((p) => ({ ...p, [k]: Number(e.target.value) }))}
-                  />
-                </div>
-              ))}
-              <button type="button" className="forge" disabled={busy} onClick={runArenaAuto}>
-                AUTO-PROPOSE + ARBITRATE →
-              </button>
-              <p className="muted sm">Generates reckless + balanced + yield + dust agents, scores under laws.</p>
-            </article>
-            <article className="result">
-              <label>ARENA</label>
-              {!arena ? (
-                <p className="muted">Run auto arena or full pipeline.</p>
-              ) : (
-                <>
-                  <div className="kv">
-                    <span>Accepted / Rejected</span>
-                    <b>
-                      {arena.n_accepted} / {arena.n_rejected}
-                    </b>
-                  </div>
-                  {arena.winner ? (
-                    <div className="winner">
-                      <Pill ok>WINNER · {arena.winner.action.agent}</Pill>
-                      <p>{arena.winner.evaluation.human_summary}</p>
-                    </div>
-                  ) : (
-                    <Pill ok={false}>NO LAWFUL WINNER</Pill>
-                  )}
-                  <div className="plans">
-                    {(arena.evaluations || []).map((row, i) => (
-                      <div key={i} className={`plan ${row.evaluation.accepted ? "yes" : "no"}`}>
-                        <header>
-                          <b>
-                            {row.action.agent} · {row.action.protocol}
-                          </b>
-                          <Pill ok={row.evaluation.accepted}>{row.evaluation.accepted ? "ACCEPT" : "REJECT"}</Pill>
-                        </header>
-                        <p>
-                          score {row.evaluation.score} · {row.action.rationale || row.action.action}
-                        </p>
-                        {!row.evaluation.accepted && (
-                          <ul>
-                            {(row.evaluation.reasons || row.evaluation.violations || []).map((r) => (
-                              <li key={r}>{r}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </article>
-          </div>
-        </section>
+        <Nomos
+          api={api}
+          policy={policy}
+          setPolicy={setPolicy}
+          buildBody={buildBody}
+          arena={arena}
+          setArena={setArena}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+          onDeskArena={runDeskArena}
+          onCompanyRun={runCompany}
+        />
       )}
 
       {tab === "ai" && (

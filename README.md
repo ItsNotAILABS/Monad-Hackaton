@@ -170,7 +170,10 @@ powershell -File scripts/run_polyglot.ps1
 | `GET` | `/polyglot` | Julia · Node · Python catalog |
 | `POST` | `/polyglot/mesh` | Full polyglot intelligence mesh |
 | `GET` | `/use-cases` | 20 use cases JSON |
+| `GET` | `/nomos` | NOMOS department (propose + arena doctrine) |
+| `POST` | `/nomos/run` | Multi-agent propose + dual-stack arbitrate |
 | `POST` | `/company/run` | Staff Company OS |
+| `POST` | `/arena/auto` | Propose agents + arbitrate (REJECT demo) |
 | `POST` | `/desk/arena` | Trading rejects + accepts |
 | `GET` | `/judge` | Spark / AI judge pack |
 | `GET` | `/landing` | Live market + teach feed |
@@ -231,6 +234,7 @@ Doctrine: **Owner remains sovereign.**
 | [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md) | Server engines + Monad RPC |
 | [docs/LOCAL_AI.md](docs/LOCAL_AI.md) | Browser Transformers.js |
 | [docs/COMPANY_OS.md](docs/COMPANY_OS.md) | Departments + SLAs |
+| [docs/NOMOS.md](docs/NOMOS.md) | **Risk/law arena · REJECT is a feature** |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |

@@ -1070,6 +1070,47 @@ pre.code, .code {
   border: 1px solid #2ee6a630;
 }
 
+/* NOMOS department */
+.nomos-panel .doctrine-line {
+  color: var(--accent2);
+  margin: 4px 0 8px;
+}
+.nomos-workflow {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #0d1018aa;
+}
+.nomos-flow-chips {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.flow-chip {
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #ffffff06;
+}
+.flow-chip.on {
+  border-color: #6d4aff88;
+  background: #6d4aff22;
+  color: var(--text);
+}
+.nomos-steps {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.86rem;
+  color: var(--muted);
+}
+.nomos-steps b { color: var(--text); }
+.nomos-onchain {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+.nomos-grid article label { display: block; margin-top: 0; }
+
 .option {
   display: flex;
   flex-direction: column;
