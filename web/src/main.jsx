@@ -56,6 +56,11 @@ function App() {
   const [toast, setToast] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [aiNode, setAiNode] = useState(null);
+  const [aiChatLog, setAiChatLog] = useState([]);
+  const [aiInput, setAiInput] = useState("sync twins and show balances");
+  const [wallets, setWallets] = useState(null);
+  const [sandbox, setSandbox] = useState(null);
 
   const [name, setName] = useState("THESIS Sovereign Ops");
   const [objective, setObjective] = useState(
@@ -124,7 +129,7 @@ function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [h, j, p, d, q, wp, rc, dk, hm, co, eco] = await Promise.all([
+      const [h, j, p, d, q, wp, rc, dk, hm, co, eco, ai, wl, sb] = await Promise.all([
         api("/health"),
         api("/judge"),
         api("/protocols"),
@@ -136,6 +141,9 @@ function App() {
         api(`/home?network=${network}`),
         api(`/intelligence/coach?network=${network}`),
         api(`/ecosystem?network=${network === "monad-mainnet" ? "monad-mainnet" : "monad-testnet"}`),
+        api("/ai"),
+        api("/wallets"),
+        api("/sandbox"),
       ]);
       setHealth(h);
       setJudge(j);
@@ -149,6 +157,9 @@ function App() {
       setHome(hm);
       setCoach(co);
       setEcosystem(eco);
+      setAiNode(ai);
+      setWallets(wl);
+      setSandbox(sb);
       if (dk?.marks?.["MON/USDC"]) {
         setTicketForm((f) => ({ ...f, limit_price: dk.marks["MON/USDC"] }));
       }
@@ -414,6 +425,125 @@ function App() {
     }
   }
 
+  async function connectBrowserWallet(kind) {
+    setBusy(true);
+    setErr("");
+    try {
+      let address = "";
+      let chain = network === "monad-mainnet" ? "eip155:143" : "eip155:10143";
+      let balances = {};
+      if (kind === "phantom") {
+        const provider = window.phantom?.solana || window.solana;
+        if (!provider?.connect) {
+          throw new Error("Phantom not found — install extension or use manual link");
+        }
+        const res = await provider.connect();
+        address = res.publicKey?.toString?.() || res.publicKey?.toBase58?.() || String(res.publicKey || "");
+        chain = "solana";
+        // attested demo balances if RPC unavailable
+        balances = { SOL: 1.0, USDC: 25 };
+      } else {
+        const eth = window.ethereum;
+        if (!eth?.request) {
+          throw new Error("No injected EVM wallet — install MetaMask/Rabby or use manual");
+        }
+        const accounts = await eth.request({ method: "eth_requestAccounts" });
+        address = accounts[0];
+        try {
+          const hex = await eth.request({
+            method: "eth_getBalance",
+            params: [address, "latest"],
+          });
+          balances = { MON: Number(BigInt(hex)) / 1e18 };
+        } catch {
+          balances = { MON: 0 };
+        }
+      }
+      const linked = await api("/wallets/link", {
+        method: "POST",
+        body: JSON.stringify({ kind, address, chain, balances, label: `${kind} browser` }),
+      });
+      setWallets(linked.registry);
+      const syn = await api("/wallets/sync-twins", { method: "POST", body: "{}" });
+      setSandbox(await api("/sandbox"));
+      flash(`Linked ${kind} · synced ${syn.synced?.length || 0} twins into AI sandbox`);
+      setAiNode(await api("/ai"));
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function manualLinkWallet() {
+    const address = window.prompt("Public address only (never paste a private key / seed):");
+    if (!address) return;
+    if (/private|seed|mnemonic|secret/i.test(address)) {
+      setErr("Refusing secret material — public address only");
+      return;
+    }
+    setBusy(true);
+    try {
+      const bal = window.prompt("Attested MON or SOL balance number?", "1") || "1";
+      const isSol = !address.startsWith("0x");
+      const linked = await api("/wallets/link", {
+        method: "POST",
+        body: JSON.stringify({
+          kind: isSol ? "phantom" : "manual",
+          address,
+          chain: isSol ? "solana" : network === "monad-mainnet" ? "eip155:143" : "eip155:10143",
+          balances: isSol ? { SOL: Number(bal) } : { MON: Number(bal) },
+          label: "manual",
+        }),
+      });
+      setWallets(linked.registry);
+      await api("/wallets/sync-twins", { method: "POST", body: "{}" });
+      setSandbox(await api("/sandbox"));
+      flash("Watch-only wallet linked · twins synced");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendAiChat() {
+    if (!aiInput.trim()) return;
+    setBusy(true);
+    setErr("");
+    const msg = aiInput.trim();
+    setAiChatLog((L) => [...L, { role: "user", text: msg }]);
+    try {
+      const data = await api("/ai/chat", {
+        method: "POST",
+        body: JSON.stringify({ message: msg, network }),
+      });
+      setAiChatLog((L) => [...L, { role: "assistant", text: data.answer, actions: data.actions }]);
+      setAiNode(await api("/ai"));
+      setSandbox(await api("/sandbox"));
+      setAiInput("");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function killSandbox() {
+    const id = sandbox?.sandbox?.sandbox_id;
+    if (!id) return;
+    setBusy(true);
+    try {
+      await api(`/sandbox/${id}/kill`, { method: "POST", body: "{}" });
+      setSandbox(await api("/sandbox"));
+      flash("Sandbox frozen — AI twin mutations blocked");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openProject(id) {
     setBusy(true);
     try {
@@ -491,6 +621,7 @@ function App() {
       <nav className="tabs">
         {[
           ["home", "HOME"],
+          ["ai", "AI NODE"],
           ["desk", "DESK"],
           ["academy", "ACADEMY"],
           ["studio", "STUDIO"],
@@ -920,6 +1051,161 @@ function App() {
                   </div>
                 </>
               )}
+            </article>
+          </div>
+        </section>
+      )}
+
+      {tab === "ai" && (
+        <section className="panel">
+          <div className="grid3">
+            <article>
+              <label>AI ECOSYSTEM NODE</label>
+              <p className="muted sm">
+                Sandbox-bound DeFi intelligence. Holds <b>digital twins</b> of your coins — never Phantom/MetaMask private
+                keys. Mutations stay inside sandbox technology until you promote with a real signature.
+              </p>
+              <div className="kv">
+                <span>Node</span>
+                <code>{aiNode?.node?.node_id?.slice(0, 14) || "…"}…</code>
+              </div>
+              <div className="kv">
+                <span>AI wallet</span>
+                <code>{aiNode?.node?.ai_wallet?.wallet_id?.slice(0, 12) || "…"}…</code>
+              </div>
+              <div className="kv">
+                <span>Real key access</span>
+                <Pill ok={false}>{String(aiNode?.capabilities?.real_key_access)}</Pill>
+              </div>
+              <div className="kv">
+                <span>Sandbox only</span>
+                <Pill ok={aiNode?.capabilities?.sandbox_only_mutations}>true</Pill>
+              </div>
+              <label>CONNECT WALLETS (PUBLIC ONLY)</label>
+              <button type="button" className="forge" disabled={busy} onClick={() => connectBrowserWallet("phantom")}>
+                Connect Phantom
+              </button>
+              <button
+                type="button"
+                className="ghost block"
+                disabled={busy}
+                onClick={() => connectBrowserWallet("metamask")}
+              >
+                Connect MetaMask / injected EVM
+              </button>
+              <button type="button" className="ghost block" disabled={busy} onClick={manualLinkWallet}>
+                Watch-only address
+              </button>
+              <button
+                type="button"
+                className="ghost block"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const syn = await api("/wallets/sync-twins", { method: "POST", body: "{}" });
+                    setSandbox(await api("/sandbox"));
+                    flash(`Synced ${syn.synced?.length || 0} digital twins`);
+                  } catch (e) {
+                    setErr(String(e.message || e));
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Sync twins → AI wallet
+              </button>
+              <label>LINKED</label>
+              {(wallets?.links || []).length === 0 ? (
+                <p className="muted sm">No wallets linked yet.</p>
+              ) : (
+                (wallets.links || []).map((w) => (
+                  <div key={w.link_id} className="proto">
+                    <b>
+                      {w.kind} · {w.label}
+                    </b>
+                    <code className="sm">{w.address}</code>
+                    <p className="muted sm">{w.chain}</p>
+                  </div>
+                ))
+              )}
+            </article>
+
+            <article className="result ai-chat">
+              <label>NODE CHAT</label>
+              <div className="chat-log">
+                {aiChatLog.length === 0 && (
+                  <p className="muted sm">
+                    Try: “sync twins”, “gas tip”, “show balances”, “simulate trade”, “ecosystem USDC”
+                  </p>
+                )}
+                {aiChatLog.map((m, i) => (
+                  <div key={i} className={`chat-bubble ${m.role}`}>
+                    <em>{m.role}</em>
+                    <div style={{ whiteSpace: "pre-wrap" }}>{m.text}</div>
+                  </div>
+                ))}
+              </div>
+              <textarea
+                rows={3}
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendAiChat();
+                  }
+                }}
+              />
+              <button type="button" className="forge" disabled={busy} onClick={sendAiChat}>
+                Send to AI node →
+              </button>
+            </article>
+
+            <article className="result">
+              <label>SANDBOX · TWIN LEDGER</label>
+              <div className="kv">
+                <span>Sandbox</span>
+                <code>{sandbox?.sandbox?.sandbox_id?.slice(0, 14) || "—"}…</code>
+              </div>
+              <div className="kv">
+                <span>Mode</span>
+                <b>{sandbox?.sandbox?.mode}</b>
+              </div>
+              <div className="kv">
+                <span>Killed</span>
+                <Pill ok={!sandbox?.sandbox?.killed}>{String(!!sandbox?.sandbox?.killed)}</Pill>
+              </div>
+              <label>Digital twins</label>
+              {Object.keys(sandbox?.sandbox?.twins || {}).length === 0 ? (
+                <p className="muted sm">Empty — connect wallet + sync.</p>
+              ) : (
+                Object.values(sandbox.sandbox.twins).map((t) => (
+                  <div key={t.symbol} className="proto">
+                    <b>
+                      {t.symbol}: {t.amount}
+                    </b>
+                    <p className="muted sm">
+                      twin of {t.twin_of} · {t.synced ? "synced" : "dirty (AI mutated)"}
+                    </p>
+                  </div>
+                ))
+              )}
+              <label>Doctrine</label>
+              <ul className="pillars">
+                {(sandbox?.doctrine || []).map((d) => (
+                  <li key={d}>{d}</li>
+                ))}
+              </ul>
+              <button type="button" className="ghost block" disabled={busy} onClick={killSandbox}>
+                Kill switch (freeze sandbox)
+              </button>
+              {(sandbox?.sandbox?.events || []).slice(0, 6).map((ev) => (
+                <div key={ev.event_id} className="proto">
+                  <b>{ev.kind}</b>
+                  <p className="muted sm">{ev.detail}</p>
+                </div>
+              ))}
             </article>
           </div>
         </section>

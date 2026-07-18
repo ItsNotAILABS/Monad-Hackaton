@@ -7,6 +7,12 @@ See [CHARTER.md](CHARTER.md) for product truth and non-goals.
 ## Hard gates
 
 - No private keys in repository or browser bundle.
+- **Sandbox-first AI:** the AI node never receives seed phrases, Phantom private keys, or exportable secrets.
+- **Digital twins only:** AI secure wallet holds sandbox mirrors of user assets; mutations stay inside sandbox technology.
+- Wallet link API accepts **public address + attested balances** only (rejects private_key/seed/mnemonic fields).
+- Twin sync may RPC-read public balances; it never signs.
+- Promote-to-chain is an explicit user-signature intent — never auto-broadcast from the AI process.
+- Sandbox kill switch freezes all twin mutations.
 - No external protocol target unless explicitly allowlisted on-chain.
 - No agent execution without owner authorization (PolicyKernel agent allowlist).
 - No transaction without simulation when policy requires it (off-chain arena + on-chain validate).

@@ -79,6 +79,16 @@ PILLARS = [
         "name": "ACADEMY",
         "role": "Failure-first school for humans and AI agents",
     },
+    {
+        "id": "sandbox",
+        "name": "SANDBOX",
+        "role": "Isolation technology — AI + digital twins only",
+    },
+    {
+        "id": "ai-node",
+        "name": "AI NODE",
+        "role": "DeFi/blockchain intelligence node in sandbox",
+    },
 ]
 
 

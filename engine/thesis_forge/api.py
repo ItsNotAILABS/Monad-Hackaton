@@ -52,12 +52,28 @@ from .trading import (
     update_limits,
     update_policy,
 )
+from .ai_node import ai_chat, ensure_ai_node, node_status, promote_request
+from .sandbox import (
+    create_sandbox,
+    ensure_default_sandbox,
+    kill_sandbox,
+    list_sandboxes,
+    sandbox_snapshot,
+)
 from .vault_route import simulate_vault_route
+from .wallets import (
+    link_wallet,
+    list_supported,
+    registry_snapshot,
+    sync_twins_from_wallets,
+    unlink,
+    update_balances,
+)
 from .workspace import list_projects, load_project, save_project
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="THESIS — daily Monad seatbelt: teach-by-doing, desk risk, ecosystem, rewards",
+    description="THESIS — sandbox AI ecosystem node, twin wallet, daily seatbelt, desk risk",
     version=__version__,
 )
 
@@ -125,6 +141,33 @@ class GasMarginIn(BaseModel):
     gas_limit: int | None = None
 
 
+class WalletLinkIn(BaseModel):
+    kind: str = "metamask"
+    address: str
+    chain: str = "eip155:10143"
+    label: str = ""
+    balances: dict[str, float] = Field(default_factory=dict)
+
+
+class WalletBalancesIn(BaseModel):
+    balances: dict[str, float]
+
+
+class AIChatIn(BaseModel):
+    message: str = Field(min_length=1, max_length=4000)
+    network: str = "monad-testnet"
+
+
+class PromoteIn(BaseModel):
+    symbol: str
+    amount: float = Field(gt=0)
+
+
+class SandboxCreateIn(BaseModel):
+    name: str = "AI sandbox"
+    mode: str = "agent"
+
+
 @app.get("/home")
 def home_daily(network: str = Query("monad-testnet")):
     """Daily habit home — missions, streak, XP, gas coach, ecosystem."""
@@ -183,6 +226,103 @@ def gas_margin(body: GasMarginIn):
     return {**rec, "warn_overspend": warn}
 
 
+# ── Sandbox · Wallets · AI node ───────────────────────────────────
+
+
+@app.get("/sandbox")
+def sandbox_get(sandbox_id: str | None = None):
+    return sandbox_snapshot(sandbox_id)
+
+
+@app.get("/sandbox/list")
+def sandbox_list():
+    return {"sandboxes": list_sandboxes()}
+
+
+@app.post("/sandbox/create")
+def sandbox_create(body: SandboxCreateIn):
+    from .sandbox import SandboxMode
+
+    mode = SandboxMode(body.mode) if body.mode in SandboxMode._value2member_map_ else SandboxMode.AGENT
+    sb = create_sandbox(body.name, mode)
+    return sandbox_snapshot(sb.sandbox_id)
+
+
+@app.post("/sandbox/{sandbox_id}/kill")
+def sandbox_kill(sandbox_id: str):
+    try:
+        sb = kill_sandbox(sandbox_id)
+    except KeyError:
+        raise HTTPException(404, "sandbox not found") from None
+    return {"ok": True, "sandbox": sb.model_dump(mode="json")}
+
+
+@app.get("/wallets")
+def wallets_get():
+    return registry_snapshot()
+
+
+@app.get("/wallets/supported")
+def wallets_supported():
+    return {"wallets": list_supported()}
+
+
+@app.post("/wallets/link")
+def wallets_link(body: WalletLinkIn):
+    try:
+        w = link_wallet(
+            body.kind,  # type: ignore[arg-type]
+            body.address,
+            chain=body.chain,
+            label=body.label,
+            balances=body.balances,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"wallet": w.model_dump(mode="json"), "registry": registry_snapshot()}
+
+
+@app.post("/wallets/{link_id}/balances")
+def wallets_balances(link_id: str, body: WalletBalancesIn):
+    try:
+        w = update_balances(link_id, body.balances)
+    except KeyError:
+        raise HTTPException(404, "wallet not found") from None
+    return {"wallet": w.model_dump(mode="json")}
+
+
+@app.delete("/wallets/{link_id}")
+def wallets_unlink(link_id: str):
+    unlink(link_id)
+    return registry_snapshot()
+
+
+@app.post("/wallets/sync-twins")
+def wallets_sync_twins(sandbox_id: str | None = None, link_id: str | None = None):
+    out = sync_twins_from_wallets(sandbox_id, link_id=link_id)
+    if not out.get("ok"):
+        raise HTTPException(400, out.get("error", "sync failed"))
+    return out
+
+
+@app.get("/ai")
+def ai_status():
+    return node_status()
+
+
+@app.post("/ai/chat")
+def ai_chat_api(body: AIChatIn):
+    return ai_chat(body.message, network=body.network)
+
+
+@app.post("/ai/promote")
+def ai_promote(body: PromoteIn):
+    out = promote_request(body.symbol, body.amount)
+    if not out.get("ok"):
+        raise HTTPException(400, out.get("error", "promote failed"))
+    return out
+
+
 @app.get("/health")
 def health():
     dep = _load_deployment()
@@ -206,6 +346,9 @@ def health():
             "/forge",
             "/arena",
             "/home",
+            "/ai/*",
+            "/sandbox/*",
+            "/wallets/*",
             "/desk/*",
             "/ecosystem",
             "/gas/*",
@@ -216,9 +359,13 @@ def health():
             "/rpc/probe",
             "/judge",
         ],
-        "doctrine": "Agents propose. Laws decide. Desk risks capital. Learn by doing. Daily streaks.",
+        "doctrine": (
+            "Sandbox-first AI. Digital twins only. Real keys never leave the user wallet. "
+            "Agents propose. Laws decide. Learn by doing."
+        ),
         "trading": desk_snapshot(),
         "daily": leaderboard_self(),
+        "ai_node": node_status().get("node_id") or True,
     }
 
 

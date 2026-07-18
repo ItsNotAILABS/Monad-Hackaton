@@ -64,6 +64,12 @@ def main() -> int:
     assert st.get("ok")
     print("strategy", st["strategy"]["id"], st["n_accepted"], "accept")
 
+    ai = c.get("/ai").json()
+    assert ai.get("capabilities", {}).get("real_key_access") is False
+    chat = c.post("/ai/chat", json={"message": "gas tip and show balances"}).json()
+    assert chat.get("answer")
+    print("ai node", ai.get("node", {}).get("node_id", "")[:12])
+
     print("SMOKE_OK")
     return 0
 

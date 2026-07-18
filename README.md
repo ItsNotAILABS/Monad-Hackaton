@@ -1,8 +1,18 @@
 # THESIS — Monad AI Workstation v0.5
 
-**Teach DeFi by doing. Automate the tedious risk checks. Come back every day.**
+**Sandbox-first AI node · digital twin wallet · teach by doing · daily seatbelt.**
 
 Roommate test: *“This saved me 20 minutes of re-checking bots and stopped a fat gas-limit bill.”*
+
+### AI + wallets (safety architecture)
+
+| Layer | Behavior |
+|-------|----------|
+| **User wallets** | Phantom / MetaMask / WC / watch-only — **public address + balances only** |
+| **Sandbox** | Isolation technology; kill switch freezes AI |
+| **AI secure wallet** | Holds **digital twins** of your coins, syncable, not real keys |
+| **AI ecosystem node** | DeFi tools inside sandbox; cannot export seeds or auto-broadcast |
+| **Promote** | Twin → chain only with **your** signature |
 
 Production workstation for [Spark · Build Anything](https://buildanything.so/hackathons/spark) on [Monad](https://docs.monad.xyz/).
 

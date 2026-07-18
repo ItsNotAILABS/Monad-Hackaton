@@ -268,9 +268,40 @@ def test_daily_home_loop():
     assert r3["home"]["xp"] > 0
 
 
+def test_sandbox_ai_wallets():
+    from thesis_forge.ai_node import ai_chat, ensure_ai_node, node_status
+    from thesis_forge.sandbox import ensure_default_sandbox, mutate_twin, set_twin
+    from thesis_forge.wallets import link_wallet, sync_twins_from_wallets
+
+    sb = ensure_default_sandbox()
+    set_twin(sb.sandbox_id, "MON", 10.0, twin_of="test:native", source_chain="eip155:10143")
+    mutate_twin(sb.sandbox_id, "MON", -1.0, reason="unit")
+    w = link_wallet(
+        "phantom",
+        "So11111111111111111111111111111111111111112",
+        chain="solana",
+        balances={"SOL": 3.5, "USDC": 100},
+    )
+    assert w.kind == "phantom"
+    syn = sync_twins_from_wallets(sb.sandbox_id, link_id=w.link_id)
+    assert syn["ok"]
+    node = ensure_ai_node()
+    assert node.sandbox_id
+    st = node_status()
+    assert st["capabilities"]["real_key_access"] is False
+    chat = ai_chat("show balances and gas tip")
+    assert "answer" in chat
+    # reject secrets
+    try:
+        link_wallet("manual", "0xabc", meta={"private_key": "0xdead"})
+        assert False, "should reject secrets"
+    except ValueError:
+        pass
+
+
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "0.5.0"
+    assert c.get("/health").json()["version"] == "0.6.0"
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",
