@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Toaster } from 'sonner';
 import Home from '@/pages/Home';
 import Dashboard from '@/pages/Dashboard';
 import Templates from '@/pages/Templates';
@@ -54,6 +55,8 @@ function App() {
           <Router />
           {/* Global floating AI assistant — context-aware via AIPageContext */}
           <AIAssistantWithContext />
+          {/* Global toast notifications */}
+          <Toaster position="bottom-right" theme="dark" richColors closeButton />
         </WouterRouter>
       </AIPageContextProvider>
     </QueryClientProvider>

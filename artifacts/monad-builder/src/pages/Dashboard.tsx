@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { buildDapp } from "@/lib/ai";
+import { toast } from "sonner";
 import { useSetAIContext } from "@/lib/aiPageContext";
 
 const BUILD_STEPS = [
@@ -93,6 +94,13 @@ export default function Dashboard() {
     try {
       const result = await buildDapp(trimmed);
       if (!result) throw new Error("AI could not generate a dApp — try rephrasing.");
+
+      // Surface any type remapping/drop warnings from the AI validator
+      if (result.warnings.length > 0) {
+        for (const w of result.warnings) {
+          toast.warning("AI adjusted a component", { description: w, duration: 6000 });
+        }
+      }
 
       const project = await new Promise<any>((resolve, reject) => {
         createProject.mutate(

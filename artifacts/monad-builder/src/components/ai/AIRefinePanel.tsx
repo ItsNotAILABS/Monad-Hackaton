@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ComponentData } from "@workspace/api-client-react";
 import { refineDapp, RateLimitError } from "@/lib/ai";
+import { toast } from "sonner";
 
 interface AIRefinePanelProps {
   projectName: string;
@@ -34,13 +35,20 @@ export function AIRefinePanel({ projectName, currentComponents, onRefined }: AIR
         trimmed
       );
 
-      if (!result || result.length === 0) {
+      if (!result || result.components.length === 0) {
         setStatus("error");
         setErrorMsg("AI returned an empty layout. Try rephrasing your instruction.");
         return;
       }
 
-      onRefined(result as ComponentData[]);
+      // Surface any type remapping/drop warnings from the AI validator
+      if (result.warnings.length > 0) {
+        for (const w of result.warnings) {
+          toast.warning("AI adjusted a component", { description: w, duration: 5000 });
+        }
+      }
+
+      onRefined(result.components as ComponentData[]);
       setStatus("success");
       setPrompt("");
 

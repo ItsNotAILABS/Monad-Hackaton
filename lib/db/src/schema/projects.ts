@@ -21,7 +21,7 @@ export const componentDataSchema = z.object({
     "card",
     "stats-row",
   ]),
-  props: z.record(z.unknown()),
+  props: z.record(z.string(), z.unknown()),
   order: z.number().int(),
 });
 

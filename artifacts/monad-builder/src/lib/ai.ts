@@ -139,10 +139,15 @@ export async function generateComponent(
   }
 }
 
+export interface BuildDappResult {
+  projectName: string;
+  components: Array<{ id: string; type: string; props: Record<string, any>; order: number }>;
+  /** Non-fatal notices: component types that were remapped or dropped by the server validator. */
+  warnings: string[];
+}
+
 /** Build a full dApp from a one-sentence idea. Returns projectName + pre-configured components. */
-export async function buildDapp(
-  prompt: string
-): Promise<{ projectName: string; components: Array<{ id: string; type: string; props: Record<string, any>; order: number }> } | null> {
+export async function buildDapp(prompt: string): Promise<BuildDappResult | null> {
   try {
     const res = await guardJson(await fetch(`${AI_BASE}/build-dapp`, {
       method: "POST",
@@ -150,7 +155,9 @@ export async function buildDapp(
       body: JSON.stringify({ prompt }),
     }));
     const data = await res.json();
-    return data.ok ? { projectName: data.projectName, components: data.components } : null;
+    return data.ok
+      ? { projectName: data.projectName, components: data.components, warnings: data.warnings ?? [] }
+      : null;
   } catch (err) {
     if (err instanceof RateLimitError) throw err;
     return null;
@@ -220,12 +227,18 @@ export async function recommendTemplate(
   }
 }
 
+export interface RefineDappResult {
+  components: Array<{ id: string; type: string; props: Record<string, any>; order: number }>;
+  /** Non-fatal notices: component types that were remapped or dropped by the server validator. */
+  warnings: string[];
+}
+
 /** Refine an existing dApp canvas from a follow-up instruction. */
 export async function refineDapp(
   projectName: string,
   currentComponents: Array<{ type: string; props: Record<string, any> }>,
   refinementPrompt: string
-): Promise<Array<{ id: string; type: string; props: Record<string, any>; order: number }> | null> {
+): Promise<RefineDappResult | null> {
   try {
     const res = await guardJson(await fetch(`${AI_BASE}/refine-dapp`, {
       method: "POST",
@@ -233,7 +246,7 @@ export async function refineDapp(
       body: JSON.stringify({ projectName, currentComponents, refinementPrompt }),
     }));
     const data = await res.json();
-    return data.ok ? data.components : null;
+    return data.ok ? { components: data.components, warnings: data.warnings ?? [] } : null;
   } catch (err) {
     if (err instanceof RateLimitError) throw err;
     return null;

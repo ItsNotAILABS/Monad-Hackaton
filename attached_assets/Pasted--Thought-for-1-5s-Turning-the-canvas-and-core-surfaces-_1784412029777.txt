@@ -1,0 +1,1691 @@
+◆ Thought for 1.5s
+Turning the canvas and core surfaces into working
+products—live wallet, gas, desk, vault, and publish—
+not mock previews.
+◆ Read Documents\GitHub\Monad-Hackaton\web\src\api.j
+
+ 1  /**
+ 2   * Shared API client for the hosted web app.
+ 3   * Dev (Vite :5173) uses /api proxy →
+backend :8043.
+ 4   * Production can set VITE_API_URL.
+…
+37    return `${base}${path.startsWith("/") ?
+path : `/${path}`}`;
+38  }
+◆ Search "connectBrowserWallet|/wallets|/desk|/signa
+
+  mode: pattern
+
+  \Documents\GitHub\Monad-Hackaton\web\src\main.jsx
+     136          api("/desk"),
+     141          api("/wallets"),
+     186          const ar = await api("/desk/arena"
+     313        const data = await api("/desk/arena"
+     315        setDesk(await api("/desk"));
+     328        const data = await api("/desk/ticket
+     348        const data = await api(`/desk/fill/$
+     360        setDesk(await api("/desk/reset", { m
+     375        const data = await api(`/desk/marks/
+     395        const data = await api(`/desk/strate
+     413        const data = await api(`/desk/vault-
+     426    async function connectBrowserWallet(kind
+     460        const linked = await api("/wallets/l
+     465        const syn = await api("/wallets/sync
+     487        const linked = await api("/wallets/l
+     498        await api("/wallets/sync-twins", { m
+     577        setDesk(await api("/desk"));
+     609          api("/desk"),
+     611          api("/wallets"),
+     794        onLinkWallet={() => connectBrowserWa
+     888                return connectBrowserWallet(
+     946                  return connectBrowserWalle
+     952                    const syn = await api("/
+     954                    setWallets(await api("/w
+     977                    const d = desk || (await
+     985                    const d2 = await api("/d
+    1629                <button type="button" classN
+    1636                  onClick={() => connectBrow
+    1650                      const syn = await api(
+◆ Read Documents\GitHub\Monad-Hackaton\engine\thesis
+
+ 1  """User wallet linking — Phantom, MetaMask/
+EVM, WalletConnect-style sessions.
+ 2
+ 3  Security
+ 4  --------
+…
+78      {
+79          "kind": "manual",
+80          "name": "Watch-only / manual",
+◆ Read Documents\GitHub\Monad-Hackaton\engine\thesis
+
+1041      """Multi-engine cloud pipeline:
+chain + gas + law + index (+ research) +
+docs."""
+1042      b = body or CloudPipelineIn()
+1043      return run_cloud_pipeline(
+…
+Field(default_factory=dict)
+1089
+1090
+◆ Thought for 4.9s
+Building a live app runtime: each canvas component
+will call real backend and wallet APIs.
+◆ Creating Documents\GitHub\Monad-
+           Hackaton\web\src\live\wallet.js
+
+   1  /**
+   2   * Real browser wallet connect for Monad
+      (EVM).
+   3   * Never handles private keys — only public
+      address + optional balance.
+   4   */
+   5
+   6  export async function
+      connectEvmWallet(network = "monad-testnet") {
+   7    const eth = window.ethereum;
+   8    if (!eth) {
+   9      throw new Error("No EVM wallet found.
+      Install MetaMask / Rabby for Monad.");
+  10    }
+  11    const chainIdHex = network ===
+      "monad-mainnet" ? "0x8f" : "0x279f"; // 143 /
+      10143
+  12    const chainIdDec = network ===
+      "monad-mainnet" ? 143 : 10143;
+  13    const rpc =
+  14      network === "monad-mainnet" ?
+      "https://rpc.monad.xyz" :
+      "https://testnet-rpc.monad.xyz";
+  15
+  16    // Switch / add Monad chain
+  17    try {
+  18      await eth.request({
+  19        method: "wallet_switchEthereumChain",
+  20        params: [{ chainId: chainIdHex }],
+  21      });
+  22    } catch (e) {
+  23      if (e?.code === 4902 || String(e?.message
+      || "").includes("Unrecognized")) {
+  24        await eth.request({
+  25          method: "wallet_addEthereumChain",
+  26          params: [
+  27            {
+  28              chainId: chainIdHex,
+  29              chainName: network ===
+      "monad-mainnet" ? "Monad Mainnet" : "Monad
+      Testnet",
+  30              nativeCurrency: { name: "MON",
+      symbol: "MON", decimals: 18 },
+  31              rpcUrls: [rpc],
+  32              blockExplorerUrls: [
+  33                network === "monad-mainnet"
+  34                  ? "https://monadvision.com"
+  35                  :
+      "https://testnet.monadvision.com",
+  36              ],
+  37            },
+  38          ],
+  39        });
+  40      } else if (e?.code !== 4001) {
+  41        // continue — some wallets still return
+      accounts on current chain
+  42      }
+  43    }
+  44
+  45    const accounts = await eth.request({
+      method: "eth_requestAccounts" });
+  46    const address = accounts?.[0];
+  47    if (!address) throw new Error("No account
+      returned");
+  48
+  49    let monBalance = null;
+  50    try {
+  51      const balHex = await eth.request({
+  52        method: "eth_getBalance",
+  53        params: [address, "latest"],
+  54      });
+  55      monBalance = Number(BigInt(balHex)) /
+      1e18;
+  56    } catch {
+  57      /* optional */
+  58    }
+  59
+  60    return {
+  61      kind: "metamask",
+  62      address,
+  63      chain: `eip155:${chainIdDec}`,
+  64      balances: monBalance != null ? { MON:
+      monBalance } : {},
+  65      label: "Browser wallet",
+  66    };
+  67  }
+  68
+  69  export async function getEvmBalance(address) {
+  70    const eth = window.ethereum;
+  71    if (!eth || !address) return null;
+  72    try {
+  73      const balHex = await eth.request({
+  74        method: "eth_getBalance",
+  75        params: [address, "latest"],
+  76      });
+  77      return Number(BigInt(balHex)) / 1e18;
+  78    } catch {
+  79      return null;
+  80    }
+  81  }
+◆ Creating Documents\GitHub\Monad-
+           Hackaton\web\src\live\widgets.jsx
+
+    1  import React, { useCallback, useEffect,
+       useState } from "react";
+    2  import { api } from "../api.js";
+    3  import { connectEvmWallet } from
+       "./wallet.js";
+    4
+    5  /** Shared card chrome for live widgets */
+    6  function W({ title, icon, children, footer,
+       status }) {
+    7    return (
+    8      <div className={`live-widget ${status ||
+       ""}`}>
+    9        <header className="lw-head">
+   10          <span
+       className="lw-ico">{icon}</span>
+   11          <b>{title}</b>
+   12          {status ? <span className={`badge
+       ${status === "ok" ? "on" : status === "warn"
+       ? "warn" : ""}`}>{status}</span> : null}
+   13        </header>
+   14        <div
+       className="lw-body">{children}</div>
+   15        {footer ? <footer className="lw-foot
+       muted sm">{footer}</footer> : null}
+   16      </div>
+   17    );
+   18  }
+   19
+   20  export function WidgetWallet({ network,
+       onLinked }) {
+   21    const [busy, setBusy] = useState(false);
+   22    const [err, setErr] = useState("");
+   23    const [wallet, setWallet] = useState(null);
+   24    const [reg, setReg] = useState(null);
+   25
+   26    const refresh = useCallback(async () => {
+   27      try {
+   28        const w = await api("/wallets");
+   29        setReg(w);
+   30        const links = w.links || [];
+   31        if (links.length) setWallet(links[0]);
+   32      } catch {
+   33        /* */
+   34      }
+   35    }, []);
+   36
+   37    useEffect(() => {
+   38      refresh();
+   39    }, [refresh]);
+   40
+   41    async function connect() {
+   42      setBusy(true);
+   43      setErr("");
+   44      try {
+   45        const conn = await
+       connectEvmWallet(network);
+   46        const linked = await
+       api("/wallets/link", {
+   47          method: "POST",
+   48          body: JSON.stringify({
+   49            kind: conn.kind,
+   50            address: conn.address,
+   51            chain: conn.chain,
+   52            label: conn.label,
+   53            balances: conn.balances,
+   54          }),
+   55        });
+   56        await api("/wallets/sync-twins", {
+       method: "POST", body: "{}" });
+   57        setWallet(linked.wallet || linked);
+   58        onLinked?.(linked);
+   59        await refresh();
+   60      } catch (e) {
+   61        setErr(String(e.message || e));
+   62      } finally {
+   63        setBusy(false);
+   64      }
+   65    }
+   66
+   67    const addr = wallet?.address || "";
+   68    const mon = wallet?.balances?.MON;
+   69
+   70    return (
+   71      <W title="Wallet connect" icon="🔗 "            status={addr ? "ok" : undefined}
+       footer="Public address only · no keys">
+   72        {addr ? (
+   73          <>
+   74            <p className="mono
+       sm">{addr.slice(0, 10)}…{addr.slice(-8)}</p>
+   75            <p className="muted sm">
+   76              MON: <b>{mon != null ?
+       Number(mon).toFixed(4) : "—"}</b>
+   77            </p>
+   78            <p className="muted sm">Linked:
+       {(reg?.links || []).length}</p>
+   79          </>
+   80        ) : (
+   81          <p className="muted sm">Connect
+       MetaMask / Rabby on Monad to continue.</p>
+   82        )}
+   83        {err ? <p className="err-sm">{err}</p>
+       : null}
+   84        <button type="button"
+       className="forge" disabled={busy}
+       onClick={connect}>
+   85          {busy ? "Connecting…" : addr ?
+       "Reconnect" : "Connect wallet"}
+   86        </button>
+   87      </W>
+   88    );
+   89  }
+   90
+   91  export function WidgetGas({ network }) {
+   92    const [gas, setGas] = useState(null);
+   93    const [margin, setMargin] = useState(null);
+   94    const [err, setErr] = useState("");
+   95
+   96    useEffect(() => {
+   97      let alive = true;
+   98      (async () => {
+   99        try {
+  100          const chain_id = network ===
+       "monad-mainnet" ? 143 : 10143;
+  101          const [g, m] = await Promise.all([
+  102            api("/gas/coach"),
+  103            api("/gas/margin", {
+  104              method: "POST",
+  105              body: JSON.stringify({ chain_id,
+       estimated_gas: 80000 }),
+  106            }),
+  107          ]);
+  108          if (alive) {
+  109            setGas(g);
+  110            setMargin(m);
+  111          }
+  112        } catch (e) {
+  113          if (alive) setErr(String(e.message
+       || e));
+  114        }
+  115      })();
+  116      return () => {
+  117        alive = false;
+  118      };
+  119    }, [network]);
+  120
+  121    const tip = gas?.tip || {};
+  122    return (
+  123      <W title="Gas coach" icon="⛽ "                 status={margin ? "ok" : undefined}
+       footer="Monad bills gas_limit × price">
+  124        {err ? <p className="err-sm">{err}</p>
+       : null}
+  125        <p>
+  126          <b>{tip.title || "Loading…"}</b>
+  127        </p>
+  128        <p className="muted sm">{tip.body ||
+       tip.roommate}</p>
+  129        {margin ? (
+  130          <div className="kv">
+  131            <span>Recommended limit</span>
+  132
+       <b>{margin.recommended_gas_limit}</b>
+  133          </div>
+  134        ) : null}
+  135        <div className="kv">
+  136          <span>Margin</span>
+  137          <b>~7.5%</b>
+  138        </div>
+  139      </W>
+  140    );
+  141  }
+  142
+  143  export function WidgetSwap({ network, props
+       = {} }) {
+  144    const [busy, setBusy] = useState(false);
+  145    const [err, setErr] = useState("");
+  146    const [ticket, setTicket] = useState(null);
+  147    const [qty, setQty] =
+       useState(Number(props.qty) || 10);
+  148    const pair = props.pair || "MON/USDC";
+  149    const venue = props.venue || "kuru";
+  150
+  151    async function paperSwap(side) {
+  152      setBusy(true);
+  153      setErr("");
+  154      try {
+  155        // Ensure desk has arena context
+  156        await api("/desk/arena", { method:
+       "POST", body: "{}" });
+  157        const t = await api("/desk/ticket", {
+  158          method: "POST",
+  159          body: JSON.stringify({
+  160            venue_id: venue,
+  161            pair,
+  162            side,
+  163            qty: Number(qty) || 10,
+  164            limit_price: 1,
+  165            slippage_bps:
+       Number(props.slippage_bps) || 50,
+  166            leverage_bps: 10000,
+  167            network,
+  168          }),
+  169        });
+  170        const id = t.ticket?.ticket_id ||
+       t.ticket_id;
+  171        let filled = t;
+  172        if (id) {
+  173          filled = await
+       api(`/desk/fill/${id}`, { method: "POST",
+       body: "{}" });
+  174        }
+  175        setTicket(filled.ticket || filled);
+  176      } catch (e) {
+  177        setErr(String(e.message || e));
+  178      } finally {
+  179        setBusy(false);
+  180      }
+  181    }
+  182
+  183    return (
+  184      <W title={`Token swap · ${pair}`}
+       icon="⇄" status={ticket ? "ok" : undefined}
+       footer="Paper fill under laws · owner signs
+       for chain">
+  185        <label className="muted sm">Qty</label>
+  186        <input
+  187          className="term-input"
+  188          type="number"
+  189          value={qty}
+  190          min={0.01}
+  191          step={1}
+  192          onChange={(e) =>
+       setQty(e.target.value)}
+  193        />
+  194        <div className="chips tight" style={{
+       marginTop: 8 }}>
+  195          <button type="button"
+       className="forge" disabled={busy}
+       onClick={() => paperSwap("buy")}>
+  196            {busy ? "…" : "Buy (paper)"}
+  197          </button>
+  198          <button type="button"
+       className="ghost" disabled={busy}
+       onClick={() => paperSwap("sell")}>
+  199            Sell (paper)
+  200          </button>
+  201        </div>
+  202        {err ? <p className="err-sm">{err}</p>
+       : null}
+  203        {ticket ? (
+  204          <p className="muted sm mono"
+       style={{ marginTop: 8 }}>
+  205            {ticket.ticket_id || ticket.id} ·
+       {ticket.status} · venue {ticket.venue_id ||
+       venue}
+  206          </p>
+  207        ) : null}
+  208      </W>
+  209    );
+  210  }
+  211
+  212  export function WidgetReject({ network }) {
+  213    const [data, setData] = useState(null);
+  214    const [busy, setBusy] = useState(false);
+  215    const [err, setErr] = useState("");
+  216
+  217    async function run() {
+  218      setBusy(true);
+  219      setErr("");
+  220      try {
+  221        const a = await api("/desk/arena", {
+       method: "POST", body: "{}" });
+  222        setData(a);
+  223      } catch (e) {
+  224        setErr(String(e.message || e));
+  225      } finally {
+  226        setBusy(false);
+  227      }
+  228    }
+  229
+  230    useEffect(() => {
+  231      run();
+  232    }, [network]);
+  233
+  234    const rejects = (data?.results ||
+       data?.rejected || []).filter(
+  235      (r) => r.rejected || r.status ===
+       "rejected" || r.decision === "reject"
+  236    );
+  237    const nR = data?.n_rejected ??
+       rejects.length;
+  238    const nA = data?.n_accepted ?? 0;
+  239
+  240    return (
+  241      <W title="REJECT feed" icon="⛔ "               status={nR >= 1 ? "ok" : "warn"}
+       footer="Reject is a feature">
+  242        <div className="kv">
+  243          <span>Rejected</span>
+  244          <b className="up">{nR}</b>
+  245        </div>
+  246        <div className="kv">
+  247          <span>Accepted</span>
+  248          <b>{nA}</b>
+  249        </div>
+  250        <ul className="reject-list">
+  251          {(data?.results || [])
+  252            .filter((r) => r.rejected ||
+       r.decision === "reject" || r.status ===
+       "risk_rejected")
+  253            .slice(0, 4)
+  254            .map((r, i) => (
+  255              <li key={i} className="muted sm">
+  256                {r.reason || r.why || r.agent
+       || r.action?.agent ||
+       JSON.stringify(r).slice(0, 80)}
+  257              </li>
+  258            ))}
+  259        </ul>
+  260        {err ? <p className="err-sm">{err}</p>
+       : null}
+  261        <button type="button"
+       className="ghost" disabled={busy}
+       onClick={run}>
+  262          {busy ? "…" : "Refresh arena"}
+  263        </button>
+  264      </W>
+  265    );
+  266  }
+  267
+  268  export function WidgetVault({ network }) {
+  269    const [busy, setBusy] = useState(false);
+  270    const [err, setErr] = useState("");
+  271    const [route, setRoute] = useState(null);
+  272
+  273    async function sim() {
+  274      setBusy(true);
+  275      setErr("");
+  276      try {
+  277        await api("/desk/arena", { method:
+       "POST", body: "{}" });
+  278        const desk = await api("/desk");
+  279        const t = (desk.tickets_recent ||
+       []).find((x) =>
+  280          ["risk_accepted", "paper_filled",
+       "routed_sim"].includes(x.status)
+  281        );
+  282        if (!t?.ticket_id) {
+  283          // propose + fill a small ticket
+       first
+  284          const created = await
+       api("/desk/ticket", {
+  285            method: "POST",
+  286            body: JSON.stringify({
+  287              venue_id: "kuru",
+  288              pair: "MON/USDC",
+  289              side: "buy",
+  290              qty: 5,
+  291              limit_price: 1,
+  292              slippage_bps: 30,
+  293              leverage_bps: 10000,
+  294              network,
+  295            }),
+  296          });
+  297          const id = created.ticket?.ticket_id;
+  298          if (id) await
+       api(`/desk/fill/${id}`, { method: "POST",
+       body: "{}" });
+  299        }
+  300        const desk2 = await api("/desk");
+  301        const t2 = (desk2.tickets_recent ||
+       []).find((x) =>
+  302          ["risk_accepted", "paper_filled",
+       "routed_sim"].includes(x.status)
+  303        );
+  304        if (!t2?.ticket_id) throw new
+       Error("No routable ticket after fill");
+  305        const r = await
+       api(`/desk/vault-route/${t2.ticket_id}`, {
+       method: "POST", body: "{}" });
+  306        setRoute(r);
+  307      } catch (e) {
+  308        setErr(String(e.message || e));
+  309      } finally {
+  310        setBusy(false);
+  311      }
+  312    }
+  313
+  314    return (
+  315      <W
+  316        title="Vault gate"
+  317        icon="🛡"
+  318        status={route?.would_execute ||
+       route?.ok ? "ok" : undefined}
+  319        footer="SovereignVault sim · owner
+       signs for real capital"
+  320      >
+  321        <p className="muted
+       sm">{route?.narrative || "Simulate
+       policy-gated execute path."}</p>
+  322        {route?.would_execute != null ? (
+  323          <div className="kv">
+  324            <span>Would execute</span>
+  325
+       <b>{String(route.would_execute)}</b>
+  326          </div>
+  327        ) : null}
+  328        {err ? <p className="err-sm">{err}</p>
+       : null}
+  329        <button type="button"
+       className="forge" disabled={busy}
+       onClick={sim}>
+  330          {busy ? "Simulating…" : "Simulate
+       vault route"}
+  331        </button>
+  332      </W>
+  333    );
+  334  }
+  335
+  336  export function WidgetDao() {
+  337    const [busy, setBusy] = useState(false);
+  338    const [data, setData] = useState(null);
+  339    const [err, setErr] = useState("");
+  340
+  341    async function run() {
+  342      setBusy(true);
+  343      setErr("");
+  344      try {
+  345        const n = await api("/nomos/run", {
+  346          method: "POST",
+  347          body: JSON.stringify({
+  348            name: "Live DAO",
+  349            objective: "Coordinate under dual
+       law stack; reject unlawful paths",
+  350            categories: ["vault", "dex",
+       "lending"],
+  351            network: "monad-testnet",
+  352          }),
+  353        });
+  354        setData(n);
+  355      } catch (e) {
+  356        setErr(String(e.message || e));
+  357      } finally {
+  358        setBusy(false);
+  359      }
+  360    }
+  361
+  362    useEffect(() => {
+  363      run();
+  364    }, []);
+  365
+  366    return (
+  367      <W title="DAO vote / NOMOS" icon="🗳"
+       status={data ? "ok" : undefined}
+       footer="Agents propose · laws filter · owner
+       approves">
+  368        <div className="kv">
+  369          <span>Rejected</span>
+  370          <b>{data?.n_rejected ?? "—"}</b>
+  371        </div>
+  372        <div className="kv">
+  373          <span>Accepted</span>
+  374          <b>{data?.n_accepted ?? "—"}</b>
+  375        </div>
+  376        <p className="muted sm">
+  377          Winner:{" "}
+  378          <b>
+  379            {data?.winner?.action?.agent ||
+  380              data?.winner?.agent ||
+  381              (typeof data?.winner ===
+       "string" ? data.winner : "—")}
+  382          </b>
+  383        </p>
+  384        {err ? <p className="err-sm">{err}</p>
+       : null}
+  385        <button type="button"
+       className="ghost" disabled={busy}
+       onClick={run}>
+  386          {busy ? "…" : "Re-run proposals"}
+  387        </button>
+  388      </W>
+  389    );
+  390  }
+  391
+  392  export function WidgetLaws() {
+  393    const [laws, setLaws] = useState(null);
+  394    useEffect(() => {
+  395      api("/laws")
+  396        .then(setLaws)
+  397        .catch(() => {});
+  398    }, []);
+  399    return (
+  400      <W title="Law banner" icon="📜 "                status={laws ? "ok" : undefined}
+       footer="Dual-stack runtime">
+  401        <p className="doctrine-inline sm">
+  402          Agents propose · Laws decide ·
+       Receipts remember · Owner signs
+  403        </p>
+  404        <div className="kv">
+  405          <span>Laws embedded</span>
+  406          <b>{laws?.law_count ?? "—"}</b>
+  407        </div>
+  408        <p className="muted
+       sm">{(laws?.domains &&
+       Object.keys(laws.domains).join(" · ")) ||
+       ""}</p>
+  409      </W>
+  410    );
+  411  }
+  412
+  413  export function WidgetNft({ props = {} }) {
+  414    const [protocols, setProtocols] =
+       useState([]);
+  415    useEffect(() => {
+  416      api("/protocols")
+  417        .then((p) =>
+       setProtocols(Array.isArray(p) ? p :
+       p.protocols || []))
+  418        .catch(() => {});
+  419    }, []);
+  420    const list = protocols.slice(0, 6);
+  421    return (
+  422      <W title={props.title || "NFT / protocol
+       gallery"} icon="🖼" status={list.length ?
+       "ok" : undefined} footer="Atlas honesty ·
+       verify on explorer">
+  423        <div className="nft-grid">
+  424          {list.map((p) => (
+  425            <div key={p.id}
+       className="nft-cell">
+  426              <b>{p.name}</b>
+  427              <span className="muted
+       sm">{p.category}</span>
+  428              <span className={`badge
+       ${p.adapter_status === "live" ? "on" :
+       "warn"}`}>
+  429                {p.adapter_status}
+  430              </span>
+  431            </div>
+  432          ))}
+  433        </div>
+  434        {!list.length ? <p className="muted
+       sm">Loading protocol atlas…</p> : null}
+  435      </W>
+  436    );
+  437  }
+  438
+  439  export function WidgetMint({ props = {} }) {
+  440    const [busy, setBusy] = useState(false);
+  441    const [msg, setMsg] = useState("");
+  442    const [err, setErr] = useState("");
+  443    const symbol = props.symbol || "DEMO";
+  444
+  445    async function mintPaper() {
+  446      setBusy(true);
+  447      setErr("");
+  448      try {
+  449        await api("/desk/arena", { method:
+       "POST", body: "{}" });
+  450        const t = await api("/desk/ticket", {
+  451          method: "POST",
+  452          body: JSON.stringify({
+  453            venue_id: "kuru",
+  454            pair: `${symbol}/USDC`,
+  455            side: "buy",
+  456            qty: 1,
+  457            limit_price: 1,
+  458            slippage_bps: 50,
+  459            leverage_bps: 10000,
+  460          }),
+  461        });
+  462        const id = t.ticket?.ticket_id;
+  463        if (id) await api(`/desk/fill/${id}`,
+       { method: "POST", body: "{}" });
+  464        setMsg(`Paper mint/claim path for
+       ${symbol} · ticket ${id || "ok"}`);
+  465      } catch (e) {
+  466        setErr(String(e.message || e));
+  467      } finally {
+  468        setBusy(false);
+  469      }
+  470    }
+  471
+  472    return (
+  473      <W title={`Token · ${symbol}`} icon="◎"
+       footer="Paper claim under laws">
+  474        <p className="muted sm">Max supply:
+       {props.max_supply || "—"}</p>
+  475        {msg ? <p className="muted
+       sm">{msg}</p> : null}
+  476        {err ? <p className="err-sm">{err}</p>
+       : null}
+  477        <button type="button"
+       className="forge" disabled={busy}
+       onClick={mintPaper}>
+  478          {busy ? "…" : `Claim ${symbol}
+       (paper)`}
+  479        </button>
+  480      </W>
+  481    );
+  482  }
+  483
+  484  export function WidgetStats() {
+  485    const [home, setHome] = useState(null);
+  486    useEffect(() => {
+  487      api("/home")
+  488        .then(setHome)
+  489        .catch(() => {});
+  490    }, []);
+  491    return (
+  492      <W title="Stats" icon="▣" status={home ?
+       "ok" : undefined}>
+  493        <div className="stats-row">
+  494          <div>
+  495            <em>LVL</em>
+  496            <b>{home?.level ?? "—"}</b>
+  497          </div>
+  498          <div>
+  499            <em>XP</em>
+  500            <b>{home?.xp ?? "—"}</b>
+  501          </div>
+  502          <div>
+  503            <em>🔥 </em>                         504            <b>{home?.streak ?? 0}</b>
+  505          </div>
+  506        </div>
+  507      </W>
+  508    );
+  509  }
+  510
+  511  export function WidgetBalance({ network,
+       props = {} }) {
+  512    const [mon, setMon] = useState(null);
+  513    const [addr, setAddr] = useState("");
+  514    useEffect(() => {
+  515      api("/wallets")
+  516        .then((w) => {
+  517          const l = (w.links || [])[0];
+  518          if (l) {
+  519            setAddr(l.address);
+  520            setMon(l.balances?.MON ?? null);
+  521          }
+  522        })
+  523        .catch(() => {});
+  524    }, [network]);
+  525    return (
+  526      <W title={`${props.symbol || "MON"}
+       balance`} icon="◎" footer={addr ?
+       `${addr.slice(0, 8)}…` : "Connect wallet"}>
+  527        <b className="big-bal">{mon != null ?
+       Number(mon).toFixed(4) : "—"}</b>
+  528        <span className="muted sm">chain
+       {props.chain_id || (network ===
+       "monad-mainnet" ? 143 : 10143)}</span>
+  529      </W>
+  530    );
+  531  }
+  532
+  533  export function WidgetHero({ props = {} }) {
+  534    return (
+  535      <div className="live-hero">
+  536        <h2>{props.title || "Ship on
+       Monad"}</h2>
+  537        <p className="muted">{props.subtitle
+       || "Chain ID 143"}</p>
+  538      </div>
+  539    );
+  540  }
+  541
+  542  export function WidgetText({ props = {} }) {
+  543    return (
+  544      <div className="live-text">
+  545        <p>{props.body || "Agents propose.
+       Laws decide. Owner signs."}</p>
+  546      </div>
+  547    );
+  548  }
+  549
+  550  export function WidgetButtons({ props = {},
+       onPrimary, onSecondary }) {
+  551    return (
+  552      <div className="chips tight">
+  553        <button type="button"
+       className="forge" onClick={onPrimary}>
+  554          {props.primary || "Swap"}
+  555        </button>
+  556        <button type="button"
+       className="ghost" onClick={onSecondary}>
+  557          {props.secondary || "Connect"}
+  558        </button>
+  559      </div>
+  560    );
+  561  }
+  562
+  563  export function renderWidget(node, ctx) {
+  564    const id = node.component_id;
+  565    const props = node.props || {};
+  566    const key = node.instance_id;
+  567    const common = { network: ctx.network,
+       props, key };
+  568
+  569    switch (id) {
+  570      case "wallet_connect":
+  571        return <WidgetWallet key={key}
+       network={ctx.network}
+       onLinked={ctx.onWallet} />;
+  572      case "token_swap":
+  573        return <WidgetSwap key={key}
+       {...common} />;
+  574      case "gas_coach":
+  575        return <WidgetGas key={key}
+       network={ctx.network} />;
+  576      case "vault_gate":
+  577        return <WidgetVault key={key}
+       network={ctx.network} />;
+  578      case "reject_feed":
+  579        return <WidgetReject key={key}
+       network={ctx.network} />;
+  580      case "dao_vote":
+  581        return <WidgetDao key={key} />;
+  582      case "law_banner":
+  583        return <WidgetLaws key={key} />;
+  584      case "nft_gallery":
+  585        return <WidgetNft key={key}
+       props={props} />;
+  586      case "token_mint":
+  587        return <WidgetMint key={key}
+       props={props} />;
+  588      case "stats_strip":
+  589        return <WidgetStats key={key} />;
+  590      case "balance_card":
+  591        return <WidgetBalance key={key}
+       network={ctx.network} props={props} />;
+  592      case "hero_header":
+  593        return <WidgetHero key={key}
+       props={props} />;
+  594      case "text_block":
+  595        return <WidgetText key={key}
+       props={props} />;
+  596      case "button_row":
+  597        return (
+  598          <WidgetButtons
+  599            key={key}
+  600            props={props}
+  601            onPrimary={() =>
+       ctx.onAction?.("primary")}
+  602            onSecondary={() =>
+       ctx.onAction?.("secondary")}
+  603          />
+  604        );
+  605      default:
+  606        return (
+  607          <W key={key} title={node.name || id}
+       icon={node.icon || "◆"}>
+  608            <p className="muted sm">Live
+       component: {id}</p>
+  609          </W>
+  610        );
+  611    }
+  612  }
+◆ Creating Documents\GitHub\Monad-
+           Hackaton\web\src\live\LiveApp.jsx
+
+    1  import React, { useCallback, useEffect,
+       useState } from "react";
+    2  import { api, apiUrl } from "../api.js";
+    3  import { renderWidget } from "./widgets.jsx";
+    4  import "./live.css";
+    5
+    6  /**
+    7   * REAL working product runtime for a
+       published/saved canvas.
+    8   * Every widget hits live HQ APIs + browser
+       wallet — not a static demo mock.
+    9   */
+   10  export function LiveApp({ api: apiFn,
+       network, projectId, canvas: canvasProp,
+       onNavigate, busy: parentBusy }) {
+   11    const [canvas, setCanvas] =
+       useState(canvasProp || null);
+   12    const [err, setErr] = useState("");
+   13    const [busy, setBusy] = useState(false);
+   14    const [pulse, setPulse] = useState(null);
+   15    const call = apiFn || api;
+   16
+   17    const load = useCallback(async () => {
+   18      if (canvasProp) {
+   19        setCanvas(canvasProp);
+   20        return;
+   21      }
+   22      if (!projectId) return;
+   23      setBusy(true);
+   24      setErr("");
+   25      try {
+   26        const c = await
+       call(`/builder/canvas/projects/${encodeURICom
+   27        setCanvas(c);
+   28      } catch (e) {
+   29        setErr(String(e.message || e));
+   30      } finally {
+   31        setBusy(false);
+   32      }
+   33    }, [call, canvasProp, projectId]);
+   34
+   35    useEffect(() => {
+   36      load();
+   37    }, [load]);
+   38
+   39    useEffect(() => {
+   40      let alive = true;
+   41      (async () => {
+   42        try {
+   43          const [laws, gas, desk] = await
+       Promise.all([
+   44            call("/laws"),
+   45            call("/gas/coach"),
+   46            call("/desk"),
+   47          ]);
+   48          if (alive)
+   49            setPulse({
+   50              laws: laws.law_count,
+   51              gas: gas?.tip?.title,
+   52              equity: desk?.equity,
+   53            });
+   54        } catch {
+   55          /* */
+   56        }
+   57      })();
+   58      return () => {
+   59        alive = false;
+   60      };
+   61    }, [call, network]);
+   62
+   63    const nodes = canvas?.nodes || [];
+   64    const ctx = {
+   65      network: network || canvas?.network ||
+       "monad-testnet",
+   66      onWallet: () => {},
+   67      onAction: (a) => {
+   68        if (a === "primary") {
+   69          /* swap handled in widget */
+   70        }
+   71      },
+   72    };
+   73
+   74    if (!projectId && !canvasProp && !canvas) {
+   75      return (
+   76        <section className="panel live-app">
+   77          <div className="live-app-empty">
+   78            <h3>No live app selected</h3>
+   79            <p className="muted">
+   80              Publish a canvas or run <b>Build
+       · Govern · Ship</b>, then open the live
+       product here.
+   81            </p>
+   82            <button type="button"
+       className="forge" onClick={() =>
+       onNavigate?.("builder")}>
+   83              Go to Home
+   84            </button>
+   85            <button type="button"
+       className="ghost" onClick={() =>
+       onNavigate?.("canvas")}>
+   86              Open Canvas
+   87            </button>
+   88          </div>
+   89        </section>
+   90      );
+   91    }
+   92
+   93    return (
+   94      <section className="panel live-app">
+   95        <div className="live-app-bar">
+   96          <div>
+   97            <span className="eyebrow">
+   98              <span className="live-dot sm" />
+       LIVE PRODUCT · NOT A MOCK
+   99            </span>
+  100            <h2>{canvas?.name ||
+       "Loading…"}</h2>
+  101            <p className="muted sm">
+  102              {canvas?.project_id} ·
+       {ctx.network} · THESIS OS bound · real APIs
+  103            </p>
+  104          </div>
+  105          <div className="live-pulse chips
+       tight">
+  106            {pulse ? (
+  107              <>
+  108                <span className="badge
+       on">{pulse.laws} laws</span>
+  109                <span className="badge
+       on">desk {Number(pulse.equity ||
+       0).toFixed(0)}</span>
+  110                <span className="badge
+       warn">{pulse.gas || "gas"}</span>
+  111              </>
+  112            ) : null}
+  113            <button type="button"
+       className="ghost" disabled={busy ||
+       parentBusy} onClick={load}>
+  114              Refresh
+  115            </button>
+  116            <button type="button"
+       className="ghost" onClick={() =>
+       onNavigate?.("canvas")}>
+  117              Edit canvas
+  118            </button>
+  119            {canvas?.project_id ? (
+  120              <a
+  121                className="ghost"
+  122
+       href={apiUrl(`/builder/canvas/expo/${canvas.p
+  123                target="_blank"
+  124                rel="noreferrer"
+  125                style={{ textDecoration:
+       "none" }}
+  126              >
+  127                Expo Go
+  128              </a>
+  129            ) : null}
+  130          </div>
+  131        </div>
+  132
+  133        {err ? <div className="banner
+       err">{err}</div> : null}
+  134
+  135        {!canvas && busy ? <p
+       className="muted" style={{ padding: 20
+       }}>Loading live app…</p> : null}
+  136
+  137        <div className="live-grid">
+  138          {nodes.map((n) => (
+  139            <div
+  140              key={n.instance_id}
+  141              className="live-cell"
+  142              style={{ gridColumn: `span
+       ${Math.min(Number(n.w) || 4, 12)}` }}
+  143            >
+  144              {renderWidget(n, ctx)}
+  145            </div>
+  146          ))}
+  147          {!nodes.length && canvas ? (
+  148            <p className="muted">This app has
+       no components — add some on Canvas.</p>
+  149          ) : null}
+  150        </div>
+  151
+  152        <div className="live-app-foot muted
+       sm">
+  153          Working product: wallet RPC · paper
+       swap · desk arena · vault sim · NOMOS · gas
+       coach · lawbook.
+  154          Capital still requires owner
+       signature for on-chain broadcast.
+  155        </div>
+  156      </section>
+  157    );
+  158  }
+  159
+  160  /** Project picker when opening Live without
+       id */
+  161  export function LiveAppHub({ api: apiFn,
+       network, onNavigate, busy }) {
+  162    const [projects, setProjects] =
+       useState([]);
+  163    const [selected, setSelected] =
+       useState("");
+  164    const call = apiFn || api;
+  165
+  166    useEffect(() => {
+  167      call("/builder/canvas/projects")
+  168        .then((p) => {
+  169          const list = p.projects || [];
+  170          setProjects(list);
+  171          if (list[0])
+       setSelected(list[0].project_id);
+  172        })
+  173        .catch(() => {});
+  174    }, [call]);
+  175
+  176    if (selected) {
+  177      return (
+  178        <LiveApp
+  179          api={call}
+  180          network={network}
+  181          projectId={selected}
+  182          onNavigate={onNavigate}
+  183          busy={busy}
+  184        />
+  185      );
+  186    }
+  187
+  188    return (
+  189      <section className="panel live-app">
+  190        <div className="live-app-empty">
+  191          <h3>Live apps</h3>
+  192          <p className="muted">Ship a project
+       first (Home → Build · Govern · Ship).</p>
+  193          <button type="button"
+       className="forge" onClick={() =>
+       onNavigate?.("builder")}>
+  194            Build · Govern · Ship
+  195          </button>
+  196        </div>
+  197      </section>
+  198    );
+  199  }
+◆ Creating Documents\GitHub\Monad-
+           Hackaton\web\src\live\live.css
+
+    1  /* Live product runtime — real interactive
+       apps */
+    2
+    3  .live-app {
+    4    padding: 0 !important;
+    5    overflow: hidden;
+    6    border: 1px solid #34f5b033 !important;
+    7    box-shadow: 0 0 40px #2ee6a612 inset;
+    8  }
+    9
+   10  .live-app-bar {
+   11    display: flex;
+   12    justify-content: space-between;
+   13    gap: 14px;
+   14    flex-wrap: wrap;
+   15    padding: 16px 18px;
+   16    border-bottom: 1px solid var(--line);
+   17    background: linear-gradient(100deg,
+       #0e1a16, #0c0e18 55%, #12101f);
+   18  }
+   19
+   20  .live-app-bar h2 {
+   21    margin: 4px 0;
+   22    font-size: 1.35rem;
+   23    letter-spacing: -0.03em;
+   24    font-weight: 800;
+   25  }
+   26
+   27  .live-pulse {
+   28    align-items: center;
+   29  }
+   30
+   31  .live-grid {
+   32    display: grid;
+   33    grid-template-columns: repeat(12, 1fr);
+   34    gap: 12px;
+   35    padding: 16px;
+   36    min-height: 320px;
+   37    align-content: start;
+   38  }
+   39
+   40  .live-cell {
+   41    min-width: 0;
+   42  }
+   43
+   44  .live-widget {
+   45    height: 100%;
+   46    border: 1px solid var(--line);
+   47    border-radius: 16px;
+   48    padding: 14px;
+   49    background: linear-gradient(165deg,
+       #12141f, #0c0e18);
+   50    display: flex;
+   51    flex-direction: column;
+   52    gap: 8px;
+   53    box-shadow: inset 0 1px 0 #ffffff08;
+   54    transition: border-color 0.15s, transform
+       0.15s;
+   55  }
+   56
+   57  .live-widget:hover {
+   58    border-color: #7c5cff44;
+   59  }
+   60
+   61  .live-widget.ok {
+   62    border-color: #2ee6a640;
+   63  }
+   64
+   65  .live-widget.warn {
+   66    border-color: #f0b42944;
+   67  }
+   68
+   69  .lw-head {
+   70    display: flex;
+   71    align-items: center;
+   72    gap: 8px;
+   73  }
+   74
+   75  .lw-head b {
+   76    flex: 1;
+   77    font-size: 0.95rem;
+   78    letter-spacing: -0.02em;
+   79  }
+   80
+   81  .lw-ico {
+   82    font-size: 1.15rem;
+   83  }
+   84
+   85  .lw-body {
+   86    flex: 1;
+   87    display: flex;
+   88    flex-direction: column;
+   89    gap: 6px;
+   90  }
+   91
+   92  .lw-foot {
+   93    margin-top: 4px;
+   94    padding-top: 8px;
+   95    border-top: 1px solid var(--line);
+   96    font-family: var(--mono);
+   97    font-size: 0.68rem;
+   98  }
+   99
+  100  .live-hero {
+  101    grid-column: 1 / -1;
+  102    padding: 20px;
+  103    border-radius: 16px;
+  104    border: 1px solid #7c5cff44;
+  105    background: radial-gradient(ellipse 80%
+       80% at 0% 0%, #6d4aff33, transparent 55%),
+       #0c0e18;
+  106  }
+  107
+  108  .live-hero h2 {
+  109    margin: 0 0 6px;
+  110    font-size: 1.6rem;
+  111    font-weight: 800;
+  112    letter-spacing: -0.03em;
+  113  }
+  114
+  115  .live-text {
+  116    padding: 12px 14px;
+  117    border-radius: 12px;
+  118    border: 1px solid var(--line);
+  119    background: #0c0e18;
+  120    color: var(--muted);
+  121    line-height: 1.5;
+  122  }
+  123
+  124  .nft-grid {
+  125    display: grid;
+  126    grid-template-columns: repeat(auto-fill,
+       minmax(100px, 1fr));
+  127    gap: 8px;
+  128  }
+  129
+  130  .nft-cell {
+  131    border: 1px solid var(--line);
+  132    border-radius: 10px;
+  133    padding: 8px;
+  134    display: flex;
+  135    flex-direction: column;
+  136    gap: 4px;
+  137    background: #0a0c14;
+  138    font-size: 0.8rem;
+  139  }
+  140
+  141  .stats-row {
+  142    display: flex;
+  143    gap: 16px;
+  144  }
+  145
+  146  .stats-row em {
+  147    display: block;
+  148    font-style: normal;
+  149    font-family: var(--mono);
+  150    font-size: 0.65rem;
+  151    color: var(--muted);
+  152    letter-spacing: 0.06em;
+  153  }
+  154
+  155  .stats-row b {
+  156    font-size: 1.2rem;
+  157  }
+  158
+  159  .big-bal {
+  160    font-size: 1.6rem;
+  161    font-weight: 800;
+  162    letter-spacing: -0.03em;
+  163  }
+  164
+  165  .reject-list {
+  166    margin: 0;
+  167    padding-left: 1rem;
+  168    max-height: 100px;
+  169    overflow: auto;
+  170  }
+  171
+  172  .err-sm {
+  173    color: #ffb4bb;
+  174    font-size: 0.82rem;
+  175    margin: 0;
+  176  }
+  177
+  178  .live-app-foot {
+  179    padding: 12px 18px 16px;
+  180    border-top: 1px solid var(--line);
+  181    font-family: var(--mono);
+  182    font-size: 0.68rem;
+  183  }
+  184
+  185  .live-app-empty {
+  186    text-align: center;
+  187    padding: 48px 20px;
+  188  }
+  189
+  190  .live-app-empty h3 {
+  191    margin: 0 0 8px;
+  192  }
+  193
+  194  .live-app-empty .forge,
+  195  .live-app-empty .ghost {
+  196    margin: 8px 6px 0;
+  197  }
+  198
+  199  .mono.sm {
+  200    font-family: var(--mono);
+  201    font-size: 0.78rem;
+  202    word-break: break-all;
+  203  }
+  204
+  205  @media (max-width: 700px) {
+  206    .live-grid {
+  207      grid-template-columns: 1fr;
+  208    }
+  209    .live-cell {
+  210      grid-column: 1 / -1 !important;
+  211    }
+  212  }
+◆ Thought for 1.4s
+◆ Search "wallets/link|class Wallet|def link" in \Do
+
+  mode: pattern
+
+  \Documents\GitHub\Monad-Hackaton\engine\thesis_for
+     209  class WalletLinkIn(BaseModel):
+     217  class WalletBalancesIn(BaseModel):
+    1320  @app.post("/wallets/link")
+◆ Read Documents\GitHub\Monad-Hackaton\web\src\main.
+
+427    async function
+connectBrowserWallet(kind) {
+428      setBusy(true);
+429      setErr("");
+430      try {
+…
+474      }
+475    }
+476
+◆ Search "desk/ticket|TicketIn|propose_ticket" in \D
+
+  mode: pattern
+
+  \Documents\GitHub\Monad-Hackaton\engine\thesis_for
+      47      propose_ticket,
+    1751  class TicketIn(BaseModel):
+    1778  @app.post("/desk/ticket")
+    1779  def desk_ticket(body: TicketIn):
+    1795      out = propose_ticket(desk, t)
+◆ Thought for 24.3s
+◆ Search "def registry_snapshot" in \Documents\GitHu
+
+  mode: pattern
+
+  \Documents\GitHub\Monad-Hackaton\engine\thesis_for
+     169  def registry_snapshot() -> Dict[str, Any]:
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\main.jsx
+
+  13  import { AgentPanel } from "./AgentPanel.jsx";
+  14  import { ModelHub } from "./ModelHub.jsx";
+  15  import { NoCodeBuilder } from
+      "./NoCodeBuilder.jsx";
+  16  import { LiveAppHub } from
+      "./live/LiveApp.jsx";
+  17  import { MicButton } from "./MicButton.jsx";
+  18  import { AppChrome } from "./AppChrome.jsx";
+  19  import { Pill } from "./ui.jsx";
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\ui.jsx
+
+  84      tabs: [
+  85        { id: "builder", label: "Home", hint:
+      "Build · Govern · Ship" },
+  86        { id: "canvas", label: "Canvas", hint:
+      "No-code builder" },
+  87        { id: "app", label: "Live App", hint:
+      "Working product runtime" },
+  88        { id: "live", label: "Platform", hint:
+      "THESIS OS" },
+  89        { id: "judge", label: "Proof", hint:
+      "Win path" },
+  90      ],
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\main.jsx
+
+  810          <NoCodeBuilder api={api}
+       network={network} busy={busy}
+       onNavigate={setTab} />
+  811        )}
+  812
+  813        {tab === "app" && (
+  814          <LiveAppHub api={api}
+       network={network} busy={busy}
+       onNavigate={setTab} />
+  815        )}
+  816
+  817        {tab === "agent" && (
+  818          <AgentPanel api={api}
+       network={network} busy={busy}
+       onNavigate={setTab} />
+  819        )}
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\NoCodeBuilder.jsx
+
+  254            </p>
+  255          </div>
+  256          <div className="win-actions">
+  257            <button type="button"
+       className="forge win-btn" disabled={disabled
+       || !canvas} onClick={publish}>
+  257            <button
+  258              type="button"
+  259              className="forge win-btn"
+  260              disabled={disabled || !canvas}
+  261              onClick={async () => {
+  262                await save();
+  263                onNavigate?.("app");
+  264              }}
+  265            >
+  266              ▶ Run live app
+  267            </button>
+  268            <button type="button"
+       className="ghost" disabled={disabled ||
+       !canvas} onClick={publish}>
+  269              Publish · Expo Go
+  270            </button>
+  271            <button type="button"
+       className="ghost" disabled={disabled ||
+       !canvas} onClick={loadExpo}>
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\live\widgets.jsx
+
+  27      try {
+  28        const w = await api("/wallets");
+  29        setReg(w);
+  30        const links = w.links || [];
+  31        if (links.length) setWallet(links[0]);
+  30        // registry may be { links: { id:
+      wallet } } or array
+  31        let links = w.links || [];
+  32        if (links && !Array.isArray(links) &&
+      typeof links === "object") {
+  33          links = Object.values(links);
+  34        }
+  35        if (Array.isArray(links) &&
+      links.length) setWallet(links[0]);
+  36      } catch {
+  37        /* */
+  38      }
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\live\LiveApp.jsx
+
+  161  export function LiveAppHub({ api: apiFn,
+       network, onNavigate, busy }) {
+  162    const [projects, setProjects] =
+       useState([]);
+  163    const [selected, setSelected] =
+       useState("");
+  164    const [picked, setPicked] =
+       useState(false);
+  165    const call = apiFn || api;
+  166
+  167    useEffect(() => {
+  168      call("/builder/canvas/projects")
+  169        .then((p) => {
+  170          const list = p.projects || [];
+  171          setProjects(list);
+  172          if (list[0])
+       setSelected(list[0].project_id);
+  173        })
+  174        .catch(() => {});
+  175    }, [call]);
+  176
+  176    if (selected) {
+  177    // Auto-run most recent project as live
+       product
+  178    if (selected && (picked ||
+       projects.length)) {
+  179      return (
+  178        <LiveApp
+  179          api={call}
+  180          network={network}
+  181          projectId={selected}
+  182          onNavigate={onNavigate}
+  183          busy={busy}
+  184        />
+  180        <div>
+  181          {projects.length > 1 ? (
+  182            <div className="chips tight"
+       style={{ marginBottom: 10, padding: "0 4px"
+       }}>
+  183              <span className="muted
+       sm">App:</span>
+  184              <select
+  185                className="ghost"
+  186                value={selected}
+  187                onChange={(e) => {
+  188                  setSelected(e.target.value);
+  189                  setPicked(true);
+  190                }}
+  191              >
+  192                {projects.map((p) => (
+  193                  <option key={p.project_id}
+       value={p.project_id}>
+  194                    {p.name || p.project_id}
+       {p.published ? "· live" : ""}
+  195                  </option>
+  196                ))}
+  197              </select>
+  198            </div>
+  199          ) : null}
+  200          <LiveApp
+  201            api={call}
+  202            network={network}
+  203            projectId={selected}
+  204            onNavigate={onNavigate}
+  205            busy={busy}
+  206          />
+  207        </div>
+  208      );
+  209    }
+  210
+  211    return (
+  212      <section className="panel live-app">
+  213        <div className="live-app-empty">
+  214          <h3>Live apps</h3>
+  192          <p className="muted">Ship a project
+       first (Home → Build · Govern · Ship).</p>
+  215          <p className="muted">
+  216            Real product runtime — wallet,
+       paper swap, vault sim, NOMOS, gas. Ship a
+       project first.
+  217          </p>
+  218          <button type="button"
+       className="forge" onClick={() =>
+       onNavigate?.("builder")}>
+  219            Build · Govern · Ship
+  220          </button>
+  221          <button type="button"
+       className="ghost" onClick={() =>
+       onNavigate?.("canvas")}>
+  222            Open Canvas
+  223          </button>
+  224        </div>
+  225      </section>
+  226    );
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\AppChrome.jsx
+
+  139          </button>
+  140          <button type="button"
+       className="ghost" disabled={busy}
+       onClick={() => onTab("canvas")}>
+  141            Canvas
+  142          </button>
+  143          <button type="button"
+       className="ghost" disabled={busy}
+       onClick={() => onTab("app")}>
+  144            Live App
+  145          </button>
+  146          <span className="use-bar-meta muted
+       sm">
+  147            API <code>{API_BASE || "/"}</code>
+◆ Edit Documents\GitHub\Monad-
+       Hackaton\web\src\BuilderHome.jsx
+
+  425                    {ship.build?.name || "—"}
+       · {ship.build?.n_nodes ?? "—"} components
+       ·{" "}
+  426                    {ship.build?.template_id}
+  427                  </p>
+  428                  <button type="button"
+       className="ghost" onClick={() =>
+       onNavigate?.("canvas")}>
+  429                    Open canvas
+  430                  </button>
+  428                  <div className="chips tight">
+  429                    <button type="button"
+       className="ghost" onClick={() =>
+       onNavigate?.("canvas")}>
+  430                      Edit canvas
+  431                    </button>
+  432                    <button type="button"
+       className="forge" onClick={() =>
+       onNavigate?.("app")}>
+  433                      ▶ Open live app
+  434                    </button>
+  435                  </div>
+  436                </article>
+  437                <article
+       className="ship-phase">
+  438                  <span className="eyebrow">2
+       · GOVERN</span>
+
+
+minimal · /help
+Switched to Grok 4.5 (medium effort)
+
+❯ continue
+
+                                             
+minimal · /help                              ┃

@@ -10,6 +10,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { DailyBrief } from "@/components/home/DailyBrief";
 import { useState, useRef } from "react";
 import { buildDapp } from "@/lib/ai";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSetAIContext } from "@/lib/aiPageContext";
 
@@ -96,6 +97,13 @@ export default function Home() {
     try {
       const result = await buildDapp(trimmed);
       if (!result) throw new Error("AI could not generate a dApp — try rephrasing.");
+
+      // Surface any type remapping/drop warnings from the AI validator
+      if (result.warnings.length > 0) {
+        for (const w of result.warnings) {
+          toast.warning("AI adjusted a component", { description: w, duration: 6000 });
+        }
+      }
 
       // Create the project
       const project = await new Promise<any>((resolve, reject) => {
