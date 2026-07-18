@@ -91,10 +91,12 @@ from .ecosystem_laws import (
 from .live_feed import landing_feed
 from .competition import competition_pack, run_win_path, scorecard_live
 from .platform import get_app, invoke_app, list_apps, platform_status
+from .engines import engine_catalog, get_engine, list_engines, run_engine
+from .engines.orchestrator import run_cloud_pipeline
 
 app = FastAPI(
     title="THESIS Platform API",
-    description="THESIS Platform — shared primitives + app runtime for Monad DeFi",
+    description="THESIS Platform — cloud engines + app runtime for Monad-hosted web ops",
     version=__version__,
 )
 
@@ -226,7 +228,80 @@ def _embed_laws_on_startup():
 @app.get("/")
 def root():
     """Platform root — kernel status (not a pitch page)."""
-    return platform_status()
+    st = platform_status()
+    st["cloud_engines"] = engine_catalog().get("engines")
+    return st
+
+
+# ── Cloud engines (server-side, used by hosted web app) ───────────
+
+
+class EngineRunIn(BaseModel):
+    network: str = "monad-testnet"
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+class CloudPipelineIn(BaseModel):
+    network: str = "monad-testnet"
+    address: str = ""
+    query: str = ""
+    estimated_gas: int = 80_000
+
+
+@app.get("/engines")
+def engines_list(network: str = Query("monad-testnet")):
+    """Catalog of real cloud engines (API host + Monad RPC)."""
+    return engine_catalog(network)
+
+
+@app.get("/engines/{engine_id}")
+def engines_one(engine_id: str):
+    eng = get_engine(engine_id)
+    if not eng:
+        raise HTTPException(404, f"engine {engine_id} not found")
+    return eng.meta()
+
+
+@app.post("/engines/{engine_id}/run")
+def engines_run(engine_id: str, body: EngineRunIn | None = None):
+    """Run a cloud engine with params (never send private keys)."""
+    b = body or EngineRunIn()
+    params = dict(b.params or {})
+    params.setdefault("network", b.network)
+    # hard reject secret fields
+    for bad in ("private_key", "seed", "mnemonic", "secret", "privkey"):
+        if bad in params:
+            raise HTTPException(400, "refusing secret material — public params only")
+    out = run_engine(engine_id, params)
+    if out.get("error", "").startswith("unknown engine"):
+        raise HTTPException(404, out["error"])
+    return out
+
+
+@app.post("/engines/pipeline")
+def engines_pipeline(body: CloudPipelineIn | None = None):
+    """Multi-engine cloud pipeline: chain + gas + law + index (+ research) + docs."""
+    b = body or CloudPipelineIn()
+    return run_cloud_pipeline(
+        b.network,
+        address=b.address,
+        query=b.query,
+        estimated_gas=b.estimated_gas,
+    )
+
+
+@app.get("/engines/docs/download/{filename}")
+def engines_docs_download(filename: str):
+    """Download a cloud-generated markdown report."""
+    from fastapi.responses import FileResponse
+
+    safe = Path(filename).name
+    if not safe.endswith(".md") or ".." in filename:
+        raise HTTPException(400, "invalid filename")
+    path = _ROOT / "receipts" / "cloud_docs" / safe
+    if not path.exists():
+        raise HTTPException(404, "doc not found — run docs engine first")
+    return FileResponse(path, filename=safe, media_type="text/markdown")
 
 
 @app.get("/platform")
@@ -549,6 +624,9 @@ def health():
             "/platform/apps",
             "/platform/apps/{id}/invoke",
             "/platform/primitives",
+            "/engines",
+            "/engines/{id}/run",
+            "/engines/pipeline",
             "/health",
             "/landing",
             "/pipeline",

@@ -110,9 +110,10 @@ def main() -> int:
     # Platform kernel
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"
-    assert plat["kernel"]["primitives_total"] >= 9
-    assert plat["apps"]["first_party_count"] >= 9
+    assert plat["kernel"]["primitives_total"] >= 10
+    assert plat["apps"]["first_party_count"] >= 10
     assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
+    assert any(p.get("id") == "cloud" for p in plat.get("primitives") or [])
     inv = c.post(
         "/platform/apps/app.desk/invoke",
         json={"action": "arena"},
@@ -128,6 +129,17 @@ def main() -> int:
         "invoke reject",
         inv["result"]["n_rejected"],
     )
+
+    eng = c.get("/engines").json()
+    assert eng.get("count", 0) >= 6
+    gas = c.post(
+        "/engines/gas/run",
+        json={"network": "monad-testnet", "params": {"estimated_gas": 80000}},
+    ).json()
+    assert gas.get("ok")
+    idx = c.post("/engines/index/run", json={"params": {"op": "all"}}).json()
+    assert idx.get("ok") and idx.get("result", {}).get("projects")
+    print("cloud engines", eng["count"], "gas limit", (gas.get("result") or {}).get("recommended_gas_limit"))
 
     j = c.get("/judge").json()
     assert j.get("vaporware") is False

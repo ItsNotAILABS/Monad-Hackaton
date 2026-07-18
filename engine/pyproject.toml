@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thesis-forge"
-version = "2.2.0"
-description = "THESIS Platform — Monad DeFi runtime + browser-local Transformers.js AI"
+version = "2.4.0"
+description = "THESIS Platform — Monad DeFi kernel + browser env (inference, security, export)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

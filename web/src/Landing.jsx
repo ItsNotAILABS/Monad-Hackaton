@@ -342,7 +342,7 @@ export function Landing({
 
       <div className="hero-card land-hero">
         <div>
-          <span className="eyebrow">PLATFORM SHELL · MARKET + PRIMITIVES</span>
+          <span className="eyebrow">PLATFORM SHELL · KERNEL + MARKET + APPS</span>
           <h2>{feed.tagline}</h2>
           <p className="muted">{brief.narrative || brief.coach_headline}</p>
           <div className="chips">
@@ -361,8 +361,14 @@ export function Landing({
             <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
               Forge · install
             </button>
+            <button type="button" className="ghost" onClick={() => onNavigate("cloud")}>
+              Cloud engines
+            </button>
+            <button type="button" className="ghost" onClick={() => onNavigate("local")}>
+              Local AI env
+            </button>
             <button type="button" className="ghost" onClick={() => onNavigate("ai")}>
-              Intel · AI
+              Intel · AI node
             </button>
           </div>
         </div>

@@ -114,6 +114,14 @@ PRIMITIVES: Dict[str, Dict[str, Any]] = {
         "laws": ["sys.no-real-keys", "sys.sandbox-first", "intel.no-hallucinated-apy"],
         "status_fn": "local_ai",
     },
+    "cloud": {
+        "id": "cloud",
+        "name": "Cloud engines",
+        "role": "Server-side engines on the hosted API: chain RPC, gas, law, research, index, docs",
+        "api": ["/engines", "/engines/{id}/run", "/engines/pipeline"],
+        "laws": ["sys.no-real-keys", "monad.gas-bills-limit", "intel.no-hallucinated-apy"],
+        "status_fn": "cloud",
+    },
 }
 
 
@@ -226,12 +234,27 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         "tab": "local",
         "primitives": ["local_ai", "intel", "law", "learn"],
         "description": (
-            "Browser-local Transformers.js inference, IndexedDB memory, security monitor, "
-            "knowledge graph, autonomous research agents, document generation"
+            "Browser environment: Transformers.js (custom models), IndexedDB memory, "
+            "security scan + teach curriculum, knowledge graph, research agents, "
+            "PDF/Excel/Markdown export, packaged security extension download"
         ),
         "entry": "browser://local-ai",
         "actions": ["status"],
         "locality": "browser-only",
+    },
+    {
+        "id": "app.cloud",
+        "name": "Cloud engines",
+        "kind": "cloud",
+        "tab": "cloud",
+        "primitives": ["cloud", "law", "market", "capital"],
+        "description": (
+            "Real server-side engines for the hosted web app: Monad RPC pulse, gas coach, "
+            "law enforcement, research brief, package index, document export, security scan"
+        ),
+        "entry": "POST /engines/pipeline",
+        "actions": ["pipeline", "run"],
+        "locality": "cloud",
     },
 ]
 
@@ -313,14 +336,34 @@ def _primitive_status(network: str = "monad-testnet") -> Dict[str, Any]:
             "model": "Xenova/all-MiniLM-L6-v2",
             "capabilities": [
                 "feature-extraction",
+                "custom-models",
                 "local-memory",
                 "security-monitor",
+                "security-teach",
                 "knowledge-graph",
                 "research-agents",
-                "document-generation",
+                "pdf-excel-markdown",
+                "extension-package",
             ],
             "tab": "local",
             "note": "Runtime lives in the browser app — server only advertises the surface",
+        },
+        "cloud": {
+            "ok": True,
+            "locality": "cloud",
+            "engines": [
+                "chain",
+                "gas",
+                "law",
+                "research",
+                "index",
+                "docs",
+                "security",
+            ],
+            "api": "/engines",
+            "pipeline": "/engines/pipeline",
+            "tab": "cloud",
+            "note": "Runs on API host; talks to Monad RPC + platform modules",
         },
     }
 
@@ -574,13 +617,13 @@ def platform_status(network: str = "monad-testnet") -> Dict[str, Any]:
         "product": "THESIS Platform",
         "version": __version__,
         "what_this_is": (
-            "A Monad DeFi platform: shared primitives (identity, law, capital, market, "
-            "intel, forge, company, learn, local_ai) with first-party apps and installable packages. "
-            "Browser-local Transformers.js AI runs beside the API kernel — not a scoreboard."
+            "A Monad DeFi platform hosted as a web app: shared primitives, first-party apps, "
+            "cloud engines on the API host (chain/gas/law/research/index/docs), and browser-local AI. "
+            "Onchain contracts live on Monad; the UI is the headquarters."
         ),
         "doctrine": (
-            "Apps share one lawbook. Agents propose. Laws decide. Owner signs. Receipts remember. "
-            "Local AI never receives keys."
+            "Apps share one lawbook. Cloud engines hit real Monad RPC. "
+            "Agents propose. Laws decide. Owner signs. Receipts remember. Never keys in cloud."
         ),
         "network": network,
         "kernel": {

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Landing } from "./Landing.jsx";
 import { LocalAI } from "./local-ai/LocalAI.jsx";
+import { CloudEngines } from "./CloudEngines.jsx";
 import "./style.css";
 
 const CATEGORIES = ["dex", "lending", "vault", "staking", "perps", "analytics", "agent"];
@@ -669,13 +670,14 @@ function App() {
       <header className="top">
         <div>
           <span className="eyebrow">
-            THESIS PLATFORM v{health?.version || "2"} · {health?.platform_apps ?? "…"} APPS
+            THESIS PLATFORM v{health?.version || "2.3"} · {health?.platform_apps ?? "…"} APPS ·{" "}
+            {network}
           </span>
           <h1>
             THESIS <i>Platform</i>
           </h1>
           <p className="tagline">
-            Shared primitives · app runtime · one lawbook. Not a pitch deck.
+            Kernel primitives · app runtime · browser-local AI · one lawbook. Owner signs.
           </p>
         </div>
         <div className="top-right stats-chip">
@@ -691,6 +693,20 @@ function App() {
             <em>🔥</em>
             <b>{home?.streak ?? 0}</b>
           </div>
+          <div className="stat">
+            <em>DESK</em>
+            <b>{desk?.equity != null ? Number(desk.equity).toFixed(0) : "—"}</b>
+          </div>
+          <select
+            className="ghost"
+            value={network}
+            onChange={(e) => setNetwork(e.target.value)}
+            aria-label="Network"
+            style={{ maxWidth: 150 }}
+          >
+            <option value="monad-testnet">monad-testnet</option>
+            <option value="monad-mainnet">monad-mainnet</option>
+          </select>
           <div className={`status s-${status.toLowerCase()}`}>{status}</div>
           <button type="button" className="ghost" onClick={refresh}>
             Sync
@@ -709,6 +725,7 @@ function App() {
       <nav className="tabs">
         {[
           ["live", "PLATFORM"],
+          ["cloud", "CLOUD"],
           ["local", "LOCAL AI"],
           ["hq", "HQ"],
           ["home", "DAILY"],
@@ -726,6 +743,10 @@ function App() {
           </button>
         ))}
       </nav>
+
+      {tab === "cloud" && (
+        <CloudEngines api={api} network={network} busy={busy} onNavigate={setTab} />
+      )}
 
       {tab === "local" && (
         <LocalAI api={api} network={network} busy={busy} onNavigate={setTab} />
@@ -2246,10 +2267,16 @@ function App() {
         </section>
       )}
 
-      <footer className="pipeline">
-        INTENT <b>→</b> MAP <b>→</b> ARCH <b>→</b> POLICY <b>→</b> CODEGEN <b>→</b> VALIDATE <b>→</b> ARENA <b>→</b>{" "}
-        READY <b>→</b> DEPLOY* <b>→</b> VERIFY* <b>→</b> RECEIPT
-        <div className="muted sm">* operator-gated (no keys in browser)</div>
+      <footer className="footer-platform">
+        <span>
+          PRIMITIVES <b>identity</b> · <b>law</b> · <b>capital</b> · <b>market</b> · <b>intel</b> ·{" "}
+          <b>forge</b> · <b>company</b> · <b>learn</b> · <b>local_ai</b>
+        </span>
+        <span>
+          FORGE <b>intent→arena→receipt</b> · LOCAL <b>infer·store·scan·export</b> · OWNER{" "}
+          <b>signs</b>
+        </span>
+        <span className="muted">v{health?.version || "2.3"} · no keys in browser</span>
       </footer>
     </div>
   );

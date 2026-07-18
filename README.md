@@ -1,16 +1,17 @@
-# THESIS Platform (v2.2)
+# THESIS Platform (v2.4)
 
-**A Monad DeFi platform — shared primitives + app runtime + browser-local AI. Not a pitch deck.**
+**Monad DeFi platform — web app HQ + cloud engines + onchain vault. Hosted UI, engines on API, contracts on Monad.**
 
 | Layer | Meaning |
 |-------|---------|
-| **Primitives** | identity · law · capital · market · intel · forge · company · learn · **local_ai** |
-| **Apps** | First-party (desk, wallets, vault, AI, **LOCAL AI**, company, studio…) + forged packages |
-| **Runtime** | `POST /platform/apps/{id}/invoke` under one lawbook + receipts |
-| **Local AI** | Transformers.js in-browser · memory · security · KG · research agents · docs |
-| **Shell** | PLATFORM tab = kernel health + registry + live market |
+| **Primitives** | identity · law · capital · market · intel · forge · company · learn · local_ai · **cloud** |
+| **Cloud engines** | chain · gas · law · research · index · docs · security (`POST /engines/*`) |
+| **Apps** | Desk, wallets, vault, AI, **CLOUD**, LOCAL AI, company HQ, studio… + forged packages |
+| **Onchain** | SovereignVault + PolicyKernel + LawBook + … on Monad |
+| **Browser env** | Transformers.js · memory · security teach · PDF/Excel · extension |
+| **Shell** | PLATFORM tab = kernel + registry + live market |
 
-See [docs/PLATFORM.md](docs/PLATFORM.md) · [docs/LOCAL_AI.md](docs/LOCAL_AI.md).
+See [docs/PLATFORM.md](docs/PLATFORM.md) · [docs/CLOUD_ENGINES.md](docs/CLOUD_ENGINES.md) · [docs/LOCAL_AI.md](docs/LOCAL_AI.md).
 
 Thesis still runs a **Company OS** (GM + departments) and a **trading desk** as apps on that platform. Owner remains sovereign. AI uses twins only — never real keys.
 
