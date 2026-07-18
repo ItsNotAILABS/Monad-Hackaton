@@ -7,6 +7,8 @@ import Builder from '@/pages/Builder';
 import Preview from '@/pages/Preview';
 import Workspace from '@/pages/Workspace';
 import Platform from '@/pages/Platform';
+import AIStudio from '@/pages/AIStudio';
+import { AIAssistant } from '@/components/ai/AIAssistant';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,7 @@ function Router() {
       <Route path="/preview/:id" component={Preview} />
       <Route path="/workspace" component={Workspace} />
       <Route path="/platform" component={Platform} />
+      <Route path="/ai" component={AIStudio} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -41,6 +44,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Router />
+        {/* Global floating AI assistant — visible on all pages */}
+        <AIAssistant />
       </WouterRouter>
     </QueryClientProvider>
   );

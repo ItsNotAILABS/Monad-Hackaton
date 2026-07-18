@@ -13,6 +13,7 @@ import { COMPONENT_PALETTE } from "@/components/builder/palette";
 import { ComponentPreview } from "@/components/builder/ComponentPreview";
 import { ComponentData } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
+import { AIComponentPrompt } from "@/components/ai/AIComponentPrompt";
 
 // Props that are Monad network config — shown read-only in a separate section
 const NETWORK_CONFIG_KEYS = new Set([
@@ -225,6 +226,14 @@ export default function Builder() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* AI component generator */}
+          <div className="p-3 border-t border-white/5">
+            <AIComponentPrompt
+              existingTypes={components.map((c) => c.type)}
+              onAdd={handleAddComponent}
+            />
           </div>
         </div>
 

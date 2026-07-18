@@ -273,7 +273,7 @@ print(f"  Balance:  {mon:.8f} MON")
 print(f"  In wei :  {wei:,}")
 `,
 
-    block: rpcCall("eth_getBlockByNumber", ["latest", False]) + `
+    block: rpcCall("eth_getBlockByNumber", ["latest", false]) + `
 r = rpc("eth_getBlockByNumber", ["latest", False])
 if "error" in r:
     print("❌ RPC error:", r["error"]["message"]); sys.exit(1)
