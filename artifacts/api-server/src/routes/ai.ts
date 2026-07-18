@@ -212,6 +212,188 @@ aiRouter.post("/analyze", async (req, res) => {
   res.end();
 });
 
+// ─── Build dApp from prompt ────────────────────────────────────────────────
+aiRouter.post("/build-dapp", async (req, res) => {
+  const { prompt } = req.body as { prompt: string };
+
+  if (!prompt?.trim()) {
+    res.status(400).json({ ok: false, error: "prompt is required" });
+    return;
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.6-terra",
+      max_completion_tokens: 2048,
+      messages: [
+        {
+          role: "system",
+          content: `${MONAD_SYSTEM}
+
+You generate a complete MonadBuilder+ dApp layout from a one-sentence idea.
+Return ONLY valid JSON — no markdown, no explanation:
+{
+  "projectName": "<short catchy dApp name derived from the idea>",
+  "components": [
+    {
+      "type": "<component type>",
+      "props": { <component-specific props with correct Monad values> }
+    }
+    // 5-6 components total, ordered logically for a dApp page
+  ]
+}
+
+Always include 5-6 components. Always start with a hero-section or stats-bar.
+Always include wallet-connect near the top. End with a button or text-block call-to-action.
+Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
+Tailor the dApp type (DeFi/NFT/DAO/token) to the user's idea.
+
+Component types available: wallet-connect, token-swap, nft-gallery, dao-vote, stats-bar,
+price-chart, token-balance, gas-price, recent-transactions, hero-section, button, text-block, image-block
+
+Common props:
+- wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
+- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
+- dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
+- stats-bar: { items: 3, chainId: 143 }
+- price-chart: { token: "MON", chainId: 143 }
+- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- gas-price: { chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- hero-section: { title: "...", subtitle: "..." }
+- button: { label: "...", variant: "primary" }
+- text-block: { text: "..." }`,
+        },
+        {
+          role: "user",
+          content: `Build a dApp for: "${prompt}"`,
+        },
+      ],
+    });
+
+    const raw = response.choices[0]?.message?.content ?? "{}";
+    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+
+    // Assign stable IDs and order to components
+    const components = (parsed.components ?? []).map((c: any, i: number) => ({
+      id: `comp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
+      type: c.type,
+      props: c.props ?? {},
+      order: i,
+    }));
+
+    res.json({ ok: true, projectName: parsed.projectName ?? "My Monad dApp", components });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ─── Audit dApp (streaming) ────────────────────────────────────────────────
+aiRouter.post("/audit-dapp", async (req, res) => {
+  const { projectName, components } = req.body as {
+    projectName: string;
+    components: Array<{ type: string; props: Record<string, any> }>;
+  };
+
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+
+  const compSummary = components
+    .map((c, i) => `${i + 1}. ${c.type} — ${JSON.stringify(c.props).slice(0, 120)}`)
+    .join("\n");
+
+  const auditPrompt = `Audit this MonadBuilder+ dApp named "${projectName}" against Monad best practices and THESIS OS governance rules.
+
+Components on canvas:
+${compSummary}
+
+Provide a structured audit with these sections (use markdown headers):
+## Overall Score
+Give a score out of 10 and a one-line verdict.
+
+## Component Coverage
+Assess which Web3 capabilities are present and what's missing for a production dApp of this type.
+
+## Gas Risk
+Identify any components that could generate heavy gas usage on Monad (remember: gas_LIMIT × gas_PRICE model). Suggest tight limit strategies.
+
+## THESIS Governance Opportunities
+Suggest where THESIS OS laws, PolicyKernel proposals, or ReceiptChain logging would add governance value to this specific dApp.
+
+## Missing Pieces
+List the top 3-5 components or features this dApp needs to be production-ready on Monad Mainnet (Chain ID 143).
+
+Be specific to the actual components listed. Do not give generic advice.`;
+
+  try {
+    const stream = await openai.chat.completions.create({
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 4096,
+      messages: [
+        { role: "system", content: MONAD_SYSTEM },
+        { role: "user", content: auditPrompt },
+      ],
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices[0]?.delta?.content;
+      if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+    }
+    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+  } catch (err: any) {
+    res.write(`data: ${JSON.stringify({ error: err.message ?? "AI error" })}\n\n`);
+  }
+  res.end();
+});
+
+// ─── Recommend template ────────────────────────────────────────────────────
+aiRouter.post("/recommend-template", async (req, res) => {
+  const { description, templates } = req.body as {
+    description: string;
+    templates: Array<{ id: number; name: string; slug?: string; category: string; description: string }>;
+  };
+
+  if (!description?.trim() || !templates?.length) {
+    res.status(400).json({ ok: false, error: "description and templates are required" });
+    return;
+  }
+
+  try {
+    const templateList = templates
+      .map((t) => `ID ${t.id}: [${t.category}] ${t.name} — ${t.description}`)
+      .join("\n");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.6-luna",
+      max_completion_tokens: 256,
+      messages: [
+        {
+          role: "system",
+          content: `${MONAD_SYSTEM}
+
+You recommend the best MonadBuilder+ template for a user's dApp idea.
+Return ONLY valid JSON — no markdown:
+{ "templateId": <number>, "reason": "<one sentence why this template fits best>" }`,
+        },
+        {
+          role: "user",
+          content: `User wants to build: "${description}"\n\nAvailable templates:\n${templateList}\n\nWhich template ID best matches?`,
+        },
+      ],
+    });
+
+    const raw = response.choices[0]?.message?.content ?? "{}";
+    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+    const parsed = JSON.parse(cleaned);
+    res.json({ ok: true, templateId: parsed.templateId, reason: parsed.reason });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ─── Script generator ─────────────────────────────────────────────────────
 aiRouter.post("/script", async (req, res) => {
   const { prompt, lang = "python" } = req.body as {

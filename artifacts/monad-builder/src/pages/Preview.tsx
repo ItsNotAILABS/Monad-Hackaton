@@ -1,7 +1,49 @@
 import { useRoute, Link } from "wouter";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
-import { Zap, ArrowLeft, ExternalLink } from "lucide-react";
+import { Zap, ArrowLeft, ExternalLink, Sparkles, X, Loader2 } from "lucide-react";
 import { LiveWidget } from "@/components/builder/LiveWidget";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { streamAuditDapp } from "@/lib/ai";
+import { useSetAIContext } from "@/lib/aiPageContext";
+
+/** Render markdown-like section headers in the audit output */
+function AuditContent({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-1">
+      {lines.map((line, i) => {
+        if (line.startsWith("## ")) {
+          return (
+            <h3 key={i} className="text-sm font-bold text-primary mt-4 mb-1 first:mt-0">
+              {line.slice(3)}
+            </h3>
+          );
+        }
+        if (line.startsWith("### ")) {
+          return (
+            <h4 key={i} className="text-xs font-bold text-white/70 mt-3 mb-0.5">
+              {line.slice(4)}
+            </h4>
+          );
+        }
+        if (line.startsWith("- ") || line.startsWith("* ")) {
+          return (
+            <p key={i} className="text-xs text-white/65 leading-relaxed pl-3">
+              <span className="text-primary/60 mr-1">▸</span>{line.slice(2)}
+            </p>
+          );
+        }
+        if (line.trim() === "") return <div key={i} className="h-1" />;
+        return (
+          <p key={i} className="text-xs text-white/65 leading-relaxed">
+            {line}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Preview() {
   const [, params] = useRoute("/preview/:id");
@@ -10,6 +52,30 @@ export default function Preview() {
   const { data: project, isLoading } = useGetProject(id, {
     query: { enabled: !!id, queryKey: getGetProjectQueryKey(id) }
   });
+
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditing, setAuditing] = useState(false);
+  const [auditText, setAuditText] = useState("");
+
+  // Context-aware AI
+  const context = project
+    ? `Current page: Preview — user is previewing "${project.name}" (${project.status}). Components: ${project.components.map(c => c.type).join(", ")}. Help them understand how the dApp looks, suggest improvements, or explain Monad deployment.`
+    : "Current page: Preview — loading project.";
+  useSetAIContext(context);
+
+  const runAudit = useCallback(async () => {
+    if (!project || auditing) return;
+    setAuditText("");
+    setAuditing(true);
+    setAuditOpen(true);
+
+    await streamAuditDapp(
+      project.name,
+      project.components.map(c => ({ type: c.type, props: c.props })),
+      (chunk) => setAuditText((prev) => prev + chunk),
+      () => setAuditing(false)
+    );
+  }, [project, auditing]);
 
   if (isLoading) {
     return (
@@ -49,8 +115,21 @@ export default function Preview() {
         </div>
       </div>
 
-      {/* Preview badge — top right */}
+      {/* Preview badge + AI Audit button — top right */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        {/* AI Audit button */}
+        <button
+          onClick={runAudit}
+          disabled={auditing || project.components.length === 0}
+          className="bg-black/70 backdrop-blur border border-violet-500/40 text-violet-300 text-xs px-3 py-2 rounded-full font-medium shadow-[0_0_12px_rgba(139,92,246,0.2)] flex items-center gap-1.5 hover:bg-violet-500/10 hover:border-violet-500/60 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {auditing ? (
+            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Auditing…</>
+          ) : (
+            <><Sparkles className="w-3.5 h-3.5" /> AI Audit</>
+          )}
+        </button>
+
         <div className="bg-black/70 backdrop-blur border border-primary/40 text-primary text-xs px-3 py-2 rounded-full font-mono font-bold shadow-[0_0_12px_rgba(131,110,249,0.25)] flex items-center gap-1.5">
           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
           LIVE PREVIEW
@@ -96,6 +175,68 @@ export default function Preview() {
           </div>
         </footer>
       </main>
+
+      {/* AI Audit slide-in panel */}
+      <AnimatePresence>
+        {auditOpen && (
+          <motion.div
+            key="audit-panel"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed top-0 right-0 bottom-0 w-full max-w-[420px] z-40 flex flex-col bg-[#0d0d14]/97 backdrop-blur-2xl border-l border-white/10 shadow-2xl"
+          >
+            {/* Panel header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/[0.07] shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-white">AI dApp Audit</div>
+                <div className="text-[10px] text-white/35 mt-0.5 truncate">
+                  {project.name} · {project.components.length} components
+                </div>
+              </div>
+              {auditing && (
+                <div className="flex items-center gap-1.5 text-[10px] text-violet-400/70 font-mono">
+                  <Loader2 className="w-3 h-3 animate-spin" /> streaming
+                </div>
+              )}
+              <button
+                onClick={() => setAuditOpen(false)}
+                className="text-white/20 hover:text-white/60 transition-colors ml-1"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Audit content */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 min-h-0">
+              {auditText ? (
+                <AuditContent text={auditText} />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-white/20">
+                  <Loader2 className="w-6 h-6 animate-spin text-violet-400/40" />
+                  <p className="text-xs">Analyzing your dApp…</p>
+                </div>
+              )}
+            </div>
+
+            {/* Re-run button */}
+            {!auditing && auditText && (
+              <div className="px-5 py-4 border-t border-white/[0.07] shrink-0">
+                <button
+                  onClick={runAudit}
+                  className="w-full py-2.5 rounded-lg border border-violet-500/30 text-violet-400 text-sm font-medium hover:bg-violet-500/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Re-run Audit
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

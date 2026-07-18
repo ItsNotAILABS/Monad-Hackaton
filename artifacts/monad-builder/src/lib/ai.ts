@@ -99,6 +99,74 @@ export async function generateComponent(
   } catch { return null; }
 }
 
+/** Build a full dApp from a one-sentence idea. Returns projectName + pre-configured components. */
+export async function buildDapp(
+  prompt: string
+): Promise<{ projectName: string; components: Array<{ id: string; type: string; props: Record<string, any>; order: number }> } | null> {
+  try {
+    const res = await fetch(`${AI_BASE}/build-dapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    const data = await res.json();
+    return data.ok ? { projectName: data.projectName, components: data.components } : null;
+  } catch { return null; }
+}
+
+/** Stream an AI audit of the current dApp. */
+export async function streamAuditDapp(
+  projectName: string,
+  components: Array<{ type: string; props: Record<string, any> }>,
+  onChunk: (text: string) => void,
+  onDone: () => void
+): Promise<void> {
+  const res = await fetch(`${AI_BASE}/audit-dapp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ projectName, components }),
+  });
+
+  if (!res.body) { onDone(); return; }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split("\n");
+    buf = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const payload = JSON.parse(line.slice(6));
+        if (payload.content) onChunk(payload.content);
+        if (payload.done) { onDone(); return; }
+        if (payload.error) { onChunk(`\n⚠ ${payload.error}`); onDone(); return; }
+      } catch {}
+    }
+  }
+  onDone();
+}
+
+/** Get the best-matching template for a description. */
+export async function recommendTemplate(
+  description: string,
+  templates: Array<{ id: number; name: string; category: string; description: string }>
+): Promise<{ templateId: number; reason: string } | null> {
+  try {
+    const res = await fetch(`${AI_BASE}/recommend-template`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description, templates }),
+    });
+    const data = await res.json();
+    return data.ok ? { templateId: data.templateId, reason: data.reason } : null;
+  } catch { return null; }
+}
+
 /** Generate a Monad script from a description. */
 export async function generateScript(
   prompt: string,

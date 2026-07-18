@@ -9,6 +9,7 @@ import Workspace from '@/pages/Workspace';
 import Platform from '@/pages/Platform';
 import AIStudio from '@/pages/AIStudio';
 import { AIAssistant } from '@/components/ai/AIAssistant';
+import { AIPageContextProvider, useAIPageContext } from '@/lib/aiPageContext';
 
 const queryClient = new QueryClient();
 
@@ -39,14 +40,22 @@ function Router() {
   );
 }
 
+/** Reads the current AI page context and passes it to the floating assistant. */
+function AIAssistantWithContext() {
+  const { context } = useAIPageContext();
+  return <AIAssistant context={context || undefined} />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <Router />
-        {/* Global floating AI assistant — visible on all pages */}
-        <AIAssistant />
-      </WouterRouter>
+      <AIPageContextProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <Router />
+          {/* Global floating AI assistant — context-aware via AIPageContext */}
+          <AIAssistantWithContext />
+        </WouterRouter>
+      </AIPageContextProvider>
     </QueryClientProvider>
   );
 }

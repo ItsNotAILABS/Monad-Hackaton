@@ -2,6 +2,7 @@
  * AIAssistant — floating global chat widget.
  * Lives in App.tsx, persists across all pages.
  * Slides in from the right. Stateless per session (messages in React state).
+ * Accepts an optional `context` prop to make answers page-aware.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -38,7 +39,12 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   );
 }
 
-export function AIAssistant() {
+interface AIAssistantProps {
+  /** Optional page context injected into the system prompt */
+  context?: string;
+}
+
+export function AIAssistant({ context }: AIAssistantProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -75,13 +81,19 @@ export function AIAssistant() {
         if (last?.role === "assistant") last.content += chunk;
         return next;
       }),
-      () => setStreaming(false)
+      () => setStreaming(false),
+      context
     );
-  }, [messages, streaming]);
+  }, [messages, streaming, context]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(input); }
   };
+
+  // Build a short label for the context badge
+  const contextLabel = context
+    ? context.split("\n")[0].replace(/^Current page: /, "").slice(0, 40)
+    : null;
 
   return (
     <>
@@ -113,9 +125,13 @@ export function AIAssistant() {
               <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-white leading-none">MonadBuilder<span className="text-primary">+</span> AI</div>
-                <div className="text-[10px] text-white/30 mt-0.5">Monad · THESIS OS · dApp builder</div>
+                {contextLabel ? (
+                  <div className="text-[10px] text-primary/50 mt-0.5 truncate">📍 {contextLabel}</div>
+                ) : (
+                  <div className="text-[10px] text-white/30 mt-0.5">Monad · THESIS OS · dApp builder</div>
+                )}
               </div>
               {messages.length > 0 && (
                 <button onClick={() => setMessages([])} className="text-white/20 hover:text-white/50 transition-colors mr-1">

@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  useListProjects, useCreateProject, useDeleteProject,
+  useListProjects, useCreateProject, useDeleteProject, useUpdateProject,
   getListProjectsQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey
 } from "@workspace/api-client-react";
-import { Plus, LayoutTemplate, MoreVertical, Trash2, Edit2, Play, Zap } from "lucide-react";
+import { Plus, LayoutTemplate, MoreVertical, Trash2, Edit2, Play, Zap, Sparkles, Loader2 } from "lucide-react";
 import { DailyBrief } from "@/components/home/DailyBrief";
 import { HabitTracker } from "@/components/home/HabitTracker";
 import { format } from "date-fns";
@@ -25,8 +25,18 @@ import {
   AlertDialogHeader, AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { buildDapp } from "@/lib/ai";
+import { useSetAIContext } from "@/lib/aiPageContext";
+
+const BUILD_STEPS = [
+  "Understanding your dApp concept…",
+  "Choosing the right components…",
+  "Configuring Monad network values…",
+  "Assembling your canvas…",
+  "Almost ready…",
+];
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -36,6 +46,7 @@ export default function Dashboard() {
   const { data: stats } = useGetDashboardStats();
 
   const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -44,6 +55,71 @@ export default function Dashboard() {
 
   // Delete confirmation state
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+
+  // "Idea to dApp" state
+  const [idea, setIdea] = useState("");
+  const [building, setBuilding] = useState(false);
+  const [buildStep, setBuildStep] = useState(0);
+  const [buildError, setBuildError] = useState("");
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Context-aware AI: tell the assistant what projects are on the dashboard
+  const projectContext = projects
+    ? `Current page: Dashboard — user has ${projects.length} project(s): ${projects.slice(0, 5).map(p => `"${p.name}" (${p.components.length} components, ${p.status})`).join("; ")}. Help them manage their dApps, improve them, or start a new one.`
+    : "Current page: Dashboard — loading projects.";
+  useSetAIContext(projectContext);
+
+  const startStepCycle = () => {
+    let step = 0;
+    setBuildStep(0);
+    stepTimerRef.current = setInterval(() => {
+      step = (step + 1) % BUILD_STEPS.length;
+      setBuildStep(step);
+    }, 1400);
+  };
+
+  const stopStepCycle = () => {
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+  };
+
+  const handleBuildDapp = async () => {
+    const trimmed = idea.trim();
+    if (!trimmed || building) return;
+
+    setBuildError("");
+    setBuilding(true);
+    startStepCycle();
+
+    try {
+      const result = await buildDapp(trimmed);
+      if (!result) throw new Error("AI could not generate a dApp — try rephrasing.");
+
+      const project = await new Promise<any>((resolve, reject) => {
+        createProject.mutate(
+          { data: { name: result.projectName, description: `Built from: "${trimmed}"` } },
+          { onSuccess: resolve, onError: reject }
+        );
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        updateProject.mutate(
+          { id: project.id, data: { components: result.components } },
+          { onSuccess: () => resolve(), onError: reject }
+        );
+      });
+
+      queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+
+      stopStepCycle();
+      setBuilding(false);
+      setLocation(`/builder/${project.id}`);
+    } catch (err: any) {
+      stopStepCycle();
+      setBuilding(false);
+      setBuildError(err?.message ?? "Something went wrong. Please try again.");
+    }
+  };
 
   const handleCreate = async () => {
     if (!newProjectName.trim()) return;
@@ -77,7 +153,7 @@ export default function Dashboard() {
       <Navbar />
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Mission Control</h1>
             <p className="text-white/50 mt-1">Manage your Monad dApps and drafts.</p>
@@ -124,6 +200,48 @@ export default function Dashboard() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* ── "Idea to dApp" input ── */}
+        <div className="mb-8">
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 to-violet-500/30 rounded-xl blur opacity-50 group-hover:opacity-80 transition-opacity" />
+            <div className="relative flex items-center bg-black/60 border border-white/10 rounded-xl overflow-hidden">
+              <Sparkles className="w-5 h-5 text-primary/50 ml-4 shrink-0" />
+              <input
+                type="text"
+                value={idea}
+                onChange={(e) => setIdea(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleBuildDapp()}
+                placeholder="Describe your dApp idea and AI will build it instantly…"
+                className="flex-1 bg-transparent text-white placeholder-white/25 px-3 py-3.5 text-sm outline-none"
+                disabled={building}
+              />
+              <button
+                onClick={handleBuildDapp}
+                disabled={!idea.trim() || building}
+                className="m-1.5 px-4 py-2 bg-primary hover:bg-primary/80 disabled:opacity-40 text-white font-bold rounded-lg text-xs transition-colors flex items-center gap-1.5 shrink-0"
+              >
+                {building ? (
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Building…</>
+                ) : (
+                  <><Zap className="w-3.5 h-3.5" /> Build dApp</>
+                )}
+              </button>
+            </div>
+          </div>
+          {building && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-2 text-xs text-primary/60 font-mono flex items-center gap-1.5 pl-1"
+            >
+              <Loader2 className="w-3 h-3 animate-spin" /> {BUILD_STEPS[buildStep]}
+            </motion.p>
+          )}
+          {buildError && (
+            <p className="mt-2 text-xs text-red-400 pl-1">{buildError}</p>
+          )}
         </div>
 
         {/* Daily Brief + Habit Tracker */}
@@ -235,7 +353,7 @@ export default function Dashboard() {
             <Zap className="w-14 h-14 text-white/15 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">No projects yet</h3>
             <p className="text-white/50 mb-8 max-w-sm mx-auto leading-relaxed">
-              Start with a blank canvas or pick a template to hit the ground running.
+              Describe your dApp idea above, or start with a blank canvas.
             </p>
             <div className="flex justify-center gap-4">
               <Button onClick={() => setIsCreateOpen(true)} className="gap-2">

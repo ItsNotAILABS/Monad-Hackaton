@@ -1,13 +1,17 @@
 import { motion } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Zap, Layout, Blocks, Rocket, ArrowRight, ExternalLink,
   Cpu, Clock, Shield, Copy, CheckCheck, Layers, Terminal,
+  Sparkles, Loader2,
 } from "lucide-react";
-import { useGetDashboardStats } from "@workspace/api-client-react";
+import { useGetDashboardStats, useCreateProject, useUpdateProject, getListProjectsQueryKey, getGetDashboardStatsQueryKey } from "@workspace/api-client-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { DailyBrief } from "@/components/home/DailyBrief";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { buildDapp } from "@/lib/ai";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSetAIContext } from "@/lib/aiPageContext";
 
 // Real Monad Mainnet data — source: docs.monad.xyz
 const MONAD_NETWORK = {
@@ -32,6 +36,14 @@ const MONAD_NETWORK = {
   maxContractSize: "128 KB",
 };
 
+const BUILD_STEPS = [
+  "Understanding your dApp concept…",
+  "Choosing the right components…",
+  "Configuring Monad network values…",
+  "Assembling your canvas…",
+  "Almost ready…",
+];
+
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -46,6 +58,83 @@ function CopyButton({ value }: { value: string }) {
 
 export default function Home() {
   const { data: stats } = useGetDashboardStats();
+  const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
+
+  const createProject = useCreateProject();
+  const updateProject = useUpdateProject();
+
+  const [idea, setIdea] = useState("");
+  const [building, setBuilding] = useState(false);
+  const [buildStep, setBuildStep] = useState(0);
+  const [buildError, setBuildError] = useState("");
+  const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useSetAIContext("Current page: Home — user is exploring MonadBuilder+. Help them understand the platform, suggest what kind of dApp to build, and explain Monad/THESIS features.");
+
+  const startStepCycle = () => {
+    let step = 0;
+    setBuildStep(0);
+    stepTimerRef.current = setInterval(() => {
+      step = (step + 1) % BUILD_STEPS.length;
+      setBuildStep(step);
+    }, 1400);
+  };
+
+  const stopStepCycle = () => {
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+  };
+
+  const handleBuildDapp = async () => {
+    const trimmed = idea.trim();
+    if (!trimmed || building) return;
+
+    setBuildError("");
+    setBuilding(true);
+    startStepCycle();
+
+    try {
+      const result = await buildDapp(trimmed);
+      if (!result) throw new Error("AI could not generate a dApp — try rephrasing.");
+
+      // Create the project
+      const project = await new Promise<any>((resolve, reject) => {
+        createProject.mutate(
+          { data: { name: result.projectName, description: `Built from: "${trimmed}"` } },
+          {
+            onSuccess: resolve,
+            onError: reject,
+          }
+        );
+      });
+
+      // Update it with the AI-generated components
+      await new Promise<void>((resolve, reject) => {
+        updateProject.mutate(
+          { id: project.id, data: { components: result.components } },
+          {
+            onSuccess: () => resolve(),
+            onError: reject,
+          }
+        );
+      });
+
+      queryClient.invalidateQueries({ queryKey: getListProjectsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+
+      stopStepCycle();
+      setBuilding(false);
+      setLocation(`/builder/${project.id}`);
+    } catch (err: any) {
+      stopStepCycle();
+      setBuilding(false);
+      setBuildError(err?.message ?? "Something went wrong. Please try again.");
+    }
+  };
+
+  const handleIdeaKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") handleBuildDapp();
+  };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden">
@@ -77,19 +166,69 @@ export default function Home() {
             <span className="text-white/40">Agents propose · Laws decide · Receipts remember · Owner signs.</span>
           </p>
 
-          <p className="text-base text-white/35 mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-base text-white/35 mb-10 max-w-2xl mx-auto leading-relaxed">
             Drag-and-drop your dApp UI. Let THESIS govern how it runs — gas coaching, 
             multi-agent proposals, onchain law enforcement — all on Monad's 10,000 TPS chain.
           </p>
 
+          {/* ── "Idea to dApp" input ── */}
+          <div className="max-w-2xl mx-auto mb-10">
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/40 to-violet-500/40 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-center bg-black/80 border border-white/10 rounded-xl overflow-hidden">
+                <Sparkles className="w-5 h-5 text-primary/60 ml-4 shrink-0" />
+                <input
+                  type="text"
+                  value={idea}
+                  onChange={(e) => setIdea(e.target.value)}
+                  onKeyDown={handleIdeaKey}
+                  placeholder="Describe your dApp idea and AI will build it…"
+                  className="flex-1 bg-transparent text-white placeholder-white/25 px-3 py-4 text-base outline-none"
+                  disabled={building}
+                />
+                <button
+                  onClick={handleBuildDapp}
+                  disabled={!idea.trim() || building}
+                  className="m-2 px-5 py-2.5 bg-primary hover:bg-primary/80 disabled:opacity-40 text-white font-bold rounded-lg text-sm transition-colors flex items-center gap-2 shrink-0"
+                >
+                  {building ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Building…</>
+                  ) : (
+                    <><Zap className="w-4 h-4" /> Build dApp</>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Building step indicator */}
+            {building && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3 text-sm text-primary/70 text-center font-mono flex items-center justify-center gap-2"
+              >
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                {BUILD_STEPS[buildStep]}
+              </motion.div>
+            )}
+
+            {buildError && (
+              <p className="mt-3 text-sm text-red-400 text-center">{buildError}</p>
+            )}
+
+            <p className="mt-3 text-xs text-white/20 text-center">
+              Try: "A token swap interface for MON/USDC" · "A DAO voting dashboard" · "An NFT gallery with wallet connect"
+            </p>
+          </div>
+
           <div className="flex items-center justify-center gap-4 flex-wrap">
-            <Link href="/dashboard" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold bg-primary text-primary-foreground shadow-[0_0_20px_rgba(131,110,249,0.5)] hover:shadow-[0_0_40px_rgba(131,110,249,0.8)] hover:bg-primary/90 transition-all gap-2">
-              Start Building <ArrowRight className="w-5 h-5" />
+            <Link href="/dashboard" className="inline-flex items-center justify-center h-12 px-7 rounded-md text-sm font-bold bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 transition-all gap-2">
+              My Projects <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/platform" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold border border-primary/30 text-primary hover:bg-primary/10 transition-all gap-2">
-              <Layers className="w-5 h-5" /> THESIS Platform
+            <Link href="/platform" className="inline-flex items-center justify-center h-12 px-7 rounded-md text-sm font-bold border border-primary/20 text-primary/70 hover:bg-primary/10 transition-all gap-2">
+              <Layers className="w-4 h-4" /> THESIS Platform
             </Link>
-            <Link href="/templates" className="inline-flex items-center justify-center h-14 px-8 rounded-md text-base font-bold border border-white/15 text-white/60 hover:bg-white/5 transition-all">
+            <Link href="/templates" className="inline-flex items-center justify-center h-12 px-7 rounded-md text-sm font-bold border border-white/10 text-white/50 hover:bg-white/5 transition-all">
               Templates
             </Link>
           </div>

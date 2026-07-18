@@ -14,6 +14,7 @@ import { ComponentPreview } from "@/components/builder/ComponentPreview";
 import { ComponentData } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { AIComponentPrompt } from "@/components/ai/AIComponentPrompt";
+import { useSetAIContext } from "@/lib/aiPageContext";
 
 // Props that are Monad network config — shown read-only in a separate section
 const NETWORK_CONFIG_KEYS = new Set([
@@ -59,6 +60,12 @@ export default function Builder() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const initializedForId = useRef<number | null>(null);
+
+  // Context-aware AI: pass current canvas state to the assistant
+  const builderContext = project
+    ? `Current page: Builder — editing project "${project.name}" (${project.status}). Components on canvas: ${components.length > 0 ? components.map(c => c.type).join(", ") : "none yet"}. Help the user add or improve dApp components, explain Monad network settings, or suggest what to build next.`
+    : `Current page: Builder — loading project.`;
+  useSetAIContext(builderContext);
 
   useEffect(() => {
     if (project && initializedForId.current !== project.id) {
