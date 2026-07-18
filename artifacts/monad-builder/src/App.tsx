@@ -5,6 +5,8 @@ import Dashboard from '@/pages/Dashboard';
 import Templates from '@/pages/Templates';
 import Builder from '@/pages/Builder';
 import Preview from '@/pages/Preview';
+import Workspace from '@/pages/Workspace';
+import Platform from '@/pages/Platform';
 
 const queryClient = new QueryClient();
 
@@ -27,6 +29,8 @@ function Router() {
       <Route path="/templates" component={Templates} />
       <Route path="/builder/:id" component={Builder} />
       <Route path="/preview/:id" component={Preview} />
+      <Route path="/workspace" component={Workspace} />
+      <Route path="/platform" component={Platform} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Zap } from "lucide-react";
+import { Zap, Terminal, Layers } from "lucide-react";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -23,6 +23,20 @@ export function Navbar() {
             className={`text-sm font-medium transition-colors ${location === "/dashboard" ? "text-white" : "text-white/55 hover:text-white"}`}
           >
             Dashboard
+          </Link>
+          <Link
+            href="/workspace"
+            className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${location === "/workspace" ? "text-white" : "text-white/55 hover:text-white"}`}
+          >
+            <Terminal className="w-3.5 h-3.5" />
+            Workspace
+          </Link>
+          <Link
+            href="/platform"
+            className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${location === "/platform" ? "text-white" : "text-white/55 hover:text-white"}`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Platform
           </Link>
           <Link
             href="/dashboard"
