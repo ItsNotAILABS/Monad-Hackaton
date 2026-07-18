@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/monad-mobile/"
+title = "MonadBuilder+ Mobile"
+version = "1.0.0"
+id = "artifacts/monad-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/monad-mobile/" ]
+localPort = 18727
+
+[services.development]
+run = "pnpm --filter @workspace/monad-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/monad-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/monad-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18727"
+BASE_PATH = "/monad-mobile/"
