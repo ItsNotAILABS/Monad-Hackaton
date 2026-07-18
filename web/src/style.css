@@ -234,6 +234,187 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   padding: 12px 18px;
 }
 
+/* ── LIVE landing ─────────────────────────────────── */
+.landing-live {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #6d4aff33;
+  box-shadow: 0 0 40px #6d4aff14 inset;
+}
+.landing-live.pulse-update {
+  box-shadow: 0 0 50px #2ee6a622 inset, 0 0 0 1px #2ee6a633;
+  transition: box-shadow 0.25s ease;
+}
+.live-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+  background: linear-gradient(90deg, #1a0a12 0%, #0a0b12 40%, #0a1018 100%);
+}
+.live-bar .link.sm {
+  margin-left: auto;
+  font-size: 10px;
+}
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3b4a;
+  box-shadow: 0 0 10px #ff3b4a;
+  animation: pulse 1.2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.ticker-wrap {
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: #05060c;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.ticker {
+  display: flex;
+  gap: 28px;
+  padding: 12px 0;
+  width: max-content;
+  animation: scroll 28s linear infinite;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.tick em {
+  color: #8b87a8;
+  font-style: normal;
+  margin-right: 6px;
+}
+.tick.up { color: var(--accent2); }
+.tick.down { color: #ff8f9a; }
+.tick small { opacity: 0.75; margin-left: 4px; }
+.land-hero { margin: 12px; }
+.market-board .mono {
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.pillar-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin: 0 12px 14px;
+}
+.pillar-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  background: #0c0d16;
+}
+.pillar-card b {
+  display: block;
+  font-size: 1.4rem;
+  line-height: 1.1;
+  margin: 4px 0 2px;
+}
+.pillar-card .law-chip.mini {
+  margin-top: 8px;
+  padding: 6px 8px;
+  font-size: 0.75rem;
+}
+.stream {
+  max-height: 480px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.stream-item {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #0a0b12aa;
+}
+.stream-item.kind-law { border-color: #6d4aff55; }
+.stream-item.kind-practice { border-color: #f0b42944; }
+.stream-item.kind-move { border-color: #2ee6a644; }
+.stream-item.kind-gas { border-color: #4aa3ff55; }
+.stream-item.kind-market { border-color: #2ee6a633; }
+.stream-item.kind-brief { border-color: #ff8f9a44; }
+.stream-item.kind-up_next { border-color: #8b87a844; border-style: dashed; }
+.stream-item header {
+  border: 0;
+  margin: 0 0 4px;
+  padding: 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #9b97b0;
+}
+.law-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #6d4aff12;
+  border: 1px solid #6d4aff33;
+  font-size: 0.82rem;
+}
+.law-chip.on {
+  border-color: #2ee6a644;
+  background: #2ee6a610;
+}
+.law-chip em {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: #a794ff;
+}
+.why-now {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f0b42912;
+  border-left: 3px solid #f0b42988;
+  font-size: 0.85rem;
+}
+.law-note {
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+.law-note em {
+  font-family: var(--mono);
+  font-style: normal;
+  color: #a794ff;
+  font-size: 0.75rem;
+}
+.up-next {
+  margin-top: 8px;
+  opacity: 0.85;
+}
+.landing-live .chips .forge {
+  width: auto;
+  margin-top: 0;
+}
+.landing-live .proto.featured {
+  border-color: #f0b42944;
+  box-shadow: 0 0 24px #f0b42912;
+}
+@media (max-width: 1100px) {
+  .pillar-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .pillar-row { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 900px) {
   .home .hero-card { grid-template-columns: 1fr; }
 }

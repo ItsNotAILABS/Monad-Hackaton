@@ -82,6 +82,10 @@ def main() -> int:
     assert hq.get("brief") and hq.get("inbox")
     print("company HQ ok")
 
+    land = c.get("/landing").json()
+    assert land.get("ticker") and land.get("teaching_now")
+    print("landing laws", land.get("law_stack", {}).get("law_count"))
+
     print("SMOKE_OK")
     return 0
 

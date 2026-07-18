@@ -81,6 +81,14 @@ from .company import (
     performance,
     run_objective,
 )
+from .ecosystem_laws import (
+    embed_ecosystem_laws,
+    get_ecosystem_laws,
+    get_law,
+    laws_for_pillar,
+    runtime_status,
+)
+from .live_feed import landing_feed
 
 app = FastAPI(
     title="THESIS Forge API",
@@ -202,6 +210,57 @@ class ConstitutionIn(BaseModel):
 
 
 # ── Company OS (commercial headquarters) ─────────────────────────
+
+
+@app.on_event("startup")
+def _embed_laws_on_startup():
+    """Embed ecosystem laws at process boot — same class of runtime as owner constitution."""
+    try:
+        embed_ecosystem_laws(force=True)
+    except Exception:
+        pass
+
+
+@app.get("/")
+@app.get("/landing")
+def landing(network: str = Query("monad-testnet")):
+    """Badass live market + teaching landing (poll every few seconds)."""
+    return landing_feed(network)
+
+
+@app.get("/laws")
+def laws_status():
+    """Runtime-embedded ecosystem lawbook status."""
+    return runtime_status()
+
+
+@app.get("/laws/full")
+def laws_full():
+    return get_ecosystem_laws()
+
+
+@app.get("/laws/pillar/{pillar}")
+def laws_pillar(pillar: str):
+    return {"pillar": pillar, "laws": laws_for_pillar(pillar)}
+
+
+@app.get("/laws/{law_id}")
+def laws_one(law_id: str):
+    law = get_law(law_id)
+    if not law:
+        raise HTTPException(404, "law not found")
+    return law
+
+
+@app.post("/laws/reembed")
+def laws_reembed():
+    book = embed_ecosystem_laws(force=True)
+    return {
+        "ok": True,
+        "law_count": book.get("law_count"),
+        "embedded_at": book.get("embedded_at"),
+        "domains": list((book.get("domains") or {}).keys()),
+    }
 
 
 @app.get("/company")
@@ -440,6 +499,8 @@ def health():
             "/company/run",
             "/company/brief",
             "/company/inbox",
+            "/laws",
+            "/laws/full",
             "/home",
             "/ai/*",
             "/sandbox/*",

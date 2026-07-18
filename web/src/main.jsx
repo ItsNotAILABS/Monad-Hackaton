@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { Landing } from "./Landing.jsx";
 import "./style.css";
 
 const CATEGORIES = ["dex", "lending", "vault", "staking", "perps", "analytics", "agent"];
@@ -47,7 +48,7 @@ function StatusDot({ status }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("hq");
+  const [tab, setTab] = useState("live");
   const [health, setHealth] = useState(null);
   const [judge, setJudge] = useState(null);
   const [home, setHome] = useState(null);
@@ -559,12 +560,12 @@ function App() {
         method: "POST",
         body: JSON.stringify({ objective: companyObjective }),
       });
-      setMissionRoom(data.mission);
+      setMissionRoom({ ...data.mission, law_stack: data.law_stack });
       setHq(await api("/company"));
       setTab("hq");
       flash(
         data.sla_all_met
-          ? `Mission staffed · SLAs met · ${(data.elapsed_ms || 0).toFixed(0)}ms`
+          ? `Mission staffed · ${data.law_stack?.ecosystem_law_count || 0} eco-laws · SLAs ok`
           : "Mission staffed (check SLAs)"
       );
     } catch (e) {
@@ -680,6 +681,7 @@ function App() {
 
       <nav className="tabs">
         {[
+          ["live", "LIVE"],
           ["hq", "HQ"],
           ["home", "DAILY"],
           ["ai", "AI NODE"],
@@ -696,6 +698,16 @@ function App() {
           </button>
         ))}
       </nav>
+
+      {tab === "live" && (
+        <Landing
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunCompany={runCompany}
+        />
+      )}
 
       {tab === "hq" && (
         <section className="panel home">
@@ -807,11 +819,28 @@ function App() {
                   <b>{v == null ? "—" : typeof v === "number" ? Number(v).toFixed?.(2) ?? v : String(v)}</b>
                 </div>
               ))}
-              <label>Constitution</label>
+              <label>Owner constitution</label>
               <p className="muted sm">
                 Liquid ≥{(hq?.constitution?.constitution?.min_liquid_reserve_bps || 0) / 100}% · Max protocol{" "}
                 {(hq?.constitution?.constitution?.max_protocol_exposure_bps || 0) / 100}% · Leverage{" "}
                 {hq?.constitution?.constitution?.allow_leverage ? "ON" : "OFF"}
+              </p>
+              <label>Ecosystem laws (runtime embed)</label>
+              <div className="kv">
+                <span>Embedded</span>
+                <Pill ok={!!hq?.ecosystem_laws?.embedded}>{String(!!hq?.ecosystem_laws?.embedded)}</Pill>
+              </div>
+              <div className="kv">
+                <span>Law count</span>
+                <b>{hq?.ecosystem_laws?.law_count ?? "—"}</b>
+              </div>
+              <div className="kv">
+                <span>Domains</span>
+                <b className="muted sm">{(hq?.ecosystem_laws?.domains || []).join(", ")}</b>
+              </div>
+              <p className="muted sm">
+                {hq?.ecosystem_laws?.doctrine ||
+                  "Owner constitution AND Monad/protocol/safety laws load at runtime for every mission."}
               </p>
               <p className="muted sm">
                 Scale: {hq?.performance?.scaling?.now} → {(hq?.performance?.scaling?.next || []).join(" · ")}
@@ -834,6 +863,16 @@ function App() {
                 <span>Winner</span>
                 <b>{missionRoom.winner?.agent || "—"}</b>
               </div>
+              {missionRoom.law_stack && (
+                <div className="ai">
+                  <b>Dual law stack</b>
+                  <p className="muted sm">
+                    Owner constitution: {String(missionRoom.law_stack.owner_constitution)} · Ecosystem laws:{" "}
+                    {missionRoom.law_stack.ecosystem_law_count} (
+                    {(missionRoom.law_stack.ecosystem_domains || []).join(", ")})
+                  </p>
+                </div>
+              )}
               <label>Departments</label>
               <div className="plans">
                 {(missionRoom.reports || []).map((r, i) => (

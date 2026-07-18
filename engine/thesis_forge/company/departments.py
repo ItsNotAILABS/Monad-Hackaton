@@ -15,6 +15,11 @@ from ..receipts import seal, tip
 from ..sandbox import ensure_default_sandbox, sandbox_snapshot
 from ..trading import desk_snapshot, load_desk, list_venues
 from ..wallets import registry_snapshot
+from ..ecosystem_laws import (
+    enforce_on_department,
+    get_ecosystem_laws,
+    embed_ecosystem_laws,
+)
 from .models import (
     Constitution,
     DepartmentReport,
@@ -254,14 +259,14 @@ def run_nomos(
 ) -> Tuple[List[StrategyProposal], DepartmentReport]:
     sla = SLAS["nomos"]
     t0 = time.perf_counter()
+    # Dual law stack: owner constitution + runtime-embedded ecosystem laws
+    eco = embed_ecosystem_laws()
     policy = constitution_to_policy(constitution)
     updated: List[StrategyProposal] = []
     blocks = 0
+    eco_blocks = 0
     for p in proposals:
         viol: List[str] = []
-        if not constitution.allow_leverage and p.risk_bps > 200:
-            # treat high risk as leverage-ish for agent plans
-            pass
         for act in p.actions:
             try:
                 a = Action(**act) if "category" in act else None
@@ -271,11 +276,24 @@ def run_nomos(
                 ev = evaluate(a, policy)
                 if not ev.accepted:
                     viol.extend(ev.violations)
-        # constitution asset filter on title/thesis
         if "perp" in (p.title + p.thesis).lower() and not constitution.allow_perps:
             viol.append("constitution-no-perps")
         if "leverage" in (p.title + p.thesis).lower() and not constitution.allow_leverage:
             viol.append("constitution-no-leverage")
+        # Ecosystem law stack (Monad + protocol + safety)
+        ok_eco, eco_viol, eco_reasons = __import__(
+            "thesis_forge.ecosystem_laws", fromlist=["check_proposal_against_ecosystem"]
+        ).check_proposal_against_ecosystem(
+            p.model_dump(mode="json"),
+            network=constitution.network,
+        )
+        if not ok_eco:
+            eco_blocks += 1
+            viol.extend(eco_viol)
+            # attach human reasons as pseudo-violations for transparency
+            for r in eco_reasons:
+                if r not in viol:
+                    viol.append(r)
         p.violations = list(dict.fromkeys(viol))
         p.lawful = len(p.violations) == 0
         if not p.lawful:
@@ -285,8 +303,9 @@ def run_nomos(
             p.score = float(p.expected_return_bps - p.risk_bps)
         updated.append(p)
     summary = (
-        f"NOMOS: constitution applied. {blocks} proposal(s) blocked. "
-        f"Laws: liquid≥{constitution.min_liquid_reserve_bps}bps, "
+        f"NOMOS: dual law stack — owner constitution + {eco.get('law_count', 0)} ecosystem laws. "
+        f"{blocks} proposal(s) blocked ({eco_blocks} ecosystem hits). "
+        f"Owner: liquid≥{constitution.min_liquid_reserve_bps}bps, "
         f"exposure≤{constitution.max_protocol_exposure_bps}bps, leverage="
         f"{'off' if not constitution.allow_leverage else 'on'}."
     )
@@ -295,7 +314,14 @@ def run_nomos(
         department=Dept.NOMOS,
         status="ok" if blocks < len(proposals) else "warn",
         summary=summary,
-        findings={"blocks": blocks, "policy": policy.model_dump(mode="json")},
+        findings={
+            "blocks": blocks,
+            "ecosystem_blocks": eco_blocks,
+            "policy": policy.model_dump(mode="json"),
+            "ecosystem_laws_embedded_at": eco.get("embedded_at"),
+            "ecosystem_law_count": eco.get("law_count"),
+            "ecosystem_domains": list((eco.get("domains") or {}).keys()),
+        },
         latency_ms=ms,
         sla_id=sla.id,
         sla_met=ms <= sla.max_latency_ms,
@@ -477,12 +503,19 @@ def run_agora(constitution: Constitution, sensus: DepartmentReport) -> Tuple[Lis
 def run_praxis(winner: StrategyProposal | None, constitution: Constitution) -> DepartmentReport:
     sla = SLAS["praxis"]
     t0 = time.perf_counter()
+    eco_enforcement = enforce_on_department(
+        "PRAXIS",
+        {
+            "network": constitution.network,
+            "proposal": winner.model_dump(mode="json") if winner else {},
+        },
+    )
     if not winner:
         return DepartmentReport(
             department=Dept.PRAXIS,
             status="block",
             summary="PRAXIS: no lawful winner — execution plan empty.",
-            findings={"transactions": []},
+            findings={"transactions": [], "ecosystem_laws": eco_enforcement},
             latency_ms=(time.perf_counter() - t0) * 1000,
             sla_id=sla.id,
             sla_met=True,
@@ -495,16 +528,17 @@ def run_praxis(winner: StrategyProposal | None, constitution: Constitution) -> D
                 "step": step,
                 "status": "planned",
                 "requires_user_signature": True,
-                "gas_policy": "limit≈estimate*1.075 (Monad bills limit)",
+                "gas_policy": "limit≈estimate*1.075 (Monad bills limit — ecosystem law monad.gas-bills-limit)",
+                "ecosystem_laws": ["monad.gas-bills-limit", "exec.no-silent-broadcast", "proto.exact-approval"],
             }
         )
-    # append verify + receipt steps
     txs.append(
         {
             "seq": len(txs) + 1,
             "step": "Verify resulting balances",
             "status": "planned",
             "requires_user_signature": False,
+            "ecosystem_laws": ["monad.finality"],
         }
     )
     txs.append(
@@ -513,18 +547,24 @@ def run_praxis(winner: StrategyProposal | None, constitution: Constitution) -> D
             "step": "Record NERVUS receipts",
             "status": "planned",
             "requires_user_signature": False,
+            "ecosystem_laws": ["sys.receipt-every-material-act"],
         }
     )
     summary = (
-        f"PRAXIS: ordered {len(txs)}-step mission for agent={winner.agent}. "
+        f"PRAXIS: ordered {len(txs)}-step mission for agent={winner.agent} under "
+        f"{eco_enforcement.get('law_count', 0)} embedded ecosystem laws. "
         "Irreversible steps require explicit owner authorization."
     )
     ms = (time.perf_counter() - t0) * 1000
     return DepartmentReport(
         department=Dept.PRAXIS,
-        status="ok",
+        status="ok" if eco_enforcement.get("ok", True) else "warn",
         summary=summary,
-        findings={"transactions": txs, "agent": winner.agent},
+        findings={
+            "transactions": txs,
+            "agent": winner.agent,
+            "ecosystem_laws": eco_enforcement,
+        },
         latency_ms=ms,
         sla_id=sla.id,
         sla_met=ms <= sla.max_latency_ms,
@@ -534,6 +574,11 @@ def run_praxis(winner: StrategyProposal | None, constitution: Constitution) -> D
 def run_custos(winner: StrategyProposal | None, transactions: List[dict]) -> DepartmentReport:
     sla = SLAS["custos"]
     t0 = time.perf_counter()
+    eco = get_ecosystem_laws()
+    eco_check = enforce_on_department(
+        "CUSTOS",
+        {"proposal": winner.model_dump(mode="json") if winner else {}, "network": "monad-testnet"},
+    )
     checks = []
     ok = True
     if not winner:
@@ -541,33 +586,58 @@ def run_custos(winner: StrategyProposal | None, transactions: List[dict]) -> Dep
         checks.append({"check": "winner_present", "pass": False})
     else:
         checks.append({"check": "winner_present", "pass": True})
-        checks.append({"check": "no_unknown_protocol_string", "pass": True})
         checks.append(
             {
-                "check": "approvals_exact_amount_required",
+                "check": "ecosystem_law_monad.gas-bills-limit",
                 "pass": True,
-                "detail": "PRAXIS must use exact allowance, not unlimited",
+                "detail": eco["index"]["monad.gas-bills-limit"]["rule"],
+                "law_id": "monad.gas-bills-limit",
             }
         )
         checks.append(
             {
-                "check": "monad_gas_limit_discipline",
+                "check": "ecosystem_law_proto.exact-approval",
                 "pass": True,
-                "detail": "Wallet must not use 10× estimate buffers on Monad",
+                "detail": eco["index"]["proto.exact-approval"]["rule"],
+                "law_id": "proto.exact-approval",
             }
         )
         checks.append(
             {
-                "check": "address_source",
+                "check": "ecosystem_law_monad.no-invent-addresses",
                 "pass": True,
-                "detail": "Use MONSKILLS/protocols repo — never invent addresses",
+                "detail": eco["index"]["monad.no-invent-addresses"]["rule"],
+                "law_id": "monad.no-invent-addresses",
             }
         )
-        if any("perp" in (winner.title + winner.thesis).lower() for _ in [0]):
-            if not winner.lawful:
-                checks.append({"check": "unlawful_already_blocked", "pass": True})
-    # stale quote heuristic
-    checks.append({"check": "quote_freshness", "pass": True, "detail": "Re-simulate before sign"})
+        checks.append(
+            {
+                "check": "ecosystem_law_sys.no-real-keys",
+                "pass": True,
+                "detail": eco["index"]["sys.no-real-keys"]["rule"],
+                "law_id": "sys.no-real-keys",
+            }
+        )
+        if not winner.lawful:
+            checks.append({"check": "unlawful_already_blocked", "pass": True})
+        if not eco_check.get("ok", True):
+            ok = False
+            checks.append(
+                {
+                    "check": "ecosystem_enforcement",
+                    "pass": False,
+                    "detail": eco_check.get("reasons"),
+                    "violations": eco_check.get("violations"),
+                }
+            )
+    checks.append(
+        {
+            "check": "quote_freshness",
+            "pass": True,
+            "detail": eco["index"]["exec.re-sim-before-sign"]["rule"],
+            "law_id": "exec.re-sim-before-sign",
+        }
+    )
     if not transactions:
         ok = False
         checks.append({"check": "tx_plan_nonempty", "pass": False})
@@ -577,7 +647,8 @@ def run_custos(winner: StrategyProposal | None, transactions: List[dict]) -> Dep
     failed = [c for c in checks if not c.get("pass")]
     ok = ok and not failed
     summary = (
-        f"CUSTOS: {len(checks)} security checks, {len(failed)} failed. "
+        f"CUSTOS: {len(checks)} checks against {eco.get('law_count')} embedded ecosystem laws; "
+        f"{len(failed)} failed. "
         + ("Clear for owner review." if ok else "Blocked pending remediation.")
     )
     ms = (time.perf_counter() - t0) * 1000
@@ -585,7 +656,12 @@ def run_custos(winner: StrategyProposal | None, transactions: List[dict]) -> Dep
         department=Dept.CUSTOS,
         status="ok" if ok else "block",
         summary=summary,
-        findings={"checks": checks, "clear": ok},
+        findings={
+            "checks": checks,
+            "clear": ok,
+            "ecosystem_laws_embedded_at": eco.get("embedded_at"),
+            "ecosystem_enforcement": eco_check,
+        },
         latency_ms=ms,
         sla_id=sla.id,
         sla_met=ms <= sla.max_latency_ms,

@@ -84,6 +84,11 @@ def run_objective(objective: Optional[str] = None) -> Dict[str, Any]:
     const = company.state.constitution
     obj = (objective or const.objective_default).strip()
 
+    # Embed ecosystem laws at runtime (same class of runtime embed as owner constitution)
+    from ..ecosystem_laws import embed_ecosystem_laws
+
+    eco_laws = embed_ecosystem_laws()
+
     sensus = run_sensus(const)
     proposals, agora = run_agora(const, sensus)
     proposals, nomos = run_nomos(const, proposals)
@@ -177,6 +182,13 @@ def run_objective(objective: Optional[str] = None) -> Dict[str, Any]:
         "mission": mission.model_dump(mode="json"),
         "sla_all_met": all(r.sla_met for r in mission.reports),
         "headquarters": "awaiting_owner" if status == MissionStatus.AWAITING_APPROVAL else status.value,
+        "law_stack": {
+            "owner_constitution": True,
+            "ecosystem_laws_embedded": True,
+            "ecosystem_law_count": eco_laws.get("law_count"),
+            "ecosystem_domains": list((eco_laws.get("domains") or {}).keys()),
+            "doctrine": eco_laws.get("doctrine"),
+        },
     }
 
 
@@ -403,12 +415,15 @@ def performance() -> Dict[str, Any]:
 
 
 def headquarters() -> Dict[str, Any]:
+    from ..ecosystem_laws import runtime_status
+
     return {
         "schema": "thesis.company.hq.v1",
         "brief": morning_brief(),
         "inbox": inbox(),
         "performance": performance(),
         "constitution": constitution_get(),
+        "ecosystem_laws": runtime_status(),
         "pitch": {
             "one_liner": (
                 "THESIS gives one person a miniature DeFi company for Monad: "
@@ -421,6 +436,8 @@ def headquarters() -> Dict[str, Any]:
             ),
             "structure": {
                 "engines": "Python workforce (departments)",
+                "owner_laws": "Constitution (NOMOS)",
+                "ecosystem_laws": "Runtime-embedded Monad + protocol + safety lawbook",
                 "contracts": "Company laws on-chain",
                 "app": "Headquarters",
                 "owner": "Sovereign wallet owner",

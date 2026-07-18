@@ -158,18 +158,43 @@ def _remember(node: AINode, role: str, text: str) -> None:
 def ai_chat(message: str, *, network: str = "monad-testnet") -> Dict[str, Any]:
     """Deterministic intelligent node (no external LLM required) with tool use."""
     node = ensure_ai_node()
+    # AI node loads ecosystem laws at runtime (governance + safety)
+    from .ecosystem_laws import embed_ecosystem_laws, enforce_on_department, laws_for_pillar
+
+    eco = embed_ecosystem_laws()
     _remember(node, "user", message)
     low = (message or "").lower()
     actions: List[Dict[str, Any]] = []
     replies: List[str] = []
+    actions.append(
+        {
+            "tool": "ecosystem_laws.load",
+            "result": {
+                "law_count": eco.get("law_count"),
+                "domains": list((eco.get("domains") or {}).keys()),
+            },
+        }
+    )
 
     # Tool routing
+    if any(k in low for k in ("law", "laws", "governance", "ecosystem law")):
+        safety = laws_for_pillar("safety")[:3]
+        gov = laws_for_pillar("governance")[:2]
+        actions.append({"tool": "ecosystem_laws.pillars", "result": {"safety": len(safety), "gov": len(gov)}})
+        replies.append(
+            f"**Law node:** {eco.get('law_count')} ecosystem laws embedded "
+            f"(domains: {', '.join((eco.get('domains') or {}).keys())}). "
+            f"Safety: {', '.join(x['id'] for x in safety)}. "
+            f"Governance: {', '.join(x['id'] for x in gov)}. "
+            f"{eco.get('doctrine')}"
+        )
+
     if any(k in low for k in ("gas", "fee", "gwei", "overcharge")):
         g = gas_coach()
         actions.append({"tool": "gas.coach", "result": g["tip"]})
         replies.append(
             f"**Gas node:** {g['tip']['title']}. {g['tip']['body']} "
-            f"({g['tip']['roommate']})"
+            f"({g['tip']['roommate']}) — ecosystem law `monad.gas-bills-limit`."
         )
 
     if any(k in low for k in ("wallet", "phantom", "metamask", "connect", "twin")):

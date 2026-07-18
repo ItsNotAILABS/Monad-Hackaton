@@ -299,6 +299,27 @@ def test_sandbox_ai_wallets():
         pass
 
 
+def test_ecosystem_laws_runtime_embed():
+    from thesis_forge.ecosystem_laws import (
+        check_proposal_against_ecosystem,
+        embed_ecosystem_laws,
+        get_ecosystem_laws,
+        laws_for_pillar,
+    )
+
+    book = embed_ecosystem_laws(force=True)
+    assert book["law_count"] >= 15
+    assert "system_self" in book["domains"]
+    assert "monad_network" in book["domains"]
+    assert "protocols" in book["domains"]
+    assert laws_for_pillar("safety")
+    # blob tx illegal on Monad
+    ok, viol, _ = check_proposal_against_ecosystem({"tx_type": 3, "title": "blob"})
+    assert not ok and "monad.tx-types" in viol
+    # cached get
+    assert get_ecosystem_laws()["law_count"] == book["law_count"]
+
+
 def test_company_os_commercial():
     from thesis_forge.company import (
         act_on_mission,
@@ -332,7 +353,11 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "1.0.0"
+    assert c.get("/health").json()["version"] == "1.2.0"
+    laws = c.get("/laws").json()
+    assert laws.get("embedded") and laws.get("law_count", 0) >= 15
+    land = c.get("/landing").json()
+    assert land.get("ticker") and land.get("stream") and land.get("ai_brief")
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",
