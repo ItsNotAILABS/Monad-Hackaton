@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thesis-forge"
-version = "0.6.0"
-description = "THESIS — Monad AI Workstation (Studio · Codex · Nomos · Desk · Academy)"
+version = "1.0.0"
+description = "THESIS Company OS — miniature DeFi company for Monad"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

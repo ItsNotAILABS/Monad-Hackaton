@@ -70,6 +70,18 @@ def main() -> int:
     assert chat.get("answer")
     print("ai node", ai.get("node", {}).get("node_id", "")[:12])
 
+    co = c.post(
+        "/company/run",
+        json={
+            "objective": "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me."
+        },
+    ).json()
+    assert co.get("ok") and co.get("sla_all_met") is True
+    print("company mission", co["mission"]["status"], "winner", (co["mission"].get("winner") or {}).get("agent"))
+    hq = c.get("/company").json()
+    assert hq.get("brief") and hq.get("inbox")
+    print("company HQ ok")
+
     print("SMOKE_OK")
     return 0
 

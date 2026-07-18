@@ -47,7 +47,7 @@ function StatusDot({ status }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState("hq");
   const [health, setHealth] = useState(null);
   const [judge, setJudge] = useState(null);
   const [home, setHome] = useState(null);
@@ -61,6 +61,11 @@ function App() {
   const [aiInput, setAiInput] = useState("sync twins and show balances");
   const [wallets, setWallets] = useState(null);
   const [sandbox, setSandbox] = useState(null);
+  const [hq, setHq] = useState(null);
+  const [missionRoom, setMissionRoom] = useState(null);
+  const [companyObjective, setCompanyObjective] = useState(
+    "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me what is happening."
+  );
 
   const [name, setName] = useState("THESIS Sovereign Ops");
   const [objective, setObjective] = useState(
@@ -129,7 +134,7 @@ function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [h, j, p, d, q, wp, rc, dk, hm, co, eco, ai, wl, sb] = await Promise.all([
+      const [h, j, p, d, q, wp, rc, dk, hm, co, eco, ai, wl, sb, company] = await Promise.all([
         api("/health"),
         api("/judge"),
         api("/protocols"),
@@ -144,6 +149,7 @@ function App() {
         api("/ai"),
         api("/wallets"),
         api("/sandbox"),
+        api("/company"),
       ]);
       setHealth(h);
       setJudge(j);
@@ -160,6 +166,7 @@ function App() {
       setAiNode(ai);
       setWallets(wl);
       setSandbox(sb);
+      setHq(company);
       if (dk?.marks?.["MON/USDC"]) {
         setTicketForm((f) => ({ ...f, limit_price: dk.marks["MON/USDC"] }));
       }
@@ -544,6 +551,59 @@ function App() {
     }
   }
 
+  async function runCompany() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api("/company/run", {
+        method: "POST",
+        body: JSON.stringify({ objective: companyObjective }),
+      });
+      setMissionRoom(data.mission);
+      setHq(await api("/company"));
+      setTab("hq");
+      flash(
+        data.sla_all_met
+          ? `Mission staffed · SLAs met · ${(data.elapsed_ms || 0).toFixed(0)}ms`
+          : "Mission staffed (check SLAs)"
+      );
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openMission(id) {
+    setBusy(true);
+    try {
+      const data = await api(`/company/missions/${id}`);
+      setMissionRoom(data.mission);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function decideMission(decision) {
+    if (!missionRoom?.mission_id) return;
+    setBusy(true);
+    try {
+      const data = await api(`/company/missions/${missionRoom.mission_id}/act`, {
+        method: "POST",
+        body: JSON.stringify({ decision }),
+      });
+      setMissionRoom(data.mission || data);
+      setHq(await api("/company"));
+      flash(`Mission ${decision}`);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openProject(id) {
     setBusy(true);
     try {
@@ -581,13 +641,13 @@ function App() {
     <div className="shell">
       <header className="top">
         <div>
-          <span className="eyebrow">THESIS v{health?.version || "0.5"} · DAILY MONAD SEATBELT</span>
+          <span className="eyebrow">THESIS v{health?.version || "1.0"} · YOUR MONAD DEFI COMPANY</span>
           <h1>
-            THESIS <i>Daily</i>
+            THESIS <i>HQ</i>
           </h1>
           <p className="tagline">
-            {home?.pitch?.roommate ||
-              "Teach DeFi by doing. Automate risk checks. Come back every day."}
+            {hq?.pitch?.roommate ||
+              "A 20-minute multi-app workflow becomes one managed mission."}
           </p>
         </div>
         <div className="top-right stats-chip">
@@ -620,7 +680,8 @@ function App() {
 
       <nav className="tabs">
         {[
-          ["home", "HOME"],
+          ["hq", "HQ"],
+          ["home", "DAILY"],
           ["ai", "AI NODE"],
           ["desk", "DESK"],
           ["academy", "ACADEMY"],
@@ -635,6 +696,203 @@ function App() {
           </button>
         ))}
       </nav>
+
+      {tab === "hq" && (
+        <section className="panel home">
+          <div className="hero-card">
+            <div>
+              <span className="eyebrow">COMMAND CENTER</span>
+              <h2>{hq?.pitch?.one_liner || "Your miniature DeFi company for Monad."}</h2>
+              <p className="muted">
+                Python departments are the workforce. Contracts are the laws. This app is headquarters. You remain
+                sovereign.
+              </p>
+              <label>OWNER OBJECTIVE</label>
+              <textarea
+                rows={3}
+                value={companyObjective}
+                onChange={(e) => setCompanyObjective(e.target.value)}
+              />
+              <button type="button" className="forge" disabled={busy} onClick={runCompany}>
+                ASSIGN THESIS (GM) → STAFF ALL DEPARTMENTS
+              </button>
+            </div>
+            <div className="hero-side">
+              <div className="orb small">
+                <b>{hq?.performance?.kpis?.missions_completed ?? 0}</b>
+                <span>DONE</span>
+              </div>
+              <div className="kv">
+                <span>Time saved</span>
+                <b>{Number(hq?.performance?.kpis?.time_saved_minutes || 0).toFixed(0)}m</b>
+              </div>
+              <div className="kv">
+                <span>Policy blocks</span>
+                <b>{hq?.performance?.kpis?.policy_violations_blocked ?? 0}</b>
+              </div>
+              <div className="kv">
+                <span>Lessons</span>
+                <b>{hq?.performance?.kpis?.lessons_completed ?? 0}</b>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid3">
+            <article className="result">
+              <label>MORNING BRIEF</label>
+              <p>{hq?.brief?.narrative}</p>
+              <ul className="pillars">
+                {(hq?.brief?.bullets || []).map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="ghost block"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const b = await api("/company/brief");
+                    setHq((h) => ({ ...(h || {}), brief: b }));
+                  } catch (e) {
+                    setErr(String(e.message || e));
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Refresh brief
+              </button>
+            </article>
+
+            <article>
+              <label>MANAGER INBOX</label>
+              <div className="mission-list">
+                {(hq?.inbox?.items || []).length === 0 ? (
+                  <p className="muted sm">{hq?.inbox?.empty_hint || "No items — run THESIS."}</p>
+                ) : (
+                  (hq.inbox.items || []).map((it, i) => (
+                    <div
+                      key={it.mission_id + it.title + i}
+                      className={`mission ${it.priority === "rejected" ? "done" : ""}`}
+                    >
+                      <header>
+                        <b>{it.title}</b>
+                        <Pill
+                          ok={it.priority === "recommended" || it.priority === "optional"}
+                          warn={it.priority === "learning"}
+                        >
+                          {it.priority}
+                        </Pill>
+                      </header>
+                      <p className="muted sm">{it.objective}</p>
+                      {it.mission_id && it.status !== "learning" && it.priority !== "rejected" && (
+                        <button type="button" className="ghost" disabled={busy} onClick={() => openMission(it.mission_id)}>
+                          Open mission room
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </article>
+
+            <article className="result">
+              <label>COMPANY PERFORMANCE</label>
+              <p className="muted sm">{hq?.performance?.narrative}</p>
+              {Object.entries(hq?.performance?.kpis || {}).map(([k, v]) => (
+                <div className="kv" key={k}>
+                  <span>{k.replace(/_/g, " ")}</span>
+                  <b>{v == null ? "—" : typeof v === "number" ? Number(v).toFixed?.(2) ?? v : String(v)}</b>
+                </div>
+              ))}
+              <label>Constitution</label>
+              <p className="muted sm">
+                Liquid ≥{(hq?.constitution?.constitution?.min_liquid_reserve_bps || 0) / 100}% · Max protocol{" "}
+                {(hq?.constitution?.constitution?.max_protocol_exposure_bps || 0) / 100}% · Leverage{" "}
+                {hq?.constitution?.constitution?.allow_leverage ? "ON" : "OFF"}
+              </p>
+              <p className="muted sm">
+                Scale: {hq?.performance?.scaling?.now} → {(hq?.performance?.scaling?.next || []).join(" · ")}
+              </p>
+            </article>
+          </div>
+
+          {missionRoom && (
+            <article className="result mission-room">
+              <label>MISSION ROOM</label>
+              <h3>{missionRoom.title}</h3>
+              <p className="muted">{missionRoom.objective}</p>
+              <div className="kv">
+                <span>Status</span>
+                <Pill ok={missionRoom.status === "awaiting_approval" || missionRoom.status === "completed"}>
+                  {missionRoom.status}
+                </Pill>
+              </div>
+              <div className="kv">
+                <span>Winner</span>
+                <b>{missionRoom.winner?.agent || "—"}</b>
+              </div>
+              <label>Departments</label>
+              <div className="plans">
+                {(missionRoom.reports || []).map((r, i) => (
+                  <div key={i} className={`plan ${r.status === "ok" ? "yes" : "no"}`}>
+                    <header>
+                      <b>{r.department}</b>
+                      <Pill ok={r.sla_met} warn={!r.sla_met}>
+                        {r.sla_met ? "SLA" : "SLA!"} {Number(r.latency_ms || 0).toFixed(0)}ms
+                      </Pill>
+                    </header>
+                    <p>{r.summary}</p>
+                  </div>
+                ))}
+              </div>
+              <label>Competing plans</label>
+              {(missionRoom.proposals || []).map((p, i) => (
+                <div key={i} className={`plan ${p.lawful ? "yes" : "no"}`}>
+                  <header>
+                    <b>
+                      {p.agent}: {p.title}
+                    </b>
+                    <Pill ok={p.lawful}>{p.lawful ? "LAWFUL" : "BLOCKED"}</Pill>
+                  </header>
+                  <p className="muted sm">{p.thesis}</p>
+                  {!p.lawful && (
+                    <ul>
+                      {(p.violations || []).map((v) => (
+                        <li key={v}>{v}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+              <label>Transactions (PRAXIS)</label>
+              <ol className="pillars">
+                {(missionRoom.transactions || []).map((t) => (
+                  <li key={t.seq}>
+                    {t.seq}. {t.step}{" "}
+                    {t.requires_user_signature ? <em>(signature)</em> : null}
+                  </li>
+                ))}
+              </ol>
+              <label>ACADEMY</label>
+              <p className="ai">{missionRoom.academy_lesson || missionRoom.explanation}</p>
+              <div className="chips">
+                <button type="button" className="forge" disabled={busy} onClick={() => decideMission("approve")}>
+                  Approve
+                </button>
+                <button type="button" className="ghost" disabled={busy} onClick={() => decideMission("reject")}>
+                  Reject
+                </button>
+                <button type="button" className="ghost" disabled={busy} onClick={() => decideMission("simulate_again")}>
+                  Simulate again
+                </button>
+              </div>
+            </article>
+          )}
+        </section>
+      )}
 
       {tab === "home" && (
         <section className="panel home">

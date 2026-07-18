@@ -299,9 +299,40 @@ def test_sandbox_ai_wallets():
         pass
 
 
+def test_company_os_commercial():
+    from thesis_forge.company import (
+        act_on_mission,
+        headquarters,
+        morning_brief,
+        performance,
+        run_objective,
+    )
+
+    brief = morning_brief()
+    assert "narrative" in brief and brief["bullets"]
+    out = run_objective(
+        "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me what is happening."
+    )
+    assert out["ok"]
+    assert out["sla_all_met"] is True
+    m = out["mission"]
+    assert m["reports"]
+    depts = {r["department"] for r in m["reports"]}
+    assert "SENSUS" in depts and "NOMOS" in depts and "AGORA" in depts
+    # degen must be blocked among proposals
+    assert any(not p["lawful"] for p in m["proposals"])
+    if m["status"] == "awaiting_approval":
+        dec = act_on_mission(m["mission_id"], "approve")
+        assert dec["ok"]
+    perf = performance()
+    assert "kpis" in perf
+    hq = headquarters()
+    assert hq["pitch"]["roommate"]
+
+
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "0.6.0"
+    assert c.get("/health").json()["version"] == "1.0.0"
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",

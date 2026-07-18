@@ -218,6 +218,22 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   font-style: normal;
 }
 
+.mission-room {
+  margin-top: 12px;
+  padding: 18px !important;
+}
+.mission-room h3 {
+  margin: 6px 0 10px;
+}
+.mission-room .chips {
+  margin-top: 14px;
+}
+.mission-room .chips .forge {
+  width: auto;
+  margin-top: 0;
+  padding: 12px 18px;
+}
+
 @media (max-width: 900px) {
   .home .hero-card { grid-template-columns: 1fr; }
 }

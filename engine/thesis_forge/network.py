@@ -50,6 +50,11 @@ CONTRACT_ORDER = [
 
 PILLARS = [
     {
+        "id": "hq",
+        "name": "HQ",
+        "role": "Company OS — GM coordinates all departments",
+    },
+    {
         "id": "home",
         "name": "HOME",
         "role": "Daily seatbelt — missions, streak, XP, gas coach",

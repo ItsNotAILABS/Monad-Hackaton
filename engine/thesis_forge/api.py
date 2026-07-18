@@ -70,10 +70,21 @@ from .wallets import (
     update_balances,
 )
 from .workspace import list_projects, load_project, save_project
+from .company import (
+    act_on_mission,
+    constitution_get,
+    constitution_set,
+    get_mission,
+    headquarters,
+    inbox,
+    morning_brief,
+    performance,
+    run_objective,
+)
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="THESIS — sandbox AI ecosystem node, twin wallet, daily seatbelt, desk risk",
+    description="THESIS Company OS — miniature DeFi company for Monad (GM + departments)",
     version=__version__,
 )
 
@@ -166,6 +177,86 @@ class PromoteIn(BaseModel):
 class SandboxCreateIn(BaseModel):
     name: str = "AI sandbox"
     mode: str = "agent"
+
+
+class CompanyObjectiveIn(BaseModel):
+    objective: str | None = None
+
+
+class MissionActIn(BaseModel):
+    decision: str  # approve | reject | simulate_again | revise
+    note: str = ""
+
+
+class ConstitutionIn(BaseModel):
+    owner_label: str | None = None
+    objective_default: str | None = None
+    min_liquid_reserve_bps: int | None = None
+    max_protocol_exposure_bps: int | None = None
+    max_slippage_bps: int | None = None
+    max_leverage_bps: int | None = None
+    max_action_value: float | None = None
+    allow_leverage: bool | None = None
+    allow_perps: bool | None = None
+    network: str | None = None
+
+
+# ── Company OS (commercial headquarters) ─────────────────────────
+
+
+@app.get("/company")
+def company_hq():
+    """Full headquarters payload: brief, inbox, performance, constitution, pitch."""
+    return headquarters()
+
+
+@app.get("/company/brief")
+def company_brief():
+    return morning_brief()
+
+
+@app.get("/company/inbox")
+def company_inbox():
+    return inbox()
+
+
+@app.get("/company/performance")
+def company_performance():
+    return performance()
+
+
+@app.get("/company/constitution")
+def company_constitution_get():
+    return constitution_get()
+
+
+@app.post("/company/constitution")
+def company_constitution_set(body: ConstitutionIn):
+    data = {k: v for k, v in body.model_dump().items() if v is not None}
+    return constitution_set(data)
+
+
+@app.post("/company/run")
+def company_run(body: CompanyObjectiveIn | None = None):
+    """THESIS GM staffs all departments for an objective → mission room."""
+    obj = body.objective if body else None
+    return run_objective(obj)
+
+
+@app.get("/company/missions/{mission_id}")
+def company_mission(mission_id: str):
+    out = get_mission(mission_id)
+    if out.get("error"):
+        raise HTTPException(404, out["error"])
+    return out
+
+
+@app.post("/company/missions/{mission_id}/act")
+def company_mission_act(mission_id: str, body: MissionActIn):
+    out = act_on_mission(mission_id, body.decision, body.note)
+    if not out.get("ok") and out.get("error"):
+        raise HTTPException(400, out["error"])
+    return out
 
 
 @app.get("/home")
@@ -345,6 +436,10 @@ def health():
             "/pipeline",
             "/forge",
             "/arena",
+            "/company",
+            "/company/run",
+            "/company/brief",
+            "/company/inbox",
             "/home",
             "/ai/*",
             "/sandbox/*",
@@ -360,8 +455,8 @@ def health():
             "/judge",
         ],
         "doctrine": (
-            "Sandbox-first AI. Digital twins only. Real keys never leave the user wallet. "
-            "Agents propose. Laws decide. Learn by doing."
+            "Company OS: THESIS is GM; departments research, compete, veto, explain, execute. "
+            "Owner is sovereign. Sandbox twins only for AI. Laws over profit."
         ),
         "trading": desk_snapshot(),
         "daily": leaderboard_self(),

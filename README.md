@@ -1,8 +1,21 @@
-# THESIS — Monad AI Workstation v0.5
+# THESIS — Your Monad DeFi Company (v1.0 Company OS)
 
-**Sandbox-first AI node · digital twin wallet · teach by doing · daily seatbelt.**
+**You hired a miniature DeFi company — not another dashboard.**
 
-Roommate test: *“This saved me 20 minutes of re-checking bots and stopped a fat gas-limit bill.”*
+THESIS is General Manager. Python departments research, simulate, veto, compete, secure, teach, execute (with your approval), and record receipts.
+
+Roommate test: *“A 20-minute multi-app workflow becomes one managed, explained mission.”*
+
+### Company OS (v1.0 commercial core)
+
+| Surface | Meaning |
+|---------|---------|
+| **HQ** | Command center — brief, inbox, mission room, performance |
+| **POST /company/run** | THESIS GM staffs SENSUS→AGORA→NOMOS→MATHESIS→PRAXIS→CUSTOS→ACADEMY→NERVUS |
+| **Constitution** | Owner laws (30% liquid, no leverage, max 20% protocol, …) |
+| **SLA** | Each department reports latency vs commercial service level |
+
+See [docs/COMPANY_OS.md](docs/COMPANY_OS.md).
 
 ### AI + wallets (safety architecture)
 
