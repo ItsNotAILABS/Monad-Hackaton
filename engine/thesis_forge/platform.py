@@ -106,6 +106,14 @@ PRIMITIVES: Dict[str, Dict[str, Any]] = {
         "laws": ["intel.teach-on-action"],
         "status_fn": "learn",
     },
+    "local_ai": {
+        "id": "local_ai",
+        "name": "Local AI",
+        "role": "Browser Transformers.js · memory · security · KG · research · docs",
+        "api": ["browser://local-ai", "GET /platform (manifest only)"],
+        "laws": ["sys.no-real-keys", "sys.sandbox-first", "intel.no-hallucinated-apy"],
+        "status_fn": "local_ai",
+    },
 }
 
 
@@ -211,6 +219,20 @@ FIRST_PARTY_APPS: List[Dict[str, Any]] = [
         "entry": "POST /arena/auto",
         "actions": ["arena"],
     },
+    {
+        "id": "app.local_ai",
+        "name": "Local AI",
+        "kind": "local_ai",
+        "tab": "local",
+        "primitives": ["local_ai", "intel", "law", "learn"],
+        "description": (
+            "Browser-local Transformers.js inference, IndexedDB memory, security monitor, "
+            "knowledge graph, autonomous research agents, document generation"
+        ),
+        "entry": "browser://local-ai",
+        "actions": ["status"],
+        "locality": "browser-only",
+    },
 ]
 
 
@@ -283,6 +305,22 @@ def _primitive_status(network: str = "monad-testnet") -> Dict[str, Any]:
             "level": home.get("level"),
             "streak": home.get("streak"),
             "quests": len(list_quests()),
+        },
+        "local_ai": {
+            "ok": True,
+            "locality": "browser-only",
+            "engine": "transformers.js",
+            "model": "Xenova/all-MiniLM-L6-v2",
+            "capabilities": [
+                "feature-extraction",
+                "local-memory",
+                "security-monitor",
+                "knowledge-graph",
+                "research-agents",
+                "document-generation",
+            ],
+            "tab": "local",
+            "note": "Runtime lives in the browser app — server only advertises the surface",
         },
     }
 
@@ -537,10 +575,13 @@ def platform_status(network: str = "monad-testnet") -> Dict[str, Any]:
         "version": __version__,
         "what_this_is": (
             "A Monad DeFi platform: shared primitives (identity, law, capital, market, "
-            "intel, forge, company, learn) with first-party apps and installable forged packages. "
-            "Not a scoreboard. Not a pitch. A runtime you operate."
+            "intel, forge, company, learn, local_ai) with first-party apps and installable packages. "
+            "Browser-local Transformers.js AI runs beside the API kernel — not a scoreboard."
         ),
-        "doctrine": "Apps share one lawbook. Agents propose. Laws decide. Owner signs. Receipts remember.",
+        "doctrine": (
+            "Apps share one lawbook. Agents propose. Laws decide. Owner signs. Receipts remember. "
+            "Local AI never receives keys."
+        ),
         "network": network,
         "kernel": {
             "ok": prim_ok == prim_total,

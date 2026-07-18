@@ -13,4 +13,14 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    exclude: ["@huggingface/transformers"],
+  },
+  build: {
+    target: "esnext",
+    chunkSizeWarningLimit: 3000,
+  },
+  worker: {
+    format: "es",
+  },
 });

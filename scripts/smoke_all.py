@@ -110,8 +110,9 @@ def main() -> int:
     # Platform kernel
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"
-    assert plat["kernel"]["primitives_total"] >= 8
-    assert plat["apps"]["first_party_count"] >= 8
+    assert plat["kernel"]["primitives_total"] >= 9
+    assert plat["apps"]["first_party_count"] >= 9
+    assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
     inv = c.post(
         "/platform/apps/app.desk/invoke",
         json={"action": "arena"},

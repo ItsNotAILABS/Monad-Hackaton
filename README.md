@@ -1,15 +1,16 @@
-# THESIS Platform (v2.1)
+# THESIS Platform (v2.2)
 
-**A Monad DeFi platform — shared primitives + app runtime. Not a pitch deck.**
+**A Monad DeFi platform — shared primitives + app runtime + browser-local AI. Not a pitch deck.**
 
 | Layer | Meaning |
 |-------|---------|
-| **Primitives** | identity · law · capital · market · intel · forge · company · learn |
-| **Apps** | First-party (desk, wallets, vault, AI, company, studio…) + forged packages |
+| **Primitives** | identity · law · capital · market · intel · forge · company · learn · **local_ai** |
+| **Apps** | First-party (desk, wallets, vault, AI, **LOCAL AI**, company, studio…) + forged packages |
 | **Runtime** | `POST /platform/apps/{id}/invoke` under one lawbook + receipts |
+| **Local AI** | Transformers.js in-browser · memory · security · KG · research agents · docs |
 | **Shell** | PLATFORM tab = kernel health + registry + live market |
 
-See [docs/PLATFORM.md](docs/PLATFORM.md).
+See [docs/PLATFORM.md](docs/PLATFORM.md) · [docs/LOCAL_AI.md](docs/LOCAL_AI.md).
 
 Thesis still runs a **Company OS** (GM + departments) and a **trading desk** as apps on that platform. Owner remains sovereign. AI uses twins only — never real keys.
 

@@ -652,6 +652,43 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   .win-actions { align-items: stretch; width: 100%; }
 }
 
+/* Local AI */
+.local-ai .local-textarea {
+  width: 100%;
+  margin: 8px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #05060c;
+  color: inherit;
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 0.9rem;
+  resize: vertical;
+}
+.local-ai .forge {
+  width: auto;
+  margin-top: 8px;
+}
+.kg-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.doc-preview {
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  margin-top: 8px;
+}
+.local-caps {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width: 1100px) {
+  .local-caps { grid-template-columns: repeat(3, 1fr); }
+}
+
+
 @media (max-width: 1400px) {
   .app-modules { grid-template-columns: repeat(4, 1fr); }
   .grid4 { grid-template-columns: repeat(2, 1fr); }

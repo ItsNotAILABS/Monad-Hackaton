@@ -353,12 +353,14 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "2.1.0"
+    assert c.get("/health").json()["version"] == "2.2.0"
     assert c.get("/health").json().get("kind") == "platform"
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"
-    assert plat.get("kernel", {}).get("primitives_total", 0) >= 8
-    assert (plat.get("apps") or {}).get("first_party_count", 0) >= 8
+    assert plat.get("kernel", {}).get("primitives_total", 0) >= 9
+    assert (plat.get("apps") or {}).get("first_party_count", 0) >= 9
+    assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
+    assert any(a.get("id") == "app.local_ai" for a in (plat.get("apps") or {}).get("first_party") or [])
     inv = c.post(
         "/platform/apps/app.desk/invoke",
         json={"action": "arena", "network": "monad-testnet"},

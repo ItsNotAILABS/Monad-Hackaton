@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Landing } from "./Landing.jsx";
+import { LocalAI } from "./local-ai/LocalAI.jsx";
 import "./style.css";
 
 const CATEGORIES = ["dex", "lending", "vault", "staking", "perps", "analytics", "agent"];
@@ -708,6 +709,7 @@ function App() {
       <nav className="tabs">
         {[
           ["live", "PLATFORM"],
+          ["local", "LOCAL AI"],
           ["hq", "HQ"],
           ["home", "DAILY"],
           ["ai", "AI"],
@@ -724,6 +726,10 @@ function App() {
           </button>
         ))}
       </nav>
+
+      {tab === "local" && (
+        <LocalAI api={api} network={network} busy={busy} onNavigate={setTab} />
+      )}
 
       {tab === "live" && (
         <Landing
