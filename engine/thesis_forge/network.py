@@ -50,6 +50,11 @@ CONTRACT_ORDER = [
 
 PILLARS = [
     {
+        "id": "home",
+        "name": "HOME",
+        "role": "Daily seatbelt — missions, streak, XP, gas coach",
+    },
+    {
         "id": "studio",
         "name": "STUDIO",
         "role": "AI IDE path — objective → manifest → deploy plan",
@@ -57,7 +62,7 @@ PILLARS = [
     {
         "id": "codex",
         "name": "CODEX",
-        "role": "Ecosystem atlas — protocols, RPC, explorers",
+        "role": "Ecosystem atlas — tokens, infra, protocols",
     },
     {
         "id": "nomos",

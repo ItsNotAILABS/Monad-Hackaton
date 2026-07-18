@@ -47,9 +47,13 @@ function StatusDot({ status }) {
 }
 
 function App() {
-  const [tab, setTab] = useState("studio");
+  const [tab, setTab] = useState("home");
   const [health, setHealth] = useState(null);
   const [judge, setJudge] = useState(null);
+  const [home, setHome] = useState(null);
+  const [coach, setCoach] = useState(null);
+  const [ecosystem, setEcosystem] = useState(null);
+  const [toast, setToast] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -120,7 +124,7 @@ function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [h, j, p, d, q, wp, rc, dk] = await Promise.all([
+      const [h, j, p, d, q, wp, rc, dk, hm, co, eco] = await Promise.all([
         api("/health"),
         api("/judge"),
         api("/protocols"),
@@ -129,6 +133,9 @@ function App() {
         api("/workspace/projects"),
         api("/receipts/recent?n=12"),
         api("/desk"),
+        api(`/home?network=${network}`),
+        api(`/intelligence/coach?network=${network}`),
+        api(`/ecosystem?network=${network === "monad-mainnet" ? "monad-mainnet" : "monad-testnet"}`),
       ]);
       setHealth(h);
       setJudge(j);
@@ -139,6 +146,9 @@ function App() {
       setProjects(wp.projects || []);
       setReceipts(rc.receipts || []);
       setDesk(dk);
+      setHome(hm);
+      setCoach(co);
+      setEcosystem(eco);
       if (dk?.marks?.["MON/USDC"]) {
         setTicketForm((f) => ({ ...f, limit_price: dk.marks["MON/USDC"] }));
       }
@@ -147,11 +157,53 @@ function App() {
       setErr(String(e.message || e));
       setHealth(null);
     }
-  }, [questId]);
+  }, [questId, network]);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  function flash(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(""), 2800);
+  }
+
+  async function doMission(missionId, extra = {}) {
+    setBusy(true);
+    setErr("");
+    try {
+      const body = { mission_id: missionId, ...extra };
+      if (missionId === "desk-arena") {
+        const ar = await api("/desk/arena", { method: "POST", body: "{}" });
+        setDeskArena(ar);
+        body.n_rejected = ar.n_rejected;
+      }
+      if (missionId === "academy-lab") {
+        // deep-link user to academy — auto-complete only if they already graded
+        if (grade?.passed) {
+          body.passed = true;
+        } else {
+          setTab("academy");
+          if (home?.missions) {
+            const m = home.missions.find((x) => x.id === "academy-lab");
+            if (m?.quest_id) setQuestId(m.quest_id);
+          }
+          flash("Pass the lab with ✓ I understand, then tap mission again");
+          setBusy(false);
+          return;
+        }
+      }
+      const data = await api("/home/mission", { method: "POST", body: JSON.stringify(body) });
+      if (data.home) setHome(data.home);
+      if (data.xp_gain) flash(`+${data.xp_gain} XP${data.new_badges?.length ? " · badge!" : ""}`);
+      if (data.new_badges?.length) flash(`Badge: ${data.new_badges.join(", ")}`);
+      setCoach(await api(`/intelligence/coach?network=${network}`));
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     if (!questId) return;
@@ -215,6 +267,18 @@ function App() {
         body: JSON.stringify({ quest_id: questId, selected_action_index: pick, understood }),
       });
       setGrade(data);
+      if (data.passed) {
+        try {
+          const m = await api("/home/mission", {
+            method: "POST",
+            body: JSON.stringify({ mission_id: "academy-lab", passed: true }),
+          });
+          if (m.home) setHome(m.home);
+          if (m.xp_gain) flash(`Lab passed · +${m.xp_gain} XP`);
+        } catch {
+          /* mission may already be done */
+        }
+      }
     } catch (e) {
       setErr(String(e.message || e));
     } finally {
@@ -387,15 +451,28 @@ function App() {
     <div className="shell">
       <header className="top">
         <div>
-          <span className="eyebrow">THESIS v{health?.version || "0.3"} · MONAD WORKSTATION</span>
+          <span className="eyebrow">THESIS v{health?.version || "0.5"} · DAILY MONAD SEATBELT</span>
           <h1>
-            THESIS <i>Forge</i>
+            THESIS <i>Daily</i>
           </h1>
           <p className="tagline">
-            Full pipeline IDE · agents under laws · failure-first academy · explainable events
+            {home?.pitch?.roommate ||
+              "Teach DeFi by doing. Automate risk checks. Come back every day."}
           </p>
         </div>
-        <div className="top-right">
+        <div className="top-right stats-chip">
+          <div className="stat">
+            <em>LVL</em>
+            <b>{home?.level ?? "—"}</b>
+          </div>
+          <div className="stat">
+            <em>XP</em>
+            <b>{home?.xp ?? "—"}</b>
+          </div>
+          <div className="stat">
+            <em>🔥</em>
+            <b>{home?.streak ?? 0}</b>
+          </div>
           <div className={`status s-${status.toLowerCase()}`}>{status}</div>
           <button type="button" className="ghost" onClick={refresh}>
             Sync
@@ -403,6 +480,7 @@ function App() {
         </div>
       </header>
 
+      {toast ? <div className="banner ok">{toast}</div> : null}
       {err ? (
         <div className="banner err">
           {err}
@@ -412,11 +490,12 @@ function App() {
 
       <nav className="tabs">
         {[
+          ["home", "HOME"],
+          ["desk", "DESK"],
+          ["academy", "ACADEMY"],
           ["studio", "STUDIO"],
           ["ide", "IDE"],
           ["nomos", "NOMOS"],
-          ["desk", "DESK"],
-          ["academy", "ACADEMY"],
           ["codex", "CODEX"],
           ["judge", "JUDGE"],
         ].map(([id, label]) => (
@@ -425,6 +504,181 @@ function App() {
           </button>
         ))}
       </nav>
+
+      {tab === "home" && (
+        <section className="panel home">
+          <div className="hero-card">
+            <div>
+              <span className="eyebrow">EVERYDAY PROBLEM</span>
+              <h2>{home?.pitch?.problem || "DeFi confuses. Bots scare. Tabs multiply."}</h2>
+              <p className="muted">{home?.pitch?.solution}</p>
+              <div className="progress fat">
+                <div className="bar" style={{ width: `${home?.progress?.pct || 0}%` }} />
+              </div>
+              <p className="muted sm">
+                Today {home?.progress?.completed || 0}/{home?.progress?.total || 5} ·{" "}
+                {home?.intelligence?.headline}
+              </p>
+              {home?.next_best_action && home.next_best_action.mission_id !== "done" && (
+                <button
+                  type="button"
+                  className="forge"
+                  disabled={busy}
+                  onClick={() => {
+                    const id = home.next_best_action.mission_id;
+                    if (id === "checkin") doMission("checkin");
+                    else if (id === "gas-tip") doMission("gas-tip", { acknowledged: true });
+                    else if (id === "desk-arena") doMission("desk-arena");
+                    else if (id === "academy-lab") doMission("academy-lab");
+                    else if (id === "ecosystem-glance") doMission("ecosystem-glance", { viewed: true });
+                  }}
+                >
+                  {home.next_best_action.cta || "Continue"} →
+                </button>
+              )}
+              {home?.progress?.all_clear && (
+                <p className="cert">Daily clear. See you tomorrow — streak protected.</p>
+              )}
+            </div>
+            <div className="hero-side">
+              <div className="orb small">
+                <b>{home?.level ?? 1}</b>
+                <span>LEVEL</span>
+              </div>
+              <div className="kv">
+                <span>Best streak</span>
+                <b>{home?.best_streak ?? 0}d</b>
+              </div>
+              <div className="kv">
+                <span>Desk equity</span>
+                <b>{Number(home?.desk_pulse?.equity || 0).toFixed(0)}</b>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid3">
+            <article>
+              <label>TODAY&apos;S MISSIONS</label>
+              <div className="mission-list">
+                {(home?.missions || []).map((m) => (
+                  <div key={m.id} className={`mission ${m.done ? "done" : ""}`}>
+                    <header>
+                      <b>{m.title}</b>
+                      <Pill ok={m.done}>{m.done ? "DONE" : `+${m.xp} XP`}</Pill>
+                    </header>
+                    <p className="muted sm">{m.problem}</p>
+                    <p className="muted sm">
+                      <b>Do:</b> {m.do}
+                    </p>
+                    {!m.done && (
+                      <button
+                        type="button"
+                        className="ghost"
+                        disabled={busy}
+                        onClick={() => {
+                          if (m.id === "checkin") doMission("checkin");
+                          else if (m.id === "gas-tip") doMission("gas-tip", { acknowledged: true });
+                          else if (m.id === "desk-arena") doMission("desk-arena");
+                          else if (m.id === "academy-lab") doMission("academy-lab");
+                          else if (m.id === "ecosystem-glance")
+                            doMission("ecosystem-glance", { viewed: true });
+                        }}
+                      >
+                        {m.cta}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article className="result">
+              <label>COACH · GAS · INTEL</label>
+              {(coach?.tips || []).slice(0, 4).map((t, i) => (
+                <div key={i} className="proto">
+                  <b>
+                    {t.kind}: {t.title}
+                  </b>
+                  <p className="muted sm">{t.body}</p>
+                </div>
+              ))}
+              {home?.gas_coach?.tip && (
+                <div className="ai">
+                  <b>{home.gas_coach.tip.title}</b>
+                  <p>{home.gas_coach.tip.body}</p>
+                  <p className="muted sm">{home.gas_coach.tip.roommate}</p>
+                  {home.gas_coach.demo_margin && (
+                    <p className="muted sm">
+                      Example: estimate {home.gas_coach.demo_margin.estimated_gas} → limit{" "}
+                      {home.gas_coach.demo_margin.recommended_gas_limit} (Monad ~7.5% buffer)
+                    </p>
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                className="ghost block"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const r = await api("/intelligence/reject-demo", { method: "POST", body: "{}" });
+                    flash(r.lesson || "Reject demo done");
+                    setDeskArena({
+                      n_accepted: 0,
+                      n_rejected: r.n_rejected,
+                      results: r.sample ? [r.sample] : [],
+                    });
+                  } catch (e) {
+                    setErr(String(e.message || e));
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                One-tap: show a reject
+              </button>
+            </article>
+
+            <article className="result">
+              <label>ECOSYSTEM · REWARDS</label>
+              {home?.featured_asset && (
+                <div className="proto featured">
+                  <span className="eyebrow">FEATURED ASSET</span>
+                  <b>
+                    {home.featured_asset.symbol} · {home.featured_asset.name}
+                  </b>
+                  {home.featured_asset.address && home.featured_asset.address.startsWith("0x") && (
+                    <code className="sm">{home.featured_asset.address}</code>
+                  )}
+                  <p className="muted sm">Verify on explorer — never invent addresses (MONSKILLS).</p>
+                </div>
+              )}
+              <label>Badges</label>
+              <div className="badge-row">
+                {(home?.badges || []).map((b) => (
+                  <span key={b.id} className={`badge ${b.earned ? "on" : ""}`} title={b.desc}>
+                    {b.name}
+                  </span>
+                ))}
+              </div>
+              <label>Why come back daily</label>
+              <ul className="pillars">
+                <li>Streak XP bonus compounds healthy risk habits</li>
+                <li>Rotating academy labs = new DeFi lesson every day</li>
+                <li>Desk arena always finds a reject to celebrate</li>
+                <li>Gas tip rotates — Monad bills the limit</li>
+              </ul>
+              {(ecosystem?.problems || []).slice(0, 2).map((p) => (
+                <div key={p.id} className="proto">
+                  <b>{p.problem}</b>
+                  <p className="muted sm">{p.roommate}</p>
+                </div>
+              ))}
+            </article>
+          </div>
+        </section>
+      )}
 
       {tab === "studio" && (
         <section className="panel">
@@ -1025,7 +1279,7 @@ function App() {
       {tab === "codex" && (
         <section className="panel grid2">
           <article>
-            <label>ECOSYSTEM ATLAS</label>
+            <label>ECOSYSTEM ATLAS · PROTOCOLS</label>
             <div className="proto-list">
               {protocols.map((p) => (
                 <div key={p.id} className="proto">
@@ -1041,6 +1295,30 @@ function App() {
                 </div>
               ))}
             </div>
+            <label>MAINNET TOKENS (MONSKILLS)</label>
+            <div className="proto-list" style={{ maxHeight: 200 }}>
+              {(ecosystem?.tokens || []).map((t) => (
+                <div key={t.symbol + (t.address || "")} className="proto">
+                  <b>
+                    {t.symbol} · {t.name}
+                  </b>
+                  {t.address && t.address.startsWith("0x") ? (
+                    <code className="sm">{t.address}</code>
+                  ) : (
+                    <p className="muted sm">{t.note || t.kind}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+            <label>INFRA</label>
+            {(ecosystem?.infra || []).map((i) => (
+              <div key={i.id} className="kv">
+                <span>{i.name}</span>
+                <a className="link" href={network === "monad-mainnet" ? i.mainnet || i.testnet : i.testnet || i.mainnet} target="_blank" rel="noreferrer">
+                  open
+                </a>
+              </div>
+            ))}
           </article>
           <article className="result">
             <label>NETWORK + DEPLOY</label>

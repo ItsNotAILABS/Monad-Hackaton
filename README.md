@@ -1,6 +1,8 @@
-# THESIS — Monad AI Workstation v0.4
+# THESIS — Monad AI Workstation v0.5
 
-**Agents propose. Laws decide. Desk risks capital. Receipts remember.**
+**Teach DeFi by doing. Automate the tedious risk checks. Come back every day.**
+
+Roommate test: *“This saved me 20 minutes of re-checking bots and stopped a fat gas-limit bill.”*
 
 Production workstation for [Spark · Build Anything](https://buildanything.so/hackathons/spark) on [Monad](https://docs.monad.xyz/).
 
@@ -17,14 +19,24 @@ Production workstation for [Spark · Build Anything](https://buildanything.so/ha
 
 | Surface | What it does |
 |---------|----------------|
+| **HOME** | **Daily loop** — missions, streak, XP, badges, gas coach, coach intel |
 | **STUDIO / PIPELINE** | 11-stage build with explainability events |
 | **IDE** | Generated multi-file package (Solidity hints, TS config, AGENT.md, lawbook) |
 | **NOMOS** | Auto multi-agent propose + arena (REJECT is a feature) |
-| **DESK** | **Trading business** — tickets, desk risk, paper PnL, venue roster (Kuru / AMM / perps) |
-| **ACADEMY** | Failure-first labs for humans **and** AI constraints |
-| **CODEX** | Protocol atlas + live RPC probe + receipts |
+| **DESK** | Trading business — tickets, strategies, paper PnL, vault route |
+| **ACADEMY** | Failure-first labs (learn DeFi by using it safely) |
+| **CODEX** | Protocols + **mainnet tokens** (MONSKILLS addresses) + infra |
 | **JUDGE** | Proof panel for humans / Spark AI judging agent |
 | **CHAIN** | `SovereignVault` gated by `PolicyKernel` + `ReceiptChain` |
+
+### Spark alignment
+
+| Everyday pain | THESIS |
+|---------------|--------|
+| DeFi jargon until you get rekt | Academy + desk rejects teach by doing |
+| 20 min re-checking every bot | Desk arena + lawbook automate the no |
+| Fat gas limits on Monad | Gas coach: pay **limit**, ~7.5% buffer |
+| Tab hell every morning | HOME streak keeps one daily open |
 
 ### Trading desk (business)
 
@@ -61,25 +73,26 @@ python ../scripts/smoke_all.py
 
 ---
 
-## API (v0.3)
+## API (v0.5)
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | `/pipeline` | **Full product path** — events + codegen + arena + workspace |
-| POST | `/forge` | Manifest + package |
+| GET | `/home` | Daily missions, streak, XP, gas coach |
+| POST | `/home/mission` | Complete mission → XP / badges |
+| GET | `/intelligence/coach` | Next-best-action tips |
+| GET | `/ecosystem` | Tokens + infra (Monskills addresses) |
+| POST | `/gas/margin` | Monad gas-limit margin (~7.5%) |
+| POST | `/pipeline` | Full build path — events + codegen + arena |
 | POST | `/arena/auto` | Propose agents + arbitrate |
 | GET | `/desk` | Trading book snapshot |
-| POST | `/desk/arena` | Trading-agent arena (mm/degen/arb/whale) |
+| POST | `/desk/arena` | Trading-agent arena |
 | POST | `/desk/ticket` | Risk-gate a trade ticket |
-| POST | `/desk/fill/{id}` | Paper fill accepted ticket |
-| POST | `/desk/marks/refresh` | Live synthetic marks (+ RPC entropy) |
+| POST | `/desk/fill/{id}` | Paper fill |
+| POST | `/desk/marks/refresh` | Live marks |
 | POST | `/desk/strategies/{id}` | market-make · inventory · take-profit |
-| POST | `/desk/vault-route/{id}` | Simulate `SovereignVault.execute` calldata |
+| POST | `/desk/vault-route/{id}` | Vault execute simulation |
 | POST | `/academy/grade` | Grade lab |
-| GET | `/workspace/projects` | List saved projects |
-| GET | `/rpc/probe` | Live Monad chainId check |
-| GET | `/judge` | Judge / AI proof panel |
-| GET | `/demo/pack` | 3-minute demo script payload |
+| GET | `/judge` | Judge proof panel |
 
 OpenAPI: http://127.0.0.1:8043/docs
 

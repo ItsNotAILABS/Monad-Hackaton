@@ -87,6 +87,106 @@ h1 i { font-weight: 400; color: #9b87ff; font-style: normal; }
   border: 1px solid #ff5d6c40;
   color: #ffb4bb;
 }
+.banner.ok {
+  background: #2ee6a614;
+  border: 1px solid #2ee6a640;
+  color: #9ff5d0;
+  animation: pop 0.35s ease;
+}
+@keyframes pop {
+  from { transform: translateY(-6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.stats-chip { flex-wrap: wrap; }
+.stat {
+  background: #0c0e16;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: center;
+  min-width: 56px;
+}
+.stat em {
+  display: block;
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+.stat b { font-size: 1.05rem; }
+
+.home .hero-card {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  border: 1px solid #6d4aff44;
+  background:
+    radial-gradient(ellipse 80% 80% at 100% 0%, #6d4aff22, transparent 50%),
+    #080a12;
+}
+.home .hero-card h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.progress.fat { height: 10px; margin: 14px 0 8px; }
+.orb.small {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 12px;
+  border: 1px solid #7658ff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px #5d32ff33 inset;
+}
+.orb.small b { font-size: 2.2rem; }
+.orb.small span { font: 10px var(--mono); color: #bbaaff; }
+
+.mission-list { display: flex; flex-direction: column; gap: 8px; max-height: 520px; overflow: auto; }
+.mission {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  transition: border-color 0.15s;
+}
+.mission.done { border-color: #2ee6a640; opacity: 0.85; }
+.mission header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 0;
+  margin: 0 0 6px;
+  padding: 0;
+}
+.badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.badge.on {
+  border-color: #f0b42966;
+  color: #f0b429;
+  background: #f0b42914;
+}
+.featured { border-color: #6d4aff55 !important; }
+code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-all; color: #a794ff; }
+
+@media (max-width: 900px) {
+  .home .hero-card { grid-template-columns: 1fr; }
+}
 
 .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; }
 .tabs button, .chips button, .ghost, .option, .tree button {

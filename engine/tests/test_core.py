@@ -253,9 +253,24 @@ def test_marks_strategies_vault_route():
     assert route["calldata"]["function"].startswith("execute")
 
 
+def test_daily_home_loop():
+    from thesis_forge.daily import complete_mission, home
+
+    h = home("monad-testnet")
+    assert h["missions"]
+    assert h["pitch"]["roommate"]
+    r = complete_mission("checkin", payload={})
+    assert r["ok"]
+    r2 = complete_mission("gas-tip", payload={"acknowledged": True})
+    assert r2["ok"]
+    r3 = complete_mission("ecosystem-glance", payload={"viewed": True})
+    assert r3["ok"]
+    assert r3["home"]["xp"] > 0
+
+
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "0.4.1"
+    assert c.get("/health").json()["version"] == "0.5.0"
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",
@@ -280,6 +295,14 @@ def test_api_surface():
     assert g.json()["passed"] is True
     d = c.get("/desk").json()
     assert d["paper_mode"] is True
+    hm = c.get("/home").json()
+    assert hm["missions"]
+    c.post("/home/mission", json={"mission_id": "checkin"})
+    assert c.get("/intelligence/coach").json()["tips"]
+    assert c.get("/ecosystem").json()["infra"]
+    assert c.post("/gas/margin", json={"chain_id": 10143, "estimated_gas": 80000}).json()[
+        "recommended_gas_limit"
+    ]
     ar = c.post("/desk/arena").json()
     assert ar["n_rejected"] >= 1
     tk = c.post(

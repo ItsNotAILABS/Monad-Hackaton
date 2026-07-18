@@ -44,6 +44,12 @@ def main() -> int:
     assert j["vaporware"] is False
     print("judge ok", j["features"])
 
+    home = c.get("/home").json()
+    assert home.get("missions")
+    c.post("/home/mission", json={"mission_id": "checkin"})
+    c.post("/home/mission", json={"mission_id": "gas-tip", "acknowledged": True})
+    print("home xp", c.get("/home").json().get("xp"))
+
     desk = c.get("/desk").json()
     assert "cash_usdc" in desk
     da = c.post("/desk/arena").json()

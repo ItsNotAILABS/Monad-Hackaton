@@ -32,6 +32,10 @@ from .pipeline import run_pipeline
 from .policy import arena_report, evaluate
 from .receipts import recent, seal, tip
 from .rpc_probe import probe_network
+from .daily import complete_mission, home as daily_home, leaderboard_self
+from .ecosystem import ecosystem_bundle
+from .gas_intel import apply_gas_limit_margin, gas_coach, should_warn_overspend
+from .intelligence import coach, quick_reject_demo
 from .marks import apply_marks_to_desk, live_marks
 from .strategies import list_strategies, run_strategy
 from .trading import (
@@ -53,7 +57,7 @@ from .workspace import list_projects, load_project, save_project
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="Monad AI Workstation v0.4.1 — Studio · Codex · Nomos · Desk (strategies/marks/vault-route) · Academy",
+    description="THESIS — daily Monad seatbelt: teach-by-doing, desk risk, ecosystem, rewards",
     version=__version__,
 )
 
@@ -105,6 +109,80 @@ class JudgeBundle(BaseModel):
 # ── Core ──────────────────────────────────────────────────────────
 
 
+class MissionComplete(BaseModel):
+    mission_id: str
+    acknowledged: bool = False
+    viewed: bool = False
+    passed: bool = False
+    n_rejected: int | None = None
+    selected_action_index: int | None = None
+    understood: bool = False
+
+
+class GasMarginIn(BaseModel):
+    chain_id: int = 10143
+    estimated_gas: int = Field(gt=0)
+    gas_limit: int | None = None
+
+
+@app.get("/home")
+def home_daily(network: str = Query("monad-testnet")):
+    """Daily habit home — missions, streak, XP, gas coach, ecosystem."""
+    return daily_home(network)
+
+
+@app.post("/home/mission")
+def home_mission(body: MissionComplete):
+    payload = {
+        "acknowledged": body.acknowledged,
+        "viewed": body.viewed,
+        "passed": body.passed,
+        "understood": body.understood,
+    }
+    if body.n_rejected is not None:
+        payload["n_rejected"] = body.n_rejected
+    if body.selected_action_index is not None:
+        payload["selected_action_index"] = body.selected_action_index
+    out = complete_mission(body.mission_id, payload=payload)
+    if not out.get("ok") and not out.get("already"):
+        raise HTTPException(400, out.get("error", "mission failed"))
+    return out
+
+
+@app.get("/home/me")
+def home_me():
+    return leaderboard_self()
+
+
+@app.get("/intelligence/coach")
+def intel_coach(network: str = Query("monad-testnet")):
+    return coach(network)
+
+
+@app.post("/intelligence/reject-demo")
+def intel_reject():
+    return quick_reject_demo()
+
+
+@app.get("/ecosystem")
+def ecosystem(network: str = Query("monad-testnet")):
+    return ecosystem_bundle(network)
+
+
+@app.get("/gas/coach")
+def gas_coach_api():
+    return gas_coach()
+
+
+@app.post("/gas/margin")
+def gas_margin(body: GasMarginIn):
+    rec = apply_gas_limit_margin(body.chain_id, body.estimated_gas)
+    warn = False
+    if body.gas_limit is not None:
+        warn = should_warn_overspend(body.chain_id, body.gas_limit, rec["recommended_gas_limit"])
+    return {**rec, "warn_overspend": warn}
+
+
 @app.get("/health")
 def health():
     dep = _load_deployment()
@@ -127,15 +205,20 @@ def health():
             "/pipeline",
             "/forge",
             "/arena",
+            "/home",
             "/desk/*",
+            "/ecosystem",
+            "/gas/*",
+            "/intelligence/*",
             "/agents/propose",
             "/academy/*",
             "/workspace/*",
             "/rpc/probe",
             "/judge",
         ],
-        "doctrine": "Agents propose. Laws decide. Desk risks capital. Receipts remember.",
+        "doctrine": "Agents propose. Laws decide. Desk risks capital. Learn by doing. Daily streaks.",
         "trading": desk_snapshot(),
+        "daily": leaderboard_self(),
     }
 
 
