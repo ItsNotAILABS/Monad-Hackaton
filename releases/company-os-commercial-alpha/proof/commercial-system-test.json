@@ -1,0 +1,35 @@
+{
+  "schema": "thesis.commercial.system_test.v1",
+  "generated_at": 1784358333.2815042,
+  "results": {
+    "commercial_validator": {
+      "assertions": 238,
+      "passed": 238,
+      "failed": 0
+    },
+    "focused_backend_tests": {
+      "tests": 7,
+      "passed": 7,
+      "failed": 0
+    },
+    "frontend_production_build": {
+      "passed": true,
+      "entries": [
+        "index.html",
+        "workstation.html"
+      ]
+    }
+  },
+  "safety": {
+    "private_keys_loaded": false,
+    "automatic_chain_broadcast": false,
+    "rbac_gate": true,
+    "approval_state_machine": true,
+    "audit_hash_chain": true
+  },
+  "not_run": {
+    "full_repository_pytest": "Will run in repository CI after merge.",
+    "foundry_contract_tests": "Foundry not available in this local validation runtime.",
+    "live_monad_deployment": "No funded deployer or operator authorization supplied."
+  }
+}
