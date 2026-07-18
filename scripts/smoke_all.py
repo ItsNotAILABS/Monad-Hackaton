@@ -44,6 +44,12 @@ def main() -> int:
     assert j["vaporware"] is False
     print("judge ok", j["features"])
 
+    desk = c.get("/desk").json()
+    assert "cash_usdc" in desk
+    da = c.post("/desk/arena").json()
+    assert da["n_rejected"] >= 1
+    print("desk arena", da["n_accepted"], "accept", da["n_rejected"], "reject")
+
     print("SMOKE_OK")
     return 0
 

@@ -32,11 +32,25 @@ from .pipeline import run_pipeline
 from .policy import arena_report, evaluate
 from .receipts import recent, seal, tip
 from .rpc_probe import probe_network
+from .trading import (
+    TradeTicket,
+    TradingLimits,
+    desk_snapshot,
+    load_desk,
+    list_venues,
+    paper_fill,
+    propose_ticket,
+    reset_desk,
+    run_desk_arena,
+    set_mark,
+    update_limits,
+    update_policy,
+)
 from .workspace import list_projects, load_project, save_project
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="Monad AI Workstation v0.3 — Studio · Codex · Nomos · Academy · Pipeline",
+    description="Monad AI Workstation v0.4 — Studio · Codex · Nomos · Desk · Academy · Pipeline",
     version=__version__,
 )
 
@@ -110,13 +124,15 @@ def health():
             "/pipeline",
             "/forge",
             "/arena",
+            "/desk/*",
             "/agents/propose",
             "/academy/*",
             "/workspace/*",
             "/rpc/probe",
             "/judge",
         ],
-        "doctrine": "Agents propose. Laws decide. Receipts remember.",
+        "doctrine": "Agents propose. Laws decide. Desk risks capital. Receipts remember.",
+        "trading": desk_snapshot(),
     }
 
 
@@ -134,6 +150,7 @@ def charter_summary():
         "solution": (
             "Full pipeline: intent → map → architecture → policy → codegen → validate → "
             "arena → readiness → (operator) deploy/verify → release receipt. "
+            "Trading desk runs agent trade tickets under desk risk + NOMOS with paper PnL. "
             "Academy teaches humans and AI by failing safely."
         ),
         "spark": {
@@ -348,6 +365,102 @@ def workspace_get(project_id: str):
 # ── Receipts / deploy / judge ─────────────────────────────────────
 
 
+# ── Trading desk (business) ───────────────────────────────────────
+
+
+class TicketIn(BaseModel):
+    agent: str = "desk-trader"
+    venue_id: str
+    pair: str
+    side: str
+    qty: float = Field(gt=0)
+    limit_price: float = Field(gt=0)
+    slippage_bps: int = 30
+    leverage_bps: int = 10000
+    rationale: str = ""
+
+
+class MarkIn(BaseModel):
+    pair: str
+    price: float = Field(gt=0)
+
+
+@app.get("/desk")
+def desk_get():
+    return desk_snapshot()
+
+
+@app.get("/desk/venues")
+def desk_venues():
+    return {"venues": list_venues()}
+
+
+@app.post("/desk/ticket")
+def desk_ticket(body: TicketIn):
+    desk = load_desk()
+    try:
+        t = TradeTicket(
+            agent=body.agent,
+            venue_id=body.venue_id,
+            pair=body.pair,
+            side=body.side,  # type: ignore[arg-type]
+            qty=body.qty,
+            limit_price=body.limit_price,
+            slippage_bps=body.slippage_bps,
+            leverage_bps=body.leverage_bps,
+            rationale=body.rationale,
+        )
+    except Exception as exc:
+        raise HTTPException(400, str(exc)) from exc
+    out = propose_ticket(desk, t)
+    return {
+        "ticket": out.model_dump(mode="json"),
+        "desk": desk_snapshot(desk),
+    }
+
+
+@app.post("/desk/fill/{ticket_id}")
+def desk_fill(ticket_id: str):
+    desk = load_desk()
+    try:
+        t = paper_fill(desk, ticket_id)
+    except KeyError:
+        raise HTTPException(404, "ticket not found") from None
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return {"ticket": t.model_dump(mode="json"), "desk": desk_snapshot(desk)}
+
+
+@app.post("/desk/arena")
+def desk_arena():
+    desk = load_desk()
+    return run_desk_arena(desk)
+
+
+@app.post("/desk/limits")
+def desk_limits(body: TradingLimits):
+    desk = update_limits(load_desk(), body)
+    return desk_snapshot(desk)
+
+
+@app.post("/desk/policy")
+def desk_policy(body: Policy):
+    desk = update_policy(load_desk(), body)
+    return desk_snapshot(desk)
+
+
+@app.post("/desk/mark")
+def desk_mark(body: MarkIn):
+    desk = set_mark(load_desk(), body.pair, body.price)
+    return desk_snapshot(desk)
+
+
+@app.post("/desk/reset")
+def desk_reset():
+    desk = reset_desk()
+    return desk_snapshot(desk)
+
+
 @app.get("/receipts/recent")
 def receipts_recent(n: int = 25):
     return {"tip": tip(), "receipts": recent(min(n, 100))}
@@ -411,6 +524,8 @@ def judge_panel():
             "pipeline_stages": len(pipeline_stages()),
             "academy_quests": len(list_quests()),
             "protocols": len(all_protocols()),
+            "trading_venues": len(list_venues()),
+            "trading_desk": True,
             "contracts": [
                 "PolicyKernel",
                 "SovereignVault",
@@ -420,6 +535,7 @@ def judge_panel():
                 "ExecutionRouter",
             ],
         },
+        "trading": desk_snapshot(),
         "deployment": dep,
         "recent_projects": projects,
         "receipt_tip": tip(),
@@ -434,6 +550,8 @@ def judge_panel():
             "real_api_paths": [
                 "POST /pipeline",
                 "POST /arena/auto",
+                "POST /desk/arena",
+                "POST /desk/ticket",
                 "POST /academy/grade",
             ],
         },
@@ -454,13 +572,13 @@ def demo_pack():
     pipe = run_pipeline(req, persist=True)
     return {
         "script": [
-            "0:00 Problem: I won't give agents a blank check on Monad.",
-            "0:20 STUDIO: Run full pipeline → events + package files.",
-            "1:00 NOMOS: Arena auto — show REJECT reasons + winner.",
-            "1:40 ACADEMY: Pass slippage lab with understanding checked.",
-            "2:10 IDE: Open generated docs/AGENT.md + lawbook.",
-            "2:30 CODEX/JUDGE: Explorer vault address when deployed.",
-            "2:50 Close: agents propose, laws decide, receipts remember.",
+            "0:00 Problem: trading bots + capital without desk risk + onchain laws.",
+            "0:25 STUDIO: pipeline → package + lawbook.",
+            "0:55 DESK: arena — reject degen perps / oversized tickets.",
+            "1:25 DESK: risk-accept a Kuru ticket → paper fill → PnL.",
+            "1:55 NOMOS + vault gate story for live capital later.",
+            "2:20 ACADEMY: one failure-first lab.",
+            "2:45 Close: agents propose, desk+laws decide, receipts remember.",
         ],
         "pipeline_preview": {
             "project_id": pipe.get("project_id"),
@@ -469,6 +587,7 @@ def demo_pack():
             "arena_rejected": (pipe.get("arena") or {}).get("n_rejected"),
             "receipt": (pipe.get("receipt") or {}).get("receipt_hash", "")[:24],
         },
+        "trading_preview": run_desk_arena(load_desk()),
         "deployment": _load_deployment(),
         "quests": list_quests(),
         "judge": "/judge",

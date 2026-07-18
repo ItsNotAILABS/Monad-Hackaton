@@ -77,6 +77,19 @@ function App() {
   const [deployment, setDeployment] = useState(null);
   const [rpc, setRpc] = useState(null);
   const [receipts, setReceipts] = useState([]);
+  const [desk, setDesk] = useState(null);
+  const [deskArena, setDeskArena] = useState(null);
+  const [ticketForm, setTicketForm] = useState({
+    venue_id: "kuru",
+    pair: "MON/USDC",
+    side: "buy",
+    qty: 25,
+    limit_price: 1,
+    slippage_bps: 20,
+    leverage_bps: 10000,
+    agent: "desk-trader",
+    rationale: "Manual desk ticket",
+  });
 
   const files = pipeline?.files || {};
   const fileList = useMemo(() => Object.keys(files).sort(), [files]);
@@ -104,7 +117,7 @@ function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [h, j, p, d, q, wp, rc] = await Promise.all([
+      const [h, j, p, d, q, wp, rc, dk] = await Promise.all([
         api("/health"),
         api("/judge"),
         api("/protocols"),
@@ -112,6 +125,7 @@ function App() {
         api("/academy/quests"),
         api("/workspace/projects"),
         api("/receipts/recent?n=12"),
+        api("/desk"),
       ]);
       setHealth(h);
       setJudge(j);
@@ -121,6 +135,10 @@ function App() {
       if (!questId && q.quests?.length) setQuestId(q.quests[0].id);
       setProjects(wp.projects || []);
       setReceipts(rc.receipts || []);
+      setDesk(dk);
+      if (dk?.marks?.["MON/USDC"]) {
+        setTicketForm((f) => ({ ...f, limit_price: dk.marks["MON/USDC"] }));
+      }
       setErr("");
     } catch (e) {
       setErr(String(e.message || e));
@@ -212,6 +230,66 @@ function App() {
     }
   }
 
+  async function runDeskArena() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api("/desk/arena", { method: "POST", body: "{}" });
+      setDeskArena(data);
+      setDesk(await api("/desk"));
+      setTab("desk");
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitTicket() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api("/desk/ticket", {
+        method: "POST",
+        body: JSON.stringify(ticketForm),
+      });
+      setDesk(data.desk);
+      if (data.ticket?.status === "risk_accepted") {
+        // optional: leave for user to fill
+      }
+      setDeskArena(null);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function fillTicket(id) {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api(`/desk/fill/${id}`, { method: "POST", body: "{}" });
+      setDesk(data.desk);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resetDeskBook() {
+    setBusy(true);
+    try {
+      setDesk(await api("/desk/reset", { method: "POST", body: "{}" }));
+      setDeskArena(null);
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openProject(id) {
     setBusy(true);
     try {
@@ -277,6 +355,7 @@ function App() {
           ["studio", "STUDIO"],
           ["ide", "IDE"],
           ["nomos", "NOMOS"],
+          ["desk", "DESK"],
           ["academy", "ACADEMY"],
           ["codex", "CODEX"],
           ["judge", "JUDGE"],
@@ -527,6 +606,244 @@ function App() {
                   </div>
                 </>
               )}
+            </article>
+          </div>
+        </section>
+      )}
+
+      {tab === "desk" && (
+        <section className="panel">
+          <div className="grid3">
+            <article>
+              <label>TRADING BUSINESS DESK</label>
+              <p className="muted sm">
+                Agent tickets pass <b>desk risk + NOMOS</b>. Paper fills update the book. Live venue keys never enter the
+                browser — SovereignVault remains the onchain capital gate.
+              </p>
+              {desk && (
+                <>
+                  <div className="kv">
+                    <span>Cash USDC</span>
+                    <b>{Number(desk.cash_usdc).toFixed(2)}</b>
+                  </div>
+                  <div className="kv">
+                    <span>Equity</span>
+                    <b>{Number(desk.equity).toFixed(2)}</b>
+                  </div>
+                  <div className="kv">
+                    <span>Day PnL</span>
+                    <b className={desk.day_pnl >= 0 ? "up" : "down"}>{Number(desk.day_pnl).toFixed(2)}</b>
+                  </div>
+                  <div className="kv">
+                    <span>Realized / Unrealized</span>
+                    <b>
+                      {Number(desk.realized_pnl).toFixed(2)} / {Number(desk.unrealized_pnl).toFixed(2)}
+                    </b>
+                  </div>
+                  <div className="kv">
+                    <span>Mode</span>
+                    <Pill ok={desk.paper_mode}>{desk.paper_mode ? "PAPER" : "LIVE*"}</Pill>
+                  </div>
+                </>
+              )}
+              <button type="button" className="forge" disabled={busy} onClick={runDeskArena}>
+                RUN DESK ARENA (agents) →
+              </button>
+              <button type="button" className="ghost block" disabled={busy} onClick={resetDeskBook}>
+                Reset paper book
+              </button>
+              <label>NEW TICKET</label>
+              <div className="field">
+                <span>Venue</span>
+                <select
+                  value={ticketForm.venue_id}
+                  onChange={(e) => {
+                    const venue_id = e.target.value;
+                    const v = (desk?.venues || []).find((x) => x.id === venue_id);
+                    const pair = v?.pairs?.[0] || ticketForm.pair;
+                    setTicketForm((f) => ({
+                      ...f,
+                      venue_id,
+                      pair,
+                      limit_price: desk?.marks?.[pair] || f.limit_price,
+                    }));
+                  }}
+                >
+                  {(desk?.venues || [])
+                    .filter((v) => v.kind !== "analytics" && v.kind !== "custody_gate")
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="field">
+                <span>Pair</span>
+                <select
+                  value={ticketForm.pair}
+                  onChange={(e) =>
+                    setTicketForm((f) => ({
+                      ...f,
+                      pair: e.target.value,
+                      limit_price: desk?.marks?.[e.target.value] || f.limit_price,
+                    }))
+                  }
+                >
+                  {(
+                    (desk?.venues || []).find((v) => v.id === ticketForm.venue_id)?.pairs || [
+                      ticketForm.pair,
+                    ]
+                  ).map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <span>Side</span>
+                <select
+                  value={ticketForm.side}
+                  onChange={(e) => setTicketForm((f) => ({ ...f, side: e.target.value }))}
+                >
+                  <option value="buy">buy</option>
+                  <option value="sell">sell</option>
+                </select>
+              </div>
+              {[
+                ["qty", "Qty"],
+                ["limit_price", "Limit"],
+                ["slippage_bps", "Slip bps"],
+              ].map(([k, lab]) => (
+                <div className="field" key={k}>
+                  <span>{lab}</span>
+                  <input
+                    type="number"
+                    value={ticketForm[k]}
+                    onChange={(e) => setTicketForm((f) => ({ ...f, [k]: Number(e.target.value) }))}
+                  />
+                </div>
+              ))}
+              <input
+                value={ticketForm.rationale}
+                onChange={(e) => setTicketForm((f) => ({ ...f, rationale: e.target.value }))}
+                placeholder="Rationale"
+              />
+              <button type="button" className="forge" disabled={busy} onClick={submitTicket}>
+                SUBMIT TICKET → RISK GATE
+              </button>
+            </article>
+
+            <article className="result">
+              <label>DESK ARENA / RISK</label>
+              {!deskArena ? (
+                <p className="muted">Run desk arena to score mm / degen / arb / whale agents against trading limits.</p>
+              ) : (
+                <>
+                  <div className="kv">
+                    <span>Accepted / Rejected</span>
+                    <b>
+                      {deskArena.n_accepted} / {deskArena.n_rejected}
+                    </b>
+                  </div>
+                  {deskArena.winner && (
+                    <div className="winner">
+                      <Pill ok>WINNER · {deskArena.winner.ticket?.agent}</Pill>
+                      <p>{deskArena.winner.ticket?.rationale}</p>
+                    </div>
+                  )}
+                  <div className="plans">
+                    {(deskArena.results || []).map((r, i) => (
+                      <div key={i} className={`plan ${r.accepted ? "yes" : "no"}`}>
+                        <header>
+                          <b>
+                            {r.ticket.agent} · {r.ticket.venue_id} · {r.ticket.pair}
+                          </b>
+                          <Pill ok={r.accepted}>{r.accepted ? "ACCEPT" : "REJECT"}</Pill>
+                        </header>
+                        <p>
+                          {r.ticket.side} {r.ticket.qty} @ {r.ticket.limit_price} · notional{" "}
+                          {Number(r.ticket.notional || r.ticket.qty * r.ticket.limit_price).toFixed(0)}
+                        </p>
+                        {!r.accepted && (
+                          <ul>
+                            {(r.reasons || r.violations || []).map((x) => (
+                              <li key={x}>{x}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </article>
+
+            <article className="result">
+              <label>BOOK · POSITIONS · TICKETS</label>
+              <label>Positions</label>
+              {(desk?.positions || []).length === 0 ? (
+                <p className="muted sm">Flat.</p>
+              ) : (
+                (desk.positions || []).map((p) => (
+                  <div key={p.venue_id + p.pair} className="proto">
+                    <b>
+                      {p.pair} · {p.venue_id}
+                    </b>
+                    <div className="muted sm">
+                      qty {p.qty.toFixed?.(4) ?? p.qty} · avg {Number(p.avg_price).toFixed(4)} · uPnL{" "}
+                      {Number(p.unrealized_pnl).toFixed(2)}
+                    </div>
+                  </div>
+                ))
+              )}
+              <label>Recent tickets</label>
+              <div className="plans">
+                {(desk?.tickets_recent || []).slice(0, 12).map((t) => (
+                  <div
+                    key={t.ticket_id}
+                    className={`plan ${
+                      t.status === "paper_filled" || t.status === "risk_accepted" ? "yes" : "no"
+                    }`}
+                  >
+                    <header>
+                      <b>
+                        {t.side} {t.pair}
+                      </b>
+                      <Pill ok={t.status !== "risk_rejected"}>{t.status}</Pill>
+                    </header>
+                    <p>
+                      {t.agent} · {t.venue_id} · {t.qty} @ {t.limit_price}
+                    </p>
+                    {t.status === "risk_accepted" && (
+                      <button type="button" className="ghost" disabled={busy} onClick={() => fillTicket(t.ticket_id)}>
+                        Paper fill
+                      </button>
+                    )}
+                    {t.reasons?.length > 0 && t.status === "risk_rejected" && (
+                      <ul>
+                        {t.reasons.slice(0, 3).map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <label>Venues</label>
+              <div className="proto-list" style={{ maxHeight: 160 }}>
+                {(desk?.venues || []).map((v) => (
+                  <div key={v.id} className="proto">
+                    <b>{v.name}</b>
+                    <span className="muted">
+                      {" "}
+                      · {v.kind} · {v.adapter_status || v.atlas_status}
+                    </span>
+                    <p className="muted sm">{v.use}</p>
+                  </div>
+                ))}
+              </div>
             </article>
           </div>
         </section>

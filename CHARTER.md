@@ -14,7 +14,8 @@ THESIS is a **production workstation** for building and operating on Monad with 
 1. **STUDIO** — AI-assisted intent → manifest → deploy plan (Foundry / Monad networks).  
 2. **CODEX** — Ecosystem atlas (protocols, explorers, RPCs) used efficiently, not hallucinated.  
 3. **NOMOS** — Onchain policy kernel + vault: agents propose; laws enforce; receipts seal.  
-4. **ACADEMY** — Failure-first education for **people and AI agents** (safe reject labs).
+4. **DESK** — Trading business layer: venues, tickets, desk risk, paper PnL, coupled to NOMOS.  
+5. **ACADEMY** — Failure-first education for **people and AI agents** (safe reject labs).
 
 We optimize for **practical impact**: fewer blind deploys, fewer blank-check approvals, faster correct use of the Monad ecosystem.
 

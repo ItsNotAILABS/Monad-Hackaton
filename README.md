@@ -1,6 +1,6 @@
-# THESIS — Monad AI Workstation v0.3
+# THESIS — Monad AI Workstation v0.4
 
-**Agents propose. Laws decide. Receipts remember. Education is a failed plan that could not spend.**
+**Agents propose. Laws decide. Desk risks capital. Receipts remember.**
 
 Production workstation for [Spark · Build Anything](https://buildanything.so/hackathons/spark) on [Monad](https://docs.monad.xyz/).
 
@@ -20,10 +20,19 @@ Production workstation for [Spark · Build Anything](https://buildanything.so/ha
 | **STUDIO / PIPELINE** | 11-stage build with explainability events |
 | **IDE** | Generated multi-file package (Solidity hints, TS config, AGENT.md, lawbook) |
 | **NOMOS** | Auto multi-agent propose + arena (REJECT is a feature) |
+| **DESK** | **Trading business** — tickets, desk risk, paper PnL, venue roster (Kuru / AMM / perps) |
 | **ACADEMY** | Failure-first labs for humans **and** AI constraints |
 | **CODEX** | Protocol atlas + live RPC probe + receipts |
 | **JUDGE** | Proof panel for humans / Spark AI judging agent |
 | **CHAIN** | `SovereignVault` gated by `PolicyKernel` + `ReceiptChain` |
+
+### Trading desk (business)
+
+- **Desk limits**: max ticket / open / position notional, daily loss, perps/short toggles  
+- **NOMOS coupling**: every ticket also evaluated as a policy `Action`  
+- **Venues**: Kuru, Uniswap-style AMM, Perpl, LeverUp, Birdeye (analytics), THESIS vault (gate)  
+- **Paper book**: cash, positions, realized/unrealized PnL, receipts  
+- **Live fills**: operator-only later — browser never holds venue API keys
 
 ---
 
@@ -59,6 +68,10 @@ python ../scripts/smoke_all.py
 | POST | `/pipeline` | **Full product path** — events + codegen + arena + workspace |
 | POST | `/forge` | Manifest + package |
 | POST | `/arena/auto` | Propose agents + arbitrate |
+| GET | `/desk` | Trading book snapshot |
+| POST | `/desk/arena` | Trading-agent arena (mm/degen/arb/whale) |
+| POST | `/desk/ticket` | Risk-gate a trade ticket |
+| POST | `/desk/fill/{id}` | Paper fill accepted ticket |
 | POST | `/academy/grade` | Grade lab |
 | GET | `/workspace/projects` | List saved projects |
 | GET | `/rpc/probe` | Live Monad chainId check |

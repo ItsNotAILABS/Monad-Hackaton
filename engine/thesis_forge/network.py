@@ -65,6 +65,11 @@ PILLARS = [
         "role": "Policy kernel — agents propose, laws decide",
     },
     {
+        "id": "desk",
+        "name": "DESK",
+        "role": "Trading business — tickets, risk, paper PnL, venue routing",
+    },
+    {
         "id": "academy",
         "name": "ACADEMY",
         "role": "Failure-first school for humans and AI agents",

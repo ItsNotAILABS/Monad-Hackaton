@@ -146,6 +146,17 @@ textarea { resize: vertical; line-height: 1.45; }
   font-size: 0.88rem;
   color: var(--muted);
 }
+.field select {
+  width: 100%;
+  background: #05060b;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+}
+.up { color: var(--accent2); }
+.down { color: #ff8f9a; }
 .forge {
   width: 100%;
   margin-top: 12px;

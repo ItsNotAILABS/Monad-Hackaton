@@ -166,9 +166,57 @@ def test_academy():
     assert grade_quest("slippage-trap", 1, understood=True)["passed"]
 
 
+def test_trading_desk():
+    from thesis_forge.trading import (
+        TradeTicket,
+        load_desk,
+        paper_fill,
+        propose_ticket,
+        reset_desk,
+        run_desk_arena,
+    )
+
+    desk = reset_desk()
+    arena = run_desk_arena(desk)
+    assert arena["n_rejected"] >= 1
+    assert arena["n_accepted"] >= 1
+
+    desk = load_desk()
+    good = TradeTicket(
+        agent="mm-bot",
+        venue_id="kuru",
+        pair="MON/USDC",
+        side="buy",
+        qty=10,
+        limit_price=1.0,
+        slippage_bps=20,
+        leverage_bps=10000,
+        rationale="unit test buy",
+    )
+    t = propose_ticket(desk, good)
+    assert t.status == "risk_accepted", (t.violations, t.reasons)
+    filled = paper_fill(desk, t.ticket_id)
+    assert filled.status == "paper_filled"
+    assert desk.cash_usdc < 10_000
+
+    bad = TradeTicket(
+        agent="degen",
+        venue_id="perpl",
+        pair="MON-PERP",
+        side="buy",
+        qty=1000,
+        limit_price=1.0,
+        slippage_bps=900,
+        leverage_bps=50000,
+        rationale="should reject",
+    )
+    t2 = propose_ticket(load_desk(), bad)
+    assert t2.status == "risk_rejected"
+
+
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "0.3.0"
+    assert c.get("/health").json()["version"] == "0.4.0"
     assert c.get("/judge").json()["vaporware"] is False
     body = {
         "name": "API Vault",
@@ -191,3 +239,22 @@ def test_api_surface():
         json={"quest_id": "slippage-trap", "selected_action_index": 1, "understood": True},
     )
     assert g.json()["passed"] is True
+    d = c.get("/desk").json()
+    assert d["paper_mode"] is True
+    ar = c.post("/desk/arena").json()
+    assert ar["n_rejected"] >= 1
+    tk = c.post(
+        "/desk/ticket",
+        json={
+            "agent": "api-bot",
+            "venue_id": "kuru",
+            "pair": "MON/USDC",
+            "side": "buy",
+            "qty": 5,
+            "limit_price": 1.0,
+            "slippage_bps": 15,
+            "leverage_bps": 10000,
+            "rationale": "api test",
+        },
+    ).json()
+    assert tk["ticket"]["status"] in ("risk_accepted", "risk_rejected")

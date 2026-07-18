@@ -11,3 +11,5 @@ broadcast/
 .DS_Store
 projects/
 *.pyc
+receipts/trading_book.json
+receipts/academy_progress.json
