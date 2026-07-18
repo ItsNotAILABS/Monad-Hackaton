@@ -1,26 +1,28 @@
-# THESIS — Your Monad DeFi Company (v2.0 · Spark competition)
+# THESIS Platform (v2.1)
 
-**You hired a miniature DeFi company — not another dashboard.**
+**A Monad DeFi platform — shared primitives + app runtime. Not a pitch deck.**
 
-Built for [Spark · Build Anything](https://buildanything.so/hackathons/spark) on Monad:  
-**personal problem → live product → machine scorecard → onchain vault story.**
+| Layer | Meaning |
+|-------|---------|
+| **Primitives** | identity · law · capital · market · intel · forge · company · learn |
+| **Apps** | First-party (desk, wallets, vault, AI, company, studio…) + forged packages |
+| **Runtime** | `POST /platform/apps/{id}/invoke` under one lawbook + receipts |
+| **Shell** | PLATFORM tab = kernel health + registry + live market |
 
-**Winning claim:** *Everyone teaches you to click go. THESIS teaches you and your AI when go is illegal — then deploys what passed.*
+See [docs/PLATFORM.md](docs/PLATFORM.md).
 
-THESIS is General Manager. Python departments research, simulate, veto, compete, secure, teach, execute (with your approval), and record receipts.
+Thesis still runs a **Company OS** (GM + departments) and a **trading desk** as apps on that platform. Owner remains sovereign. AI uses twins only — never real keys.
 
-Roommate test: *“This saved me 20 minutes of re-checking bots, stopped a fat gas-limit bill, and taught me slippage by forcing a bad plan to fail.”*
+Roommate test: *“A 20-minute multi-app workflow becomes one managed, explained mission on one runtime.”*
 
-### Judge / demo (60s)
+### Quick platform check
 
-| Action | What proves |
-|--------|-------------|
-| **LIVE → ▶ WIN PATH** | Desk REJECTS + scorecard grade |
-| **JUDGE tab** | Personal problem, criteria PASS rows, 90s script |
-| `POST /demo/win-path` | Machine-checkable competition proof |
-| `GET /judge` · `GET /competition` | AI judging agent pack |
+```bash
+curl http://127.0.0.1:8043/platform
+curl -X POST http://127.0.0.1:8043/platform/apps/app.desk/invoke -H "content-type: application/json" -d "{\"action\":\"arena\"}"
+```
 
-See [docs/SPARK.md](docs/SPARK.md).
+Optional proof pack (hackathon/judges): [docs/SPARK.md](docs/SPARK.md) · `GET /judge`
 
 ### Company OS (v1.0 commercial core)
 

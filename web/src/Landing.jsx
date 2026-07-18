@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 
 /**
- * LIVE command center — wired into real wallets, vault, desk, AI, daily, studio.
- * Polls /landing and dispatches actions through parent handlers.
+ * Platform shell — primitives + installed apps + live market.
+ * Polls /landing (platform feed) and dispatches real app actions.
  */
 export function Landing({
   api,
@@ -13,14 +13,20 @@ export function Landing({
   winPath,
 }) {
   const [feed, setFeed] = useState(null);
+  const [platform, setPlatform] = useState(null);
   const [err, setErr] = useState("");
   const [tick, setTick] = useState(0);
   const [flash, setFlash] = useState(false);
+  const [invokeLog, setInvokeLog] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const data = await api(`/landing?network=${network}`);
+      const [data, plat] = await Promise.all([
+        api(`/landing?network=${network}`),
+        api(`/platform?network=${network}`),
+      ]);
       setFeed(data);
+      setPlatform(plat);
       setErr("");
       setFlash(true);
       setTimeout(() => setFlash(false), 280);
@@ -67,7 +73,7 @@ export function Landing({
   if (!feed) {
     return (
       <section className="panel">
-        <p className="muted">Lighting up wallets · vault · desk · AI…</p>
+        <p className="muted">Booting platform kernel…</p>
       </section>
     );
   }
@@ -88,14 +94,33 @@ export function Landing({
   const projects = apps.projects || {};
   const marks = market.marks || {};
   const route = vault.latest_route || null;
-  const comp = feed.competition || {};
+  const plat = platform || feed.platform || {};
   const win = winPath || null;
+  const platApps = plat.apps || {};
+  const firstParty = platApps.first_party || [];
+  const forged = platApps.forged || [];
+
+  async function invokePlatform(appId, action, params = {}) {
+    try {
+      const out = await api(`/platform/apps/${encodeURIComponent(appId)}/invoke`, {
+        method: "POST",
+        body: JSON.stringify({ action, network, params }),
+      });
+      setInvokeLog(out);
+      // Keep parent app state in sync for company / desk surfaces
+      if (appId === "app.company" && action === "run") act("run_company");
+      if (appId === "app.desk" && action === "arena") act("desk_arena");
+      return out;
+    } catch (e) {
+      setInvokeLog({ ok: false, error: String(e.message || e) });
+    }
+  }
 
   return (
     <section className={`panel landing-live ${flash ? "pulse-update" : ""}`}>
       <div className="live-bar">
         <span className="live-dot" />
-        <b>LIVE</b>
+        <b>PLATFORM</b>
         <span className="muted sm">
           {feed.headline} · #{tick} · {(feed.elapsed_ms || 0).toFixed(0)}ms
         </span>
@@ -106,33 +131,27 @@ export function Landing({
         <span className={`badge ${vault.deployed ? "on" : "warn"}`}>
           vault {vault.deployed ? "set" : "—"}
         </span>
-        <span className="badge on">{projects.count || 0} apps</span>
-        {comp.scorecard_grade && (
-          <span className={`badge ${comp.scorecard_grade === "WINNER" ? "on" : "warn"}`}>
-            {comp.scorecard_grade} {comp.scorecard_pct}%
-          </span>
-        )}
-        <span className="muted sm">
-          THESIS laws {enforce.laws_consulted ?? "—"} · ok={String(enforce.ok ?? "—")}
+        <span className="badge on">
+          {(platApps.total ?? projects.count) || 0} apps
         </span>
-        <a className="link sm" href={feed.docs?.best_practices} target="_blank" rel="noreferrer">
-          best-practices
-        </a>
+        <span className={`badge ${plat.kernel?.ok ? "on" : "warn"}`}>
+          kernel {plat.kernel?.primitives_ok}/{plat.kernel?.primitives_total}
+        </span>
+        <span className="muted sm">
+          laws consult {enforce.laws_consulted ?? "—"} · ok={String(enforce.ok ?? "—")}
+        </span>
       </div>
 
-      {/* Spark competition winner strip */}
-      <div className="win-strip">
+      {/* Platform kernel strip */}
+      <div className="win-strip platform-strip">
         <div className="win-copy">
-          <span className="eyebrow">SPARK · BUILD ANYTHING · COMPETITION MODE</span>
-          <h3>{comp.winning_claim || feed.tagline}</h3>
+          <span className="eyebrow">THESIS PLATFORM · RUNTIME</span>
+          <h3>{plat.what_this_is || feed.tagline}</h3>
+          <p className="muted sm">{plat.doctrine || lawStack.doctrine}</p>
           <p className="muted sm">
-            <b>Personal problem:</b> {comp.problem_title || "AI + DeFi without brakes"}
-            {" · "}
-            <i>{comp.roommate_test || "Roommate-tested seatbelt for Monad ops."}</i>
-          </p>
-          <p className="muted sm">
-            Scorecard {comp.scorecard_passed}/{comp.scorecard_total} · grade{" "}
-            <b className="up">{comp.scorecard_grade || "…"}</b>
+            <b>{platApps.first_party_count ?? firstParty.length}</b> first-party apps ·{" "}
+            <b>{platApps.forged_count ?? forged.length}</b> forged packages ·{" "}
+            <b>{plat.pulse?.laws ?? lawStack.law_count}</b> laws
           </p>
         </div>
         <div className="win-actions">
@@ -140,66 +159,142 @@ export function Landing({
             type="button"
             className="forge win-btn"
             disabled={busy}
-            onClick={() => act("win_path")}
+            onClick={() => invokePlatform("app.desk", "arena")}
           >
-            ▶ WIN PATH
+            Run desk app
           </button>
-          <button type="button" className="ghost" onClick={() => onNavigate("judge")}>
-            JUDGE pack
+          <button
+            type="button"
+            className="ghost"
+            disabled={busy}
+            onClick={() => invokePlatform("app.company", "run")}
+          >
+            Run company app
           </button>
-          <a className="link sm" href={comp.url || feed.docs?.spark} target="_blank" rel="noreferrer">
-            buildanything.so/spark
-          </a>
+          <button type="button" className="ghost" onClick={() => onNavigate("studio")}>
+            Forge package
+          </button>
         </div>
       </div>
+
+      {/* Primitives row */}
+      <div className="primitive-row">
+        {(plat.primitives || []).map((p) => (
+          <div key={p.id} className={`primitive-card ${p.ok || (p.status && p.status.ok) ? "ok" : "warn"}`}>
+            <span className="eyebrow">{p.id || p.name}</span>
+            <b>{p.name}</b>
+            <span className="muted sm">{p.role}</span>
+            <span className={`dot-inline ${(p.ok ?? p.status?.ok) ? "on" : "off"}`}>
+              {(p.ok ?? p.status?.ok) ? "online" : "check"}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* First-party apps from platform registry */}
+      {(firstParty.length > 0 || forged.length > 0) && (
+        <div className="registry-block">
+          <label className="reg-label">APP REGISTRY · FIRST-PARTY</label>
+          <div className="app-modules registry">
+            {firstParty.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className="app-mod status-live"
+                disabled={busy}
+                onClick={() => {
+                  if (a.tab) onNavigate(a.tab);
+                  else if (a.actions?.[0]) invokePlatform(a.id, a.actions[0]);
+                }}
+              >
+                <span className="eyebrow">{a.kind}</span>
+                <b>{a.name}</b>
+                <span className="metric">{a.id}</span>
+                <span className="muted sm detail">{a.description}</span>
+                <span className="cta-line">open · {a.entry}</span>
+              </button>
+            ))}
+          </div>
+          {forged.length > 0 && (
+            <>
+              <label className="reg-label">INSTALLED PACKAGES · FORGED</label>
+              <div className="app-modules registry forged-row">
+                {forged.slice(0, 8).map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className="app-mod status-live"
+                    disabled={busy}
+                    onClick={() => act("open_project", { projectId: a.project_id })}
+                  >
+                    <span className="eyebrow">pkg</span>
+                    <b>{a.name}</b>
+                    <span className="metric">{a.meta?.n_files || "?"} files</span>
+                    <span className="cta-line">open in IDE</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {invokeLog && (
+        <div className={`win-result ${invokeLog.ok ? "" : "err-ish"}`}>
+          <div className="win-result-head">
+            <span className="live-dot" />
+            <b>
+              INVOKE · {invokeLog.app_id}.{invokeLog.action}
+            </b>
+            <span className={`badge ${invokeLog.ok ? "on" : "warn"}`}>
+              {invokeLog.ok ? "OK" : "FAIL"}
+            </span>
+            <span className="muted sm">
+              {(invokeLog.elapsed_ms || 0).toFixed?.(0) ?? invokeLog.elapsed_ms}ms · laws{" "}
+              {invokeLog.law?.laws_consulted ?? "—"}
+            </span>
+            <button type="button" className="ghost" onClick={() => setInvokeLog(null)}>
+              dismiss
+            </button>
+          </div>
+          {invokeLog.error && <p className="muted sm">{invokeLog.error}</p>}
+          {invokeLog.result?.n_rejected != null && (
+            <p className="muted sm">
+              Arena: accept {invokeLog.result.n_accepted} · reject {invokeLog.result.n_rejected}
+            </p>
+          )}
+          {invokeLog.result?.answer && (
+            <p className="muted sm">{String(invokeLog.result.answer).slice(0, 280)}</p>
+          )}
+        </div>
+      )}
 
       {win && (
         <div className="win-result">
           <div className="win-result-head">
             <span className="live-dot" />
-            <b>{win.headline || "WIN PATH"}</b>
+            <b>SYSTEM CHECK · {win.headline || "proof"}</b>
             <span className="badge on">
               {win.proof?.scorecard_grade} {win.proof?.scorecard_pct}%
             </span>
-            <span className="muted sm">{(win.elapsed_ms || 0).toFixed?.(0) ?? win.elapsed_ms}ms</span>
           </div>
-          <p className="muted sm">{win.roommate_test}</p>
           <div className="win-proof-grid">
             <div className="kv">
               <span>Desk rejects</span>
               <b className="up">{win.desk_arena?.n_rejected ?? 0}</b>
             </div>
             <div className="kv">
-              <span>Accepted</span>
-              <b>{win.desk_arena?.n_accepted ?? 0}</b>
-            </div>
-            <div className="kv">
-              <span>Laws live</span>
+              <span>Laws</span>
               <b>{win.proof?.laws_embedded ?? "—"}</b>
             </div>
             <div className="kv">
               <span>AI keys</span>
               <b className="up">{win.proof?.ai_no_keys ? "NEVER" : "?"}</b>
             </div>
-          </div>
-          {(win.desk_arena?.rejected_samples || []).slice(0, 3).map((r, i) => (
-            <div key={i} className="proto no">
-              <b>
-                REJECT · {r.agent} · {r.pair} · {r.venue}
-              </b>
-              <ul>
-                {(r.reasons || []).slice(0, 2).map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
+            <div className="kv">
+              <span>Apps wired</span>
+              <b>{(win.proof?.modules ?? "—")}</b>
             </div>
-          ))}
-          <div className="chips tight">
-            {(win.next_clicks || []).map((n) => (
-              <button key={n.tab} type="button" className="ghost" onClick={() => onNavigate(n.tab)}>
-                {n.label}
-              </button>
-            ))}
           </div>
         </div>
       )}
@@ -247,30 +342,27 @@ export function Landing({
 
       <div className="hero-card land-hero">
         <div>
-          <span className="eyebrow">MONAD DEFI COMPANY · FULL STACK LIVE</span>
+          <span className="eyebrow">PLATFORM SHELL · MARKET + PRIMITIVES</span>
           <h2>{feed.tagline}</h2>
           <p className="muted">{brief.narrative || brief.coach_headline}</p>
           <div className="chips">
-            <button type="button" className="forge" disabled={busy} onClick={() => act("win_path")}>
-              ▶ WIN PATH
+            <button type="button" className="forge" disabled={busy} onClick={() => invokePlatform("app.desk", "arena")}>
+              Desk app
             </button>
             <button type="button" className="forge" disabled={busy} onClick={() => act("run_company")}>
-              STAFF COMPANY →
+              Company app
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => act("connect_wallet")}>
-              Link wallet
-            </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => act("desk_arena")}>
-              Desk arena
+              Identity · link
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => act("vault_route")}>
-              Vault route
+              Capital · vault
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
-              Forge app
+              Forge · install
             </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("judge")}>
-              JUDGE
+            <button type="button" className="ghost" onClick={() => onNavigate("ai")}>
+              Intel · AI
             </button>
           </div>
         </div>

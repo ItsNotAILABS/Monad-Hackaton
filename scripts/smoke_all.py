@@ -107,18 +107,30 @@ def main() -> int:
     assert "tickets_recent" in desk
     print("wallets/desk integrated ok")
 
-    # Competition winner path
-    win = c.post("/demo/win-path").json()
-    assert win.get("ok") and win.get("proof", {}).get("reject_is_feature")
-    assert int(win.get("desk_arena", {}).get("n_rejected") or 0) >= 1
-    assert win.get("scorecard", {}).get("grade") in ("WINNER", "STRONG", "WIP")
-    print("win-path", win["scorecard"]["grade"], win["scorecard"]["pct"], "% rejects", win["desk_arena"]["n_rejected"])
+    # Platform kernel
+    plat = c.get("/platform").json()
+    assert plat.get("product") == "THESIS Platform"
+    assert plat["kernel"]["primitives_total"] >= 8
+    assert plat["apps"]["first_party_count"] >= 8
+    inv = c.post(
+        "/platform/apps/app.desk/invoke",
+        json={"action": "arena"},
+    ).json()
+    assert inv.get("ok") and int((inv.get("result") or {}).get("n_rejected") or 0) >= 1
+    print(
+        "platform apps",
+        plat["apps"]["total"],
+        "fp",
+        plat["apps"]["first_party_count"],
+        "forged",
+        plat["apps"]["forged_count"],
+        "invoke reject",
+        inv["result"]["n_rejected"],
+    )
 
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
-    assert j.get("personal_problem") and j.get("scorecard")
-    assert j.get("winning_claim")
-    print("judge scorecard", j["scorecard"]["grade"], j["scorecard"]["passed"], "/", j["scorecard"]["total"])
+    print("proof pack ok vaporware", j.get("vaporware"))
 
     print("SMOKE_OK")
     return 0

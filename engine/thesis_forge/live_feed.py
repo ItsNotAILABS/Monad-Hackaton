@@ -32,27 +32,37 @@ from .workspace import list_projects
 _ROOT = Path(__file__).resolve().parents[2]
 _DEPLOY = _ROOT / "receipts" / "deployment.json"
 
-# Lazy import competition scorecard to avoid circular import weight at module load
-def _competition_strip(network: str) -> Dict[str, Any]:
+def _platform_strip(network: str) -> Dict[str, Any]:
+    """Kernel snapshot for the shell — platform, not pitch."""
     try:
-        from .competition import WINNING_CLAIM, PERSONAL_PROBLEM, scorecard_live
+        from .platform import platform_status
 
-        card = scorecard_live(network)
+        st = platform_status(network)
         return {
-            "hackathon": "Spark · Build Anything",
-            "url": "https://buildanything.so/hackathons/spark",
-            "winning_claim": WINNING_CLAIM,
-            "roommate_test": PERSONAL_PROBLEM["roommate_test"],
-            "problem_title": PERSONAL_PROBLEM["title"],
-            "scorecard_grade": card.get("grade"),
-            "scorecard_pct": card.get("pct"),
-            "scorecard_passed": card.get("passed"),
-            "scorecard_total": card.get("total"),
-            "cta": "WIN PATH",
-            "action": "win_path",
+            "product": st.get("product"),
+            "what_this_is": st.get("what_this_is"),
+            "doctrine": st.get("doctrine"),
+            "kernel": st.get("kernel"),
+            "primitives": [
+                {
+                    "id": p.get("id"),
+                    "name": p.get("name"),
+                    "ok": (p.get("status") or {}).get("ok"),
+                    "role": p.get("role"),
+                }
+                for p in (st.get("primitives") or [])
+            ],
+            "apps": {
+                "total": (st.get("apps") or {}).get("total"),
+                "first_party": (st.get("apps") or {}).get("first_party_count"),
+                "forged": (st.get("apps") or {}).get("forged_count"),
+            },
+            "pulse": st.get("pulse"),
+            "how_to_use": st.get("how_to_use"),
+            "api": st.get("api"),
         }
     except Exception as exc:
-        return {"error": str(exc), "cta": "WIN PATH", "action": "win_path"}
+        return {"error": str(exc)}
 
 
 # Sourced from https://docs.monad.xyz/developer-essentials/best-practices
@@ -955,10 +965,10 @@ def landing_feed(network: str = "monad-testnet") -> Dict[str, Any]:
         "ts": time.time(),
         "poll_ms_hint": 4000,
         "network": network,
-        "headline": "THESIS LIVE — wallets · vault · desk · AI · apps",
+        "headline": "THESIS PLATFORM — kernel · apps · market",
         "tagline": (
-            "Your DeFi company is ON. Wallets, SovereignVault, desk, AI sandbox, "
-            "and forged apps share one lawbook — taught as they fire."
+            "Shared primitives (identity, law, capital, market, intel, forge) with "
+            "first-party apps and installable packages — one lawbook, one runtime."
         ),
         "ticker": ticker,
         "stream": stream,
@@ -1044,6 +1054,6 @@ def landing_feed(network: str = "monad-testnet") -> Dict[str, Any]:
             "network": "https://docs.monad.xyz/developer-essentials/network-information",
             "spark": "https://buildanything.so/hackathons/spark",
         },
-        "competition": _competition_strip(network),
+        "platform": _platform_strip(network),
         "elapsed_ms": (time.time() - t0) * 1000,
     }

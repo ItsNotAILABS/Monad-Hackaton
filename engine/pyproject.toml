@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "thesis-forge"
-version = "2.0.0"
-description = "THESIS Company OS — Spark competition-ready Monad DeFi company"
+version = "2.1.0"
+description = "THESIS Platform — shared primitives + app runtime for Monad DeFi"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

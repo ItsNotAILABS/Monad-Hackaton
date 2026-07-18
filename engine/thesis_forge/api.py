@@ -90,10 +90,11 @@ from .ecosystem_laws import (
 )
 from .live_feed import landing_feed
 from .competition import competition_pack, run_win_path, scorecard_live
+from .platform import get_app, invoke_app, list_apps, platform_status
 
 app = FastAPI(
-    title="THESIS Forge API",
-    description="THESIS Company OS — Spark-ready Monad DeFi company (GM + departments)",
+    title="THESIS Platform API",
+    description="THESIS Platform — shared primitives + app runtime for Monad DeFi",
     version=__version__,
 )
 
@@ -223,9 +224,60 @@ def _embed_laws_on_startup():
 
 
 @app.get("/")
+def root():
+    """Platform root — kernel status (not a pitch page)."""
+    return platform_status()
+
+
+@app.get("/platform")
+def platform(network: str = Query("monad-testnet")):
+    """Platform kernel: primitives + app registry + pulse."""
+    return platform_status(network)
+
+
+@app.get("/platform/apps")
+def platform_apps(forged: bool = Query(True)):
+    apps = list_apps(include_forged=forged)
+    return {"schema": "thesis.platform.apps.v1", "count": len(apps), "apps": apps}
+
+
+@app.get("/platform/apps/{app_id}")
+def platform_app_one(app_id: str):
+    app = get_app(app_id)
+    if not app:
+        raise HTTPException(404, f"app {app_id} not found")
+    return app
+
+
+class PlatformInvokeIn(BaseModel):
+    action: str = "status"
+    network: str = "monad-testnet"
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/platform/apps/{app_id}/invoke")
+def platform_app_invoke(app_id: str, body: PlatformInvokeIn | None = None):
+    """Invoke a platform app action under the shared lawbook."""
+    b = body or PlatformInvokeIn()
+    out = invoke_app(app_id, b.action, network=b.network, params=b.params)
+    if not out.get("ok") and out.get("error", "").startswith("unknown"):
+        raise HTTPException(404, out.get("error"))
+    return out
+
+
+@app.get("/platform/primitives")
+def platform_primitives(network: str = Query("monad-testnet")):
+    st = platform_status(network)
+    return {
+        "schema": "thesis.platform.primitives.v1",
+        "primitives": st.get("primitives"),
+        "kernel": st.get("kernel"),
+    }
+
+
 @app.get("/landing")
 def landing(network: str = Query("monad-testnet")):
-    """Badass live market + teaching landing (poll every few seconds)."""
+    """Platform shell feed — market + apps + laws (poll every few seconds)."""
     return landing_feed(network)
 
 
@@ -479,8 +531,9 @@ def health():
     dep = _load_deployment()
     return {
         "status": "operational",
-        "product": "THESIS",
+        "product": "THESIS Platform",
         "version": __version__,
+        "kind": "platform",
         "network_default": "monad-testnet",
         "pillars": PILLARS,
         "stages": pipeline_stages(),
@@ -492,40 +545,36 @@ def health():
             "chainId": dep.get("chainId") or dep.get("chain_id"),
         },
         "endpoints": [
+            "/platform",
+            "/platform/apps",
+            "/platform/apps/{id}/invoke",
+            "/platform/primitives",
             "/health",
+            "/landing",
             "/pipeline",
             "/forge",
             "/arena",
             "/company",
             "/company/run",
-            "/company/brief",
-            "/company/inbox",
             "/laws",
-            "/laws/full",
             "/home",
             "/ai/*",
             "/sandbox/*",
             "/wallets/*",
             "/desk/*",
-            "/landing",
-            "/competition",
-            "/demo/win-path",
-            "/ecosystem",
-            "/gas/*",
-            "/intelligence/*",
-            "/agents/propose",
             "/academy/*",
             "/workspace/*",
             "/rpc/probe",
             "/judge",
         ],
         "doctrine": (
-            "Company OS: THESIS is GM; departments research, compete, veto, explain, execute. "
-            "Owner is sovereign. Sandbox twins only for AI. Laws over profit."
+            "THESIS Platform: shared primitives (identity, law, capital, market, intel, forge). "
+            "Apps plug in. Agents propose. Laws decide. Owner signs. Receipts remember."
         ),
         "trading": desk_snapshot(),
         "daily": leaderboard_self(),
         "ai_node": node_status().get("node_id") or True,
+        "platform_apps": len(list_apps()),
     }
 
 

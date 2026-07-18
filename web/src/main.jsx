@@ -667,13 +667,14 @@ function App() {
     <div className="shell">
       <header className="top">
         <div>
-          <span className="eyebrow">THESIS v{health?.version || "1.0"} · YOUR MONAD DEFI COMPANY</span>
+          <span className="eyebrow">
+            THESIS PLATFORM v{health?.version || "2"} · {health?.platform_apps ?? "…"} APPS
+          </span>
           <h1>
-            THESIS <i>HQ</i>
+            THESIS <i>Platform</i>
           </h1>
           <p className="tagline">
-            {hq?.pitch?.roommate ||
-              "A 20-minute multi-app workflow becomes one managed mission."}
+            Shared primitives · app runtime · one lawbook. Not a pitch deck.
           </p>
         </div>
         <div className="top-right stats-chip">
@@ -706,17 +707,17 @@ function App() {
 
       <nav className="tabs">
         {[
-          ["live", "LIVE"],
+          ["live", "PLATFORM"],
           ["hq", "HQ"],
           ["home", "DAILY"],
-          ["ai", "AI NODE"],
+          ["ai", "AI"],
           ["desk", "DESK"],
           ["academy", "ACADEMY"],
           ["studio", "STUDIO"],
           ["ide", "IDE"],
           ["nomos", "NOMOS"],
           ["codex", "CODEX"],
-          ["judge", "JUDGE"],
+          ["judge", "PROOF"],
         ].map(([id, label]) => (
           <button key={id} type="button" className={tab === id ? "on" : ""} onClick={() => setTab(id)}>
             {label}
@@ -734,6 +735,12 @@ function App() {
           onAction={async (action, payload = {}) => {
             try {
               if (action === "win_path") return runWinPath();
+              if (action === "platform_invoke") {
+                // Landing handles invoke; optionally navigate
+                if (payload.appId === "app.company" && payload.action === "run") return runCompany();
+                if (payload.appId === "app.desk" && payload.action === "arena") return runDeskArena();
+                return;
+              }
               if (action === "run_company") return runCompany();
               if (action === "connect_wallet")
                 return connectBrowserWallet(payload.kind || "metamask");

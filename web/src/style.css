@@ -520,7 +520,7 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
 .stream-item.kind-ai { border-color: #a794ff55; }
 .stream-item.kind-apps { border-color: #ff8f9a44; }
 
-/* Competition winner strip */
+/* Platform kernel strip */
 .win-strip {
   display: flex;
   flex-wrap: wrap;
@@ -529,11 +529,63 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   justify-content: space-between;
   margin: 0;
   padding: 16px 18px;
-  border-bottom: 1px solid #f0b42944;
+  border-bottom: 1px solid #6d4aff44;
   background:
-    radial-gradient(ellipse at 10% 0%, #f0b42918, transparent 50%),
-    radial-gradient(ellipse at 90% 100%, #6d4aff22, transparent 45%),
+    radial-gradient(ellipse at 10% 0%, #6d4aff22, transparent 50%),
+    radial-gradient(ellipse at 90% 100%, #2ee6a612, transparent 45%),
     #0a0b12;
+}
+.platform-strip .win-btn {
+  background: linear-gradient(135deg, #8b6cff, #2ee6a6) !important;
+  border-color: #8b6cff88 !important;
+  color: #0a0b12 !important;
+  box-shadow: 0 0 28px #6d4aff33;
+}
+.primitive-row {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.primitive-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px;
+  background: #0c0d16;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 100px;
+}
+.primitive-card.ok { border-color: #2ee6a633; }
+.primitive-card.warn { border-color: #f0b42944; }
+.primitive-card b { font-size: 0.9rem; }
+.dot-inline {
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: auto;
+}
+.dot-inline.on { color: var(--accent2); }
+.dot-inline.off { color: #f0b429; }
+.registry-block { padding: 0 0 8px; }
+.reg-label {
+  display: block;
+  padding: 10px 14px 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #9b97b0;
+}
+.app-modules.registry { border-bottom: none; }
+.forged-row { padding-top: 0; }
+@media (max-width: 1200px) {
+  .primitive-row { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 700px) {
+  .primitive-row { grid-template-columns: repeat(2, 1fr); }
 }
 .win-copy {
   flex: 1 1 320px;
