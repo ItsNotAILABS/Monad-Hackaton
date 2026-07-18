@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Monad App Builder"
+version = "1.0.0"
+id = "artifacts/monad-builder"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21528
+
+[services.development]
+run = "pnpm --filter @workspace/monad-builder run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/monad-builder", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/monad-builder/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21528"
+BASE_PATH = "/"

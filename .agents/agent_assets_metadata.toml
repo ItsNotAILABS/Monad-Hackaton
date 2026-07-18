@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "79uc1Qw6sJ-hxvLqzySAg"
+uri = "file://SUBMISSION.md"
+type = "text"
+title = "Spark Hackathon Submission — Monad App Builder"
