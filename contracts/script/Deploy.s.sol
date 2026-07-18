@@ -32,6 +32,7 @@ contract Deploy is Script {
         ExecutionRouter router = new ExecutionRouter();
         SovereignVault vault = new SovereignVault(owner, address(policy), address(receipts));
         LawBook lawBook = new LawBook(owner);
+        lawBook.seedDefaultLaws();
         TwinLedger twins = new TwinLedger(owner);
         CompanyRegistry company = new CompanyRegistry();
         GasPolicy gasPolicy = new GasPolicy();
@@ -40,6 +41,7 @@ contract Deploy is Script {
         ThesisFactory factory = new ThesisFactory();
 
         receipts.setSealer(address(vault), true);
+        policy.setLawBook(address(lawBook));
         // optional: enable sealer gate after vault wired
         // receipts.setSealerGate(true);
 

@@ -43,7 +43,10 @@ contract ThesisFactory {
         AgentRegistry agents = new AgentRegistry();
         ProposalBook proposals = new ProposalBook();
         ExecutionRouter router = new ExecutionRouter();
-        LawBook lawBook = new LawBook(owner);
+        // Factory is temporary curator so default dual-stack laws seed in the same tx.
+        LawBook lawBook = new LawBook(address(this));
+        lawBook.seedDefaultLaws();
+        lawBook.setCurator(owner);
         TwinLedger twins = new TwinLedger(owner);
         CompanyRegistry company = new CompanyRegistry();
         GasPolicy gasPolicy = new GasPolicy();
@@ -52,6 +55,8 @@ contract ThesisFactory {
 
         // wire sealer for production-ish gate (optional)
         receipts.setSealer(address(vault), true);
+        // dual stack: PolicyKernel (owner) ↔ LawBook (ecosystem)
+        policy.setLawBook(address(lawBook));
 
         b = Bundle({
             policy: address(policy),

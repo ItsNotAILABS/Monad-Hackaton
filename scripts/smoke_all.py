@@ -208,7 +208,28 @@ def main() -> int:
 
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
-    print("proof pack ok vaporware", j.get("vaporware"))
+    assert j.get("vs_winners") and j["vs_winners"].get("one_liner")
+    print("proof pack ok vaporware", j.get("vaporware"), "vs_winners", True)
+
+    tools = c.get("/tools").json()
+    assert tools.get("count", 0) >= 8
+    assert tools.get("easy_path")
+    tr = c.post("/tools/reject_demo/run", json={}).json()
+    assert tr.get("ok") and int((tr.get("result") or {}).get("n_rejected") or 0) >= 1
+    tw = c.post("/tools/win_path/run", json={"network": "monad-testnet"}).json()
+    assert tw.get("ok")
+    mcp = c.get("/tools/mcp").json()
+    assert len(mcp.get("tools") or []) >= 8
+    print(
+        "tools",
+        tools["count"],
+        "reject",
+        (tr.get("result") or {}).get("n_rejected"),
+        "win_path",
+        (tw.get("result") or {}).get("scorecard_grade"),
+        "mcp",
+        len(mcp["tools"]),
+    )
 
     print("SMOKE_OK")
     return 0

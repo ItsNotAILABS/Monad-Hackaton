@@ -8,8 +8,16 @@ import {GasHints} from "./libraries/GasHints.sol";
 
 /// @title PolicyKernel — owner laws for agent execution (NOMOS onchain)
 /// @notice Each owner stores their own Policy + agent/target/category allowlists.
+/// @dev Dual law stack:
+///      - This contract = owner constitution (slippage, exposure, caps, allowlists)
+///      - LawBook = platform-wide ecosystem laws (gas, sandbox, veto, exact approval…)
+///      Python `policy.evaluate` + `ecosystem_laws` mirror both halves off-chain for NOMOS arena.
 contract PolicyKernel {
     using Hashing for string;
+
+    /// @notice Optional LawBook registry (ecosystem half). Not required for validate();
+    ///         integrators / UIs consult it for dual-stack audit. Owner sets per-kernel.
+    address public lawBook;
 
     mapping(address => ThesisTypes.Policy) private _policies;
     mapping(address => mapping(address => bool)) public allowedAgents;
@@ -26,8 +34,15 @@ contract PolicyKernel {
     event CategoryPermission(address indexed owner, bytes32 indexed category, bool allowed);
     event DailyCapUpdated(address indexed owner, uint128 cap);
     event SpendRecorded(address indexed owner, uint256 amount, uint32 day);
+    event LawBookLinked(address indexed lawBook);
 
     // ── writes ───────────────────────────────────────────────────
+
+    /// @notice Link the ecosystem LawBook used for dual-stack documentation / integrators.
+    function setLawBook(address lawBook_) external {
+        lawBook = lawBook_;
+        emit LawBookLinked(lawBook_);
+    }
 
     function setPolicy(ThesisTypes.Policy calldata policy) external {
         _validatePolicyShape(policy);

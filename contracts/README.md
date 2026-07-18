@@ -15,7 +15,8 @@ src/
   AgentRegistry.sol      Agent identity / capabilities / expiry
   ProposalBook.sol       Proposal lifecycle + reject reasons
   ExecutionRouter.sol    Multi-call router into vault
-  LawBook.sol            Onchain ecosystem law registry
+  LawBook.sol            Ecosystem law registry (dual stack half; seedDefaultLaws)
+  interfaces/ILawBook.sol
   TwinLedger.sol         Digital twin balances (no keys / no custody)
   CompanyRegistry.sol    Company OS mission commits
   GasPolicy.sol          ~7.5% margin coach params

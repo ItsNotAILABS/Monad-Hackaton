@@ -97,6 +97,7 @@ from .unified import run_system, system_status
 from .polyglot import polyglot_catalog, polyglot_mesh, run_polyglot
 from .use_cases import use_case_by_id, use_cases_payload
 from .nomos import nomos_payload, run_nomos_arena
+from .tools import get_tool, mcp_tool_list, run_tool, tools_catalog
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -319,6 +320,64 @@ def nomos_run(request: BuildRequest | None = None):
         network="monad-testnet",
     )
     return run_nomos_arena(req)
+
+
+class ToolRunIn(BaseModel):
+    network: str = "monad-testnet"
+    objective: str | None = None
+    estimated_gas: int | None = None
+    message: str | None = None
+    run_cloud: bool = False
+    run_company: bool = True
+    run_desk: bool = True
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.get("/tools")
+def tools_list():
+    """Focused shippable tools — human UI + any AI (MCP mirror)."""
+    return tools_catalog()
+
+
+@app.get("/tools/mcp")
+def tools_mcp_manifest():
+    """MCP tools/list payload for external AI clients."""
+    return {
+        "schema": "thesis.mcp.tools.v1",
+        "server": "thesis-platform",
+        "entry": "python -m thesis_forge.mcp_server",
+        "tools": mcp_tool_list(),
+        "http": "POST /tools/{id}/run",
+    }
+
+
+@app.get("/tools/{tool_id}")
+def tools_one(tool_id: str):
+    t = get_tool(tool_id)
+    if not t:
+        raise HTTPException(404, f"tool {tool_id} not found")
+    return t
+
+
+@app.post("/tools/{tool_id}/run")
+def tools_run(tool_id: str, body: ToolRunIn | None = None):
+    """Run one focused tool; returns proof + receipt."""
+    b = body or ToolRunIn()
+    params = dict(b.params or {})
+    params.setdefault("network", b.network)
+    if b.objective is not None:
+        params["objective"] = b.objective
+    if b.estimated_gas is not None:
+        params["estimated_gas"] = b.estimated_gas
+    if b.message is not None:
+        params["message"] = b.message
+    params.setdefault("run_cloud", b.run_cloud)
+    params.setdefault("run_company", b.run_company)
+    params.setdefault("run_desk", b.run_desk)
+    out = run_tool(tool_id, params)
+    if out.get("error") and out.get("error", "").startswith("unknown"):
+        raise HTTPException(404, out["error"])
+    return out
 
 
 @app.get("/polyglot")
@@ -749,6 +808,9 @@ def health():
             "/polyglot/mesh",
             "/nomos",
             "/nomos/run",
+            "/tools",
+            "/tools/{id}/run",
+            "/tools/mcp",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",
@@ -1227,6 +1289,8 @@ def judge_panel(network: str = Query("monad-testnet")):
         "personal_problem": pack["personal_problem"],
         "solution": pack["solution"],
         "differentiation": pack["differentiation"],
+        "vs_winners": pack.get("vs_winners"),
+        "easy_path": pack.get("easy_path"),
         "demo_script_90s": pack["demo_script_90s"],
         "scorecard": pack["scorecard"],
         "live_api": True,

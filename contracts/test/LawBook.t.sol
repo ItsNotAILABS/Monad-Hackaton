@@ -15,11 +15,16 @@ contract LawBookAndModulesTest {
     function testSeedLawsAndPillars() public {
         LawBook book = new LawBook(address(this));
         book.seedDefaultLaws();
-        require(book.lawCount() >= 14, "count");
+        require(book.lawCount() >= 20, "count");
         require(book.isActiveString("monad.gas-bills-limit"), "gas law");
         require(book.isActiveString("sys.no-real-keys"), "keys law");
+        require(book.isActiveString("exec.no-silent-broadcast"), "exec law");
         bytes32 safety = Hashing.lawId("safety");
         require(book.lawsForPillar(safety).length >= 3, "safety pillar");
+        bytes32 domain = Hashing.lawId("monad_network");
+        require(book.lawsForDomain(domain).length >= 3, "domain");
+        ThesisTypes.LawRecord memory rec = book.getLawByString("sys.nomos-veto");
+        require(rec.active, "nomos veto active");
     }
 
     function testTwinLedger() public {

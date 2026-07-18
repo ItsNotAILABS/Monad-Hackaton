@@ -6,6 +6,7 @@ import { CloudEngines } from "./CloudEngines.jsx";
 import { PolyglotHub } from "./PolyglotHub.jsx";
 import { UseCases } from "./UseCases.jsx";
 import { Nomos } from "./Nomos.jsx";
+import { Tools } from "./Tools.jsx";
 import { api, API_BASE } from "./api.js";
 import "./style.css";
 
@@ -767,6 +768,9 @@ function App() {
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("usecases")}>
           Use cases
         </button>
+        <button type="button" className="ghost" disabled={busy} onClick={() => setTab("tools")}>
+          Tools
+        </button>
         <button type="button" className="ghost" disabled={busy} onClick={() => setTab("local")}>
           Local AI
         </button>
@@ -801,6 +805,7 @@ function App() {
         {[
           ["live", "PLATFORM"],
           ["usecases", "USE CASES"],
+          ["tools", "TOOLS"],
           ["cloud", "CLOUD"],
           ["poly", "POLYGLOT"],
           ["local", "LOCAL AI"],
@@ -830,13 +835,13 @@ function App() {
                 <b>▶ RUN SYSTEM</b> — laws + desk + vault + company + polyglot
               </li>
               <li>
+                <b>TOOLS</b> — easy path: reject · gas · win_path (like focused winners, with brakes)
+              </li>
+              <li>
                 <b>USE CASES</b> — 20 asks mapped to real buttons
               </li>
               <li>
-                <b>CLOUD / POLYGLOT / LOCAL AI</b> — engines + Julia/Node + browser AI
-              </li>
-              <li>
-                <b>DESK / HQ</b> — rejects + mission approve
+                <b>DESK / HQ / PROOF</b> — rejects + mission approve + scorecard
               </li>
             </ol>
           </div>
@@ -844,17 +849,27 @@ function App() {
             <button type="button" className="forge" disabled={busy} onClick={runSystem}>
               ▶ RUN SYSTEM NOW
             </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("tools")}>
+              Tools (easy)
+            </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => setTab("usecases")}>
               20 use cases
             </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("cloud")}>
-              Cloud
-            </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("poly")}>
-              Polyglot
+            <button type="button" className="ghost" disabled={busy} onClick={() => setTab("judge")}>
+              PROOF
             </button>
           </div>
         </div>
+      )}
+
+      {tab === "tools" && (
+        <Tools
+          api={api}
+          network={network}
+          busy={busy}
+          onNavigate={setTab}
+          onRunSystem={runSystem}
+        />
       )}
 
       {tab === "usecases" && (
@@ -2275,8 +2290,52 @@ function App() {
                   <p className="muted sm">→ {d.thesis}</p>
                 </div>
               ))}
+              <button type="button" className="ghost" style={{ marginTop: 8 }} onClick={() => setTab("tools")}>
+                Open TOOLS (easy path)
+              </button>
             </article>
           </div>
+
+          {(judge?.vs_winners || judge?.easy_path) && (
+            <div className="grid2 tight" style={{ margin: "12px" }}>
+              <article className="result">
+                <label>VS POLISHED WINNERS (HONEST)</label>
+                <p className="muted sm">{judge?.vs_winners?.one_liner}</p>
+                <p className="muted sm">{judge?.vs_winners?.overall}</p>
+                <label>They do well</label>
+                <ul className="pillars">
+                  {(judge?.vs_winners?.what_winners_do_well || []).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+                <label>They often lack</label>
+                <ul className="pillars">
+                  {(judge?.vs_winners?.what_they_often_lack || []).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ul>
+              </article>
+              <article className="result">
+                <label>EASY PATH · STAY SHIPABLE</label>
+                <ol className="pillars">
+                  {(judge?.easy_path || judge?.vs_winners?.how_we_stay_easy || []).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                </ol>
+                <label>COMPARISON</label>
+                {(judge?.vs_winners?.comparison_table || []).map((row) => (
+                  <div key={row.dimension} className="proto">
+                    <b>{row.dimension}</b>
+                    <p className="muted sm">
+                      Typical: {row.typical_winner}
+                      <br />
+                      THESIS: {row.thesis}
+                    </p>
+                  </div>
+                ))}
+              </article>
+            </div>
+          )}
 
           <div className="grid2 tight" style={{ margin: "12px" }}>
             <article className="result">

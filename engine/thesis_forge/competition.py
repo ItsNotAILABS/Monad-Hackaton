@@ -83,14 +83,102 @@ WINNING_CLAIM = (
 )
 
 
+# Honest field read: polished single-feature winners vs platform foundation.
+VS_WINNERS: Dict[str, Any] = {
+    "one_liner": (
+        "Most AI-onchain winners are elegant single tools. THESIS is a Company OS with brakes: "
+        "multi-agent arena, dual law stack, owner-signed execution — plus one-click tools for "
+        "humans and any external AI via MCP."
+    ),
+    "what_winners_do_well": [
+        "Strong agentic on-chain integration (DAO agents, AI trading bots via contracts)",
+        "Real-time signals, governance automation, or agent wallets",
+        "Polished single demos / MVPs optimized for judging (video + live proof)",
+        "Focused execution and real-world utility in a narrow story",
+    ],
+    "what_they_often_lack": [
+        "LawBook-style ecosystem law registry",
+        "Dual-stack enforcement (owner constitution + ecosystem laws)",
+        "Company OS workflow with structured veto / REJECT-as-feature",
+        "Breadth that stays production-shaped (receipts, SLAs, teach-as-you-use)",
+    ],
+    "thesis_edge": [
+        "Architecture depth: PolicyKernel + LawBook + ProposalBook + SovereignVault",
+        "NOMOS arena: evaluate → arbitrate → n_rejected with reasons",
+        "Safety: twins only, no silent broadcast, owner signature",
+        "Reuse: shared primitives; forged packages; MCP tools for any AI",
+    ],
+    "tradeoffs": {
+        "scope_risk": (
+            "THESIS can look over-scoped to judges who favor quick, narrow wins."
+        ),
+        "scope_reward": (
+            "Scope is also the product: infrastructure reuse and a real platform foundation "
+            "in hackathon time — not a single toast demo."
+        ),
+        "spark_fit": (
+            "Spark’s practical/personal-problem focus plays to THESIS (tab hell + reckless agents)."
+        ),
+        "bigger_events": (
+            "Broader events often reward demo impact or novelty; THESIS wins on systemic "
+            "thinking and reusability — so we also ship focused tools (reject, gas, win_path)."
+        ),
+    },
+    "how_we_stay_easy": [
+        "TOOLS tab: nine shippable actions, not forty half-screens",
+        "Easy path: laws → reject_demo → gas_coach → win_path (<60s)",
+        "WIN PATH button: live rejects + scorecard for judges",
+        "MCP: any outside AI calls the same tools",
+    ],
+    "comparison_table": [
+        {
+            "dimension": "Story",
+            "typical_winner": "One feature (signals / trade / wallet)",
+            "thesis": "Personal problem → Company OS",
+        },
+        {
+            "dimension": "Governance",
+            "typical_winner": "Basic allowlists / simple policy",
+            "thesis": "LawBook + PolicyKernel + NOMOS arena",
+        },
+        {
+            "dimension": "Rejection",
+            "typical_winner": "Soft fail or hidden",
+            "thesis": "Explicit REJECT + reasons + receipts",
+        },
+        {
+            "dimension": "Agent path",
+            "typical_winner": "Bot executes or simulates",
+            "thesis": "Agents propose → laws decide → owner signs",
+        },
+        {
+            "dimension": "Demo shape",
+            "typical_winner": "Strong video + narrow MVP",
+            "thesis": "Focused tools inside platform + win_path live API",
+        },
+    ],
+    "overall": (
+        "THESIS punches above most hackathon entries in architecture, governance depth "
+        "(LawBook + NOMOS arena), and safety — more platform foundation than typical focused "
+        "agent/tool winners. Pre-existing infrastructure let it ship closer to a real product. "
+        "In a field of elegant single-feature AI-onchain projects, comprehensive Company OS + "
+        "explicit rejection governance is distinctive for Spark’s goals."
+    ),
+}
+
+
 DIFFERENTIATION: List[Dict[str, str]] = [
+    {
+        "crowd": "AI trading bots / signal MVPs (focused winners)",
+        "thesis": "Same utility as tools + LawBook dual stack + NOMOS veto + owner signs",
+    },
+    {
+        "crowd": "Agent wallets with light allowlists",
+        "thesis": "PolicyKernel + LawBook registry + arena n_rejected with reasons",
+    },
     {
         "crowd": "Habit stamps / soft onchain",
         "thesis": "Hard policy REJECT + SovereignVault gate + receipt chain",
-    },
-    {
-        "crowd": "Monskills template clones",
-        "thesis": "Original doctrine: Company OS + seatbelt + school + IDE",
     },
     {
         "crowd": "Fake success toasts",
@@ -102,11 +190,11 @@ DIFFERENTIATION: List[Dict[str, str]] = [
     },
     {
         "crowd": "Ignore Monad gas quirks",
-        "thesis": "Gas coach: pay limit, ~7.5% margin, hardcode 21k transfers",
+        "thesis": "Gas coach tool: pay limit, ~7.5% margin, hardcode 21k transfers",
     },
     {
         "crowd": "Scattered tabs",
-        "thesis": "LIVE board wires wallets + vault + desk + AI + forged apps",
+        "thesis": "TOOLS easy path + LIVE board + RUN SYSTEM seatbelt",
     },
 ]
 
@@ -250,6 +338,18 @@ def scorecard_live(network: str = "monad-testnet") -> Dict[str, Any]:
             "pass": True,
             "proof": "LIVE law as_used chips + ACADEMY + EXPLAINABILITY_CONTRACT",
         },
+        {
+            "id": "shippable_tools",
+            "label": "Focused shippable tools + MCP for any AI",
+            "pass": True,
+            "proof": "GET /tools · POST /tools/{id}/run · python -m thesis_forge.mcp_server",
+        },
+        {
+            "id": "dual_stack_governance",
+            "label": "Dual stack deeper than allowlist-only agent wallets",
+            "pass": True,
+            "proof": "LawBook + PolicyKernel + NOMOS arena REJECT with reasons",
+        },
     ]
     passed = sum(1 for c in criteria if c.get("pass"))
     total = len(criteria)
@@ -294,6 +394,13 @@ def competition_pack(network: str = "monad-testnet") -> Dict[str, Any]:
         "personal_problem": PERSONAL_PROBLEM,
         "solution": SOLUTION,
         "differentiation": DIFFERENTIATION,
+        "vs_winners": VS_WINNERS,
+        "easy_path": [
+            "1. TOOLS → laws (dual stack)",
+            "2. TOOLS → reject_demo (brakes live)",
+            "3. TOOLS → gas_coach (Monad utility)",
+            "4. TOOLS → win_path or PROOF → WIN PATH",
+        ],
         "demo_script_90s": DEMO_SCRIPT_90S,
         "scorecard": card,
         "monad_essentials": {
@@ -316,6 +423,9 @@ def competition_pack(network: str = "monad-testnet") -> Dict[str, Any]:
             "api_proof": [
                 "GET /judge",
                 "GET /competition",
+                "GET /tools",
+                "POST /tools/reject_demo/run",
+                "POST /tools/win_path/run",
                 "POST /demo/win-path",
                 "GET /landing",
                 "POST /desk/arena",
@@ -323,6 +433,7 @@ def competition_pack(network: str = "monad-testnet") -> Dict[str, Any]:
                 "POST /pipeline",
                 "POST /academy/grade",
             ],
+            "mcp": "python -m thesis_forge.mcp_server  # any external AI",
         },
         "brief_pulse": {
             "narrative": brief.get("narrative"),

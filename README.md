@@ -61,6 +61,17 @@
 
 **Roommate test:** *“A 20-minute multi-app workflow becomes one managed, explained mission.”*
 
+### Easy to use (like focused winners — with brakes)
+
+| Who | How |
+|-----|-----|
+| **You** | **TOOLS** tab → **EASY PATH (60s)** or sticky **Tools** |
+| **In-app AI** | Sandbox node tools (twins only) |
+| **Any AI outside** | MCP: `python -m thesis_forge.mcp_server` or `POST /tools/{id}/run` |
+| **Judges** | **PROOF** → **WIN PATH** or `POST /tools/win_path/run` |
+
+Polished single-feature winners (signals, auto-trade, agent wallets) win on demo focus. THESIS ships those as **nine tools**, then keeps **LawBook + NOMOS + owner signature**. Honest field read: [docs/VS_WINNERS.md](docs/VS_WINNERS.md) · tools: [docs/TOOLS.md](docs/TOOLS.md).
+
 Built for [**Spark · Build Anything**](https://buildanything.so/hackathons/spark) on [**Monad**](https://docs.monad.xyz/).
 
 ---
@@ -97,6 +108,7 @@ Browser (React HQ)
 | Tab | What you use it for |
 |-----|---------------------|
 | **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
+| **TOOLS** | Nine shippable actions + MCP for any AI |
 | **USE CASES** | 20 runnable scenarios mapped to Spark asks |
 | **CLOUD** | Live Monad engines (chain, gas, research, docs) |
 | **POLYGLOT** | Julia · Node · Python · WebGPU · WASM |
@@ -172,6 +184,9 @@ powershell -File scripts/run_polyglot.ps1
 | `GET` | `/use-cases` | 20 use cases JSON |
 | `GET` | `/nomos` | NOMOS department (propose + arena doctrine) |
 | `POST` | `/nomos/run` | Multi-agent propose + dual-stack arbitrate |
+| `GET` | `/tools` | Focused shippable tools catalog |
+| `POST` | `/tools/{id}/run` | Run one tool (reject, gas, win_path, …) |
+| `GET` | `/tools/mcp` | MCP tools/list for external AIs |
 | `POST` | `/company/run` | Staff Company OS |
 | `POST` | `/arena/auto` | Propose agents + arbitrate (REJECT demo) |
 | `POST` | `/desk/arena` | Trading rejects + accepts |
@@ -236,6 +251,8 @@ Doctrine: **Owner remains sovereign.**
 | [docs/COMPANY_OS.md](docs/COMPANY_OS.md) | Departments + SLAs |
 | [docs/NOMOS.md](docs/NOMOS.md) | **Risk/law arena · REJECT is a feature** |
 | [docs/NOMOS_ARENA.md](docs/NOMOS_ARENA.md) | Arena core: evaluate → arbitrate → report |
+| [docs/TOOLS.md](docs/TOOLS.md) | **Focused shippable tools + MCP** |
+| [docs/VS_WINNERS.md](docs/VS_WINNERS.md) | Honest comparison to polished winners |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |
