@@ -12,6 +12,20 @@ THESIS Platform includes a **browser-only** intelligence surface. It does not se
 | **Knowledge graph** | localStorage | Entities, venues, laws |
 | **Research agents** | Scout → Risk → Synthesizer | Multi-step local research |
 | **Documents** | Markdown / PDF / Excel | Offline exports |
+| **Teach** | In-tab curriculum + security playbook | Learn while operating |
+| **Extension** | Packaged Chrome/Edge ZIP | Load-unpacked scanner companion |
+
+## Security + teach (use it in the app)
+
+Open **LOCAL AI → Teach & Security**:
+
+1. Work through lessons (keys, gas, approvals, agents, exports, extension).  
+2. Pass the quick check on each lesson — progress is local.  
+3. Use **Live security scan** on drafts before remember/research.  
+4. **Security audit** scans memory and can emit PDF/Markdown briefs.  
+5. Playbook rows map to ecosystem laws (`sys.no-real-keys`, `monad.gas-bills-limit`, …).
+
+**Export · Extension** tab: Security PDF, Inventory Excel, Research Excel, ops Markdown, and **Download extension ZIP** (permissions: `activeTab` + `storage` only).
 
 ## Use custom models
 

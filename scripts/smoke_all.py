@@ -141,6 +141,28 @@ def main() -> int:
     assert idx.get("ok") and idx.get("result", {}).get("projects")
     print("cloud engines", eng["count"], "gas limit", (gas.get("result") or {}).get("recommended_gas_limit"))
 
+    sys = c.get("/system").json()
+    assert sys.get("surfaces") and sys.get("laws", 0) >= 15
+    unified = c.post(
+        "/system/run",
+        json={
+            "network": "monad-testnet",
+            "query": "gas vault desk",
+            "run_cloud": False,
+            "run_company": True,
+            "run_desk": True,
+        },
+    ).json()
+    assert unified.get("ok") and unified.get("desk_arena")
+    print(
+        "system run",
+        unified.get("headline", "")[:48],
+        "reject",
+        (unified.get("desk_arena") or {}).get("n_rejected"),
+        "company",
+        (unified.get("company") or {}).get("status"),
+    )
+
     j = c.get("/judge").json()
     assert j.get("vaporware") is False
     print("proof pack ok vaporware", j.get("vaporware"))

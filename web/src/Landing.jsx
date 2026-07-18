@@ -11,6 +11,7 @@ export function Landing({
   onNavigate,
   onAction,
   winPath,
+  systemRun,
 }) {
   const [feed, setFeed] = useState(null);
   const [platform, setPlatform] = useState(null);
@@ -96,6 +97,8 @@ export function Landing({
   const route = vault.latest_route || null;
   const plat = platform || feed.platform || {};
   const win = winPath || null;
+  const system = systemRun || null;
+  const sys = plat.system || feed.platform?.system || {};
   const platApps = plat.apps || {};
   const firstParty = platApps.first_party || [];
   const forged = platApps.forged || [];
@@ -145,13 +148,15 @@ export function Landing({
       {/* Platform kernel strip */}
       <div className="win-strip platform-strip">
         <div className="win-copy">
-          <span className="eyebrow">THESIS PLATFORM · RUNTIME</span>
+          <span className="eyebrow">THESIS PLATFORM · ONE SYSTEM</span>
           <h3>{plat.what_this_is || feed.tagline}</h3>
           <p className="muted sm">{plat.doctrine || lawStack.doctrine}</p>
           <p className="muted sm">
-            <b>{platApps.first_party_count ?? firstParty.length}</b> first-party apps ·{" "}
-            <b>{platApps.forged_count ?? forged.length}</b> forged packages ·{" "}
-            <b>{plat.pulse?.laws ?? lawStack.law_count}</b> laws
+            <b>{platApps.first_party_count ?? firstParty.length}</b> apps ·{" "}
+            <b>{plat.pulse?.laws ?? lawStack.law_count ?? sys.laws}</b> laws · wallets{" "}
+            <b>{sys.wallets_linked ?? wallets.linked ?? 0}</b> · vault{" "}
+            <b className="mono sm">{sys.vault ? `${String(sys.vault).slice(0, 10)}…` : "—"}</b> · packages{" "}
+            <b>{sys.projects ?? projects.count ?? 0}</b>
           </p>
         </div>
         <div className="win-actions">
@@ -159,23 +164,76 @@ export function Landing({
             type="button"
             className="forge win-btn"
             disabled={busy}
-            onClick={() => invokePlatform("app.desk", "arena")}
+            onClick={() => act("run_system")}
           >
-            Run desk app
+            ▶ RUN SYSTEM
           </button>
-          <button
-            type="button"
-            className="ghost"
-            disabled={busy}
-            onClick={() => invokePlatform("app.company", "run")}
-          >
-            Run company app
+          <button type="button" className="ghost" disabled={busy} onClick={() => onNavigate("cloud")}>
+            Cloud engines
           </button>
-          <button type="button" className="ghost" onClick={() => onNavigate("studio")}>
-            Forge package
+          <button type="button" className="ghost" disabled={busy} onClick={() => onNavigate("local")}>
+            Local AI
           </button>
         </div>
       </div>
+
+      {system && (
+        <div className="win-result">
+          <div className="win-result-head">
+            <span className="live-dot" />
+            <b>{system.headline || "SYSTEM RUN"}</b>
+            <span className={`badge ${system.ok ? "on" : "warn"}`}>{system.ok ? "OK" : "ISSUES"}</span>
+            <span className="muted sm">{(system.elapsed_ms || 0).toFixed?.(0) ?? system.elapsed_ms}ms</span>
+          </div>
+          <p className="muted sm">{system.on_chain_story}</p>
+          <div className="win-proof-grid">
+            <div className="kv">
+              <span>Desk reject</span>
+              <b className="up">{system.desk_arena?.n_rejected ?? "—"}</b>
+            </div>
+            <div className="kv">
+              <span>Accepted</span>
+              <b>{system.desk_arena?.n_accepted ?? "—"}</b>
+            </div>
+            <div className="kv">
+              <span>Company</span>
+              <b>{system.company?.status || "—"}</b>
+            </div>
+            <div className="kv">
+              <span>Vault route</span>
+              <b>
+                {system.vault_route?.would_execute === true
+                  ? "WOULD"
+                  : system.vault_route?.skipped
+                    ? "skip"
+                    : "blocked/sim"}
+              </b>
+            </div>
+          </div>
+          <div className="caps" style={{ marginTop: 8 }}>
+            {(system.steps || []).map((s) => (
+              <span key={s.step} className={`badge ${s.ok ? "on" : "warn"}`}>
+                {s.step} {s.ok ? "✓" : "✗"}
+              </span>
+            ))}
+          </div>
+          {system.vault_route?.narrative && (
+            <p className="muted sm" style={{ marginTop: 8 }}>
+              Vault: {system.vault_route.narrative}
+            </p>
+          )}
+          {system.brief?.narrative && (
+            <p className="muted sm">{system.brief.narrative}</p>
+          )}
+          <div className="chips tight">
+            {(system.next || []).map((n) => (
+              <button key={n.tab} type="button" className="ghost" onClick={() => onNavigate(n.tab)}>
+                {n.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Primitives row */}
       <div className="primitive-row">
@@ -346,29 +404,29 @@ export function Landing({
           <h2>{feed.tagline}</h2>
           <p className="muted">{brief.narrative || brief.coach_headline}</p>
           <div className="chips">
-            <button type="button" className="forge" disabled={busy} onClick={() => invokePlatform("app.desk", "arena")}>
-              Desk app
+            <button type="button" className="forge" disabled={busy} onClick={() => act("run_system")}>
+              ▶ RUN SYSTEM
             </button>
-            <button type="button" className="forge" disabled={busy} onClick={() => act("run_company")}>
-              Company app
+            <button type="button" className="ghost" disabled={busy} onClick={() => invokePlatform("app.desk", "arena")}>
+              Desk
+            </button>
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("run_company")}>
+              Company
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => act("connect_wallet")}>
-              Identity · link
+              Wallets
             </button>
             <button type="button" className="ghost" disabled={busy} onClick={() => act("vault_route")}>
-              Capital · vault
-            </button>
-            <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
-              Forge · install
+              Vault
             </button>
             <button type="button" className="ghost" onClick={() => onNavigate("cloud")}>
-              Cloud engines
+              Cloud
             </button>
             <button type="button" className="ghost" onClick={() => onNavigate("local")}>
-              Local AI env
+              Local AI
             </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("ai")}>
-              Intel · AI node
+            <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
+              Forge
             </button>
           </div>
         </div>

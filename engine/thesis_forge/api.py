@@ -93,6 +93,7 @@ from .competition import competition_pack, run_win_path, scorecard_live
 from .platform import get_app, invoke_app, list_apps, platform_status
 from .engines import engine_catalog, get_engine, list_engines, run_engine
 from .engines.orchestrator import run_cloud_pipeline
+from .unified import run_system, system_status
 
 app = FastAPI(
     title="THESIS Platform API",
@@ -246,6 +247,41 @@ class CloudPipelineIn(BaseModel):
     address: str = ""
     query: str = ""
     estimated_gas: int = 80_000
+
+
+class SystemRunIn(BaseModel):
+    network: str = "monad-testnet"
+    objective: str = ""
+    query: str = ""
+    address: str = ""
+    estimated_gas: int = 80_000
+    run_company: bool = True
+    run_desk: bool = True
+    run_cloud: bool = True
+    run_vault_route: bool = True
+
+
+@app.get("/system")
+def system_get(network: str = Query("monad-testnet")):
+    """Unified product status — all surfaces in one payload."""
+    return system_status(network)
+
+
+@app.post("/system/run")
+def system_run(body: SystemRunIn | None = None):
+    """One-click: laws + cloud pipeline + desk + vault sim + company OS."""
+    b = body or SystemRunIn()
+    return run_system(
+        b.network,
+        objective=b.objective,
+        query=b.query,
+        address=b.address,
+        estimated_gas=b.estimated_gas,
+        run_company=b.run_company,
+        run_desk=b.run_desk,
+        run_cloud=b.run_cloud,
+        run_vault_route=b.run_vault_route,
+    )
 
 
 @app.get("/engines")
@@ -624,6 +660,8 @@ def health():
             "/platform/apps",
             "/platform/apps/{id}/invoke",
             "/platform/primitives",
+            "/system",
+            "/system/run",
             "/engines",
             "/engines/{id}/run",
             "/engines/pipeline",

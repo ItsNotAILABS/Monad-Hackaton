@@ -1,6 +1,5 @@
 /**
- * THESIS browser-local AI surface
- * Transformers.js inference · memory · security · KG · research · docs
+ * THESIS browser environment — full local stack API
  */
 
 import { inferenceStatus } from "./inference.js";
@@ -8,6 +7,8 @@ import { memoryStats } from "./memory.js";
 import { graphStats } from "./knowledgeGraph.js";
 import { securityDashboard } from "./security.js";
 import { listAgents } from "./research.js";
+import { teachStats, securityPlaybook } from "./teach.js";
+import { extensionManifestSummary } from "./extension.js";
 
 export {
   ensureEmbedder,
@@ -67,13 +68,34 @@ export {
   downloadMarkdown,
 } from "./documents.js";
 
+export {
+  generatePdfReport,
+  generateExcelWorkbook,
+  exportSecurityPdf,
+  exportInventoryExcel,
+  exportResearchExcel,
+} from "./export.js";
+
+export { downloadSecurityExtension, extensionManifestSummary } from "./extension.js";
+
+export {
+  LESSONS,
+  loadProgress,
+  saveProgress,
+  markLesson,
+  teachStats,
+  getLesson,
+  TOOL_TIPS,
+  securityPlaybook,
+} from "./teach.js";
+
 export async function localAiManifest() {
   let mem = { notes: 0, events: 0, docs: 0, runs: 0 };
   let sec = { posture: "unknown", alerts: 0 };
   try {
     mem = await memoryStats();
   } catch {
-    /* idb may be blocked */
+    /* idb */
   }
   try {
     sec = await securityDashboard();
@@ -81,8 +103,8 @@ export async function localAiManifest() {
     /* ignore */
   }
   return {
-    schema: "thesis.local_ai.v1",
-    product: "THESIS Local AI",
+    schema: "thesis.browser_env.v1",
+    product: "THESIS Browser Environment",
     locality: "browser-only",
     engines: {
       inference: inferenceStatus(),
@@ -90,14 +112,22 @@ export async function localAiManifest() {
       knowledge_graph: graphStats(),
       security: sec,
       agents: listAgents(),
-      documents: { formats: ["markdown"], store: "IndexedDB" },
+      documents: {
+        formats: ["markdown", "pdf", "xlsx"],
+        store: "IndexedDB + download",
+      },
+      teach: teachStats(),
+      extension: extensionManifestSummary(),
+      playbook: securityPlaybook(),
     },
     doctrine: [
-      "All inference runs in the browser (Transformers.js)",
-      "Memory never leaves the device",
-      "Security monitor blocks key/seed paste",
-      "Research agents use local embeddings + graph + platform pulse",
-      "Documents generate offline as markdown",
+      "Inference runs in the browser (Transformers.js · custom models supported)",
+      "Storage is IndexedDB — never leaves the device",
+      "Security gate blocks keys/seeds before write or export",
+      "Agents use local embeddings + graph + public platform pulse only",
+      "PDF / Excel / Markdown generate offline",
+      "Extension package: activeTab + storage only — load unpacked after review",
+      "Teach-as-you-use lessons live in this tab",
     ],
   };
 }

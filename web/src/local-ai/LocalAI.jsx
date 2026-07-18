@@ -1,11 +1,19 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as Local from "./index.js";
 
+const SECTIONS = [
+  ["teach", "Teach & Security"],
+  ["models", "Models"],
+  ["work", "Memory · Agents"],
+  ["export", "Export · Extension"],
+];
+
 /**
- * PLATFORM app: browser-local AI
- * Transformers.js (custom models) · memory · security · KG · research · docs
+ * Full browser environment: inference, storage, agents, PDF/Excel,
+ * security scanning, extension download — with teach-as-you-use.
  */
 export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
+  const [section, setSection] = useState("teach");
   const [manifest, setManifest] = useState(null);
   const [inf, setInf] = useState(Local.inferenceStatus());
   const [modelCfg, setModelCfg] = useState(() => Local.loadInferenceSettings());
@@ -13,10 +21,16 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
   const [mem, setMem] = useState(null);
   const [graph, setGraph] = useState(null);
   const [sec, setSec] = useState(null);
+  const [teach, setTeach] = useState(() => Local.teachStats());
+  const [lessonId, setLessonId] = useState(() => Local.teachStats().next?.id || Local.LESSONS[0].id);
+  const [quizPick, setQuizPick] = useState(null);
+  const [quizMsg, setQuizMsg] = useState("");
   const [note, setNote] = useState("");
   const [query, setQuery] = useState(
     "Monad gas limits, desk rejects, and how vault route stays signature-gated"
   );
+  const [scanBox, setScanBox] = useState("");
+  const [scanResult, setScanResult] = useState(null);
   const [research, setResearch] = useState(null);
   const [docs, setDocs] = useState([]);
   const [events, setEvents] = useState([]);
@@ -26,6 +40,11 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [selectedDoc, setSelectedDoc] = useState(null);
+  const [lastAudit, setLastAudit] = useState(null);
+  const [platformSnap, setPlatformSnap] = useState(null);
+
+  const lesson = useMemo(() => Local.getLesson(lessonId), [lessonId]);
+  const progress = Local.loadProgress();
 
   const refresh = useCallback(async () => {
     try {
@@ -36,6 +55,7 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
       setMem(m.engines.memory);
       setGraph(m.engines.knowledge_graph);
       setSec(m.engines.security);
+      setTeach(Local.teachStats());
       setNotes(await Local.listNotes({ limit: 12 }));
       setEvents(await Local.listEvents({ limit: 12 }));
       setDocs(await Local.listDocs({ limit: 12 }));
@@ -51,117 +71,70 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
 
   function flash(msg) {
     setLog(msg);
-    setTimeout(() => setLog(""), 4000);
+    setTimeout(() => setLog(""), 4200);
   }
 
-  function patchCfg(partial) {
-    const next = Local.saveInferenceSettings(partial);
-    setModelCfg(next);
-    setInf(Local.inferenceStatus());
-    return next;
-  }
+  const disabled = busy || parentBusy;
 
-  async function loadModel(force = true) {
+  async function withBusy(fn) {
     setBusy(true);
     setErr("");
     try {
-      // Persist current form before load
+      await fn();
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function loadModel(force = true) {
+    await withBusy(async () => {
       Local.saveInferenceSettings(modelCfg);
       await Local.ensureEmbedder({
         force,
         onProgress: () => setInf(Local.inferenceStatus()),
       });
       setInf(Local.inferenceStatus());
-      const s = Local.inferenceStatus();
-      flash(
-        s.settings?.offlineOnly
-          ? `Custom/local model ready · ${s.model}`
-          : `Model ready · ${s.model} (remote allowed: ${s.settings?.allowRemoteModels})`
-      );
+      flash(`Model ready · ${Local.inferenceStatus().model}`);
       await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-      setInf(Local.inferenceStatus());
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   async function probeLocal() {
-    setBusy(true);
-    setErr("");
-    try {
+    await withBusy(async () => {
       const r = await Local.probeLocalModel(modelCfg.modelId, modelCfg.localModelPath);
       setProbe(r);
-      flash(r.ok ? `Found local files · ${r.url}` : "Local model not found under /models/");
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  function applyOfflinePreset() {
-    patchCfg({
-      offlineOnly: true,
-      allowRemoteModels: false,
-      allowLocalModels: true,
-      localModelPath: "/models/",
-      wasmPaths: "/wasm/",
-      useBrowserCache: true,
+      flash(r.ok ? `Found · ${r.url}` : "Local model not found under /models/");
     });
-    flash("Offline preset: remote Hub off · /models/ · /wasm/");
-  }
-
-  function applyHubPreset() {
-    patchCfg({
-      offlineOnly: false,
-      allowRemoteModels: true,
-      allowLocalModels: true,
-      localModelPath: "/models/",
-      wasmPaths: "",
-      useBrowserCache: true,
-      modelId: "Xenova/all-MiniLM-L6-v2",
-    });
-    flash("Hub preset: remote models allowed · WASM CDN default");
   }
 
   async function saveNote() {
-    setBusy(true);
-    setErr("");
-    try {
+    await withBusy(async () => {
       Local.assertSafe(note);
       const emb = await Local.embedSafe(note);
       await Local.remember(note, { kind: "note", embedding: emb, source: "user" });
       await Local.ingestText(note, { source: "user-note" });
       setNote("");
-      flash("Remembered locally + graph ingest");
+      flash("Remembered locally");
       await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   async function runResearch() {
-    setBusy(true);
-    setErr("");
-    try {
+    await withBusy(async () => {
       Local.assertSafe(query);
-      // Pull platform pulse for agents (public state only)
       let pulse = {};
       try {
         const plat = await api(`/platform?network=${network}`);
+        setPlatformSnap(plat);
         pulse = {
           version: plat.version,
           laws: plat.pulse?.laws,
           wallets: plat.pulse?.wallets,
           desk_equity: plat.pulse?.desk_equity,
-          venues: Object.entries(plat.pulse?.marks || {}).map(([k]) => ({ id: k, name: k })),
           apps: (plat.apps?.first_party || []).map((a) => ({ id: a.id, name: a.name })),
         };
-        // enrich venues from desk if available
         try {
           const desk = await api("/desk");
           pulse.venues = (desk.venues || []).map((v) => ({ id: v.id, name: v.name }));
@@ -170,48 +143,46 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
           /* optional */
         }
       } catch {
-        /* offline shell still works */
+        /* offline */
       }
-
       const run = await Local.runResearch(query, pulse);
       setResearch(run);
-      if (run.document_id) {
-        const all = await Local.listDocs({ limit: 20 });
-        setDocs(all);
-        setSelectedDoc(all.find((d) => d.id === run.document_id) || all[0]);
-      }
-      flash(`Research complete · ${(run.elapsed_ms || 0).toFixed(0)}ms · local only`);
+      const all = await Local.listDocs({ limit: 20 });
+      setDocs(all);
+      if (run.document_id) setSelectedDoc(all.find((d) => d.id === run.document_id) || all[0]);
+      flash(`Research done · ${(run.elapsed_ms || 0).toFixed(0)}ms`);
       await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
   async function runSecurityAudit() {
-    setBusy(true);
-    setErr("");
-    try {
+    await withBusy(async () => {
       const audit = await Local.auditMemory();
+      setLastAudit(audit);
       const dash = await Local.securityDashboard();
       const doc = await Local.generateSecurityBrief(dash, audit);
       setSelectedDoc(doc);
-      flash(`Security audit · ${audit.findings?.length || 0} findings · brief saved`);
+      flash(`Audit · ${audit.findings?.length || 0} findings`);
       await refresh();
+    });
+  }
+
+  function runScan() {
+    try {
+      const r = Local.scanText(scanBox, { context: "live-scan" });
+      setScanResult(r);
+      flash(r.ok ? "Scan clean" : `${r.findings.length} findings · score ${r.score}`);
     } catch (e) {
       setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
     }
   }
 
   async function hydrateGraph() {
-    setBusy(true);
-    try {
+    await withBusy(async () => {
       let facts = {};
       try {
         const plat = await api(`/platform?network=${network}`);
+        setPlatformSnap(plat);
         facts = {
           version: plat.version,
           laws: plat.pulse?.laws,
@@ -228,47 +199,94 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
       const st = await Local.hydrateFromPlatform(facts);
       const doc = await Local.generateKnowledgeMap(st, Local.searchNodes("", { limit: 30 }));
       setSelectedDoc(doc);
-      flash(`KG hydrated · ${st.nodes} nodes · ${st.edges} edges`);
+      flash(`Graph · ${st.nodes} nodes / ${st.edges} edges`);
       await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  async function genOpsDoc() {
-    setBusy(true);
-    try {
-      const plat = await api(`/platform?network=${network}`);
-      const doc = await Local.generatePlatformOpsDoc(plat);
-      setSelectedDoc(doc);
-      flash("Platform ops document saved locally");
+  async function exportPdfSecurity() {
+    await withBusy(async () => {
+      const dash = await Local.securityDashboard();
+      const audit = lastAudit || (await Local.auditMemory());
+      const out = await Local.exportSecurityPdf(dash, audit);
+      flash(`PDF · ${out.filename}`);
       await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
+    });
   }
 
-  const disabled = busy || parentBusy;
+  async function exportExcel() {
+    await withBusy(async () => {
+      let plat = platformSnap;
+      try {
+        plat = await api(`/platform?network=${network}`);
+        setPlatformSnap(plat);
+      } catch {
+        /* */
+      }
+      const audit = lastAudit || { findings: [] };
+      const out = await Local.exportInventoryExcel({
+        platform: plat,
+        notes,
+        events,
+        findings: audit.findings || [],
+      });
+      flash(`Excel · ${out.filename}`);
+      await refresh();
+    });
+  }
+
+  async function exportResearchXlsx() {
+    if (!research) {
+      setErr("Run research first");
+      return;
+    }
+    await withBusy(async () => {
+      const out = await Local.exportResearchExcel(research);
+      flash(`Excel · ${out.filename}`);
+    });
+  }
+
+  async function downloadExt() {
+    await withBusy(async () => {
+      const out = await Local.downloadSecurityExtension();
+      flash(`Extension ZIP · ${out.filename}`);
+    });
+  }
+
+  function submitQuiz() {
+    if (quizPick == null) {
+      setQuizMsg("Pick an answer");
+      return;
+    }
+    const ok = quizPick === lesson.quiz.answer;
+    Local.markLesson(lesson.id, { quizOk: ok });
+    setTeach(Local.teachStats());
+    setQuizMsg(ok ? "Correct — lesson complete" : "Not quite — re-read teach, try again");
+    if (ok) {
+      const next = Local.teachStats().next;
+      if (next) setLessonId(next.id);
+      setQuizPick(null);
+    }
+    flash(ok ? `Lesson done · ${lesson.title}` : "Review the teach block");
+  }
 
   return (
     <section className="panel local-ai">
       <div className="win-strip platform-strip">
         <div className="win-copy">
-          <span className="eyebrow">BROWSER-LOCAL AI · TRANSFORMERS.JS</span>
-          <h3>Inference, memory, security, knowledge graph, research agents, documents</h3>
+          <span className="eyebrow">BROWSER ENVIRONMENT · SECURE · TEACHES AS YOU USE</span>
+          <h3>Inference · storage · agents · PDF/Excel · security · extension</h3>
           <p className="muted sm">
-            Everything on this tab stays on-device. No cloud LLM. Platform pulse is optional public
-            state only — never keys.
+            On-device only. Security gate blocks keys/seeds. Lessons unlock confidence before you
+            export or install.
           </p>
           <p className="muted sm">
-            Model: <code>{inf.model}</code> · state <b>{inf.state}</b>
-            {inf.state === "loading" ? ` · ${inf.progress}%` : ""} · memory notes{" "}
-            <b>{mem?.notes ?? 0}</b> · graph <b>{graph?.nodes ?? 0}</b>n/{graph?.edges ?? 0}e ·
-            security <b>{sec?.posture || "—"}</b>
+            Model <code>{inf.model}</code> · {inf.state}
+            {inf.state === "loading" ? ` ${inf.progress}%` : ""} · notes <b>{mem?.notes ?? 0}</b> ·
+            graph <b>{graph?.nodes ?? 0}</b> · security <b>{sec?.posture || "—"}</b> · teach{" "}
+            <b>
+              {teach.done}/{teach.total}
+            </b>
           </p>
         </div>
         <div className="win-actions">
@@ -279,7 +297,7 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
             Security audit
           </button>
           <button type="button" className="ghost" onClick={() => onNavigate?.("live")}>
-            Platform shell
+            Platform
           </button>
         </div>
       </div>
@@ -287,331 +305,410 @@ export function LocalAI({ api, network, busy: parentBusy, onNavigate }) {
       {err ? <div className="banner err">{err}</div> : null}
       {log ? <div className="banner ok">{log}</div> : null}
 
+      <nav className="tabs local-subnav">
+        {SECTIONS.map(([id, label]) => (
+          <button key={id} type="button" className={section === id ? "on" : ""} onClick={() => setSection(id)}>
+            {label}
+          </button>
+        ))}
+      </nav>
+
       <div className="primitive-row local-caps">
         {[
           ["Inference", inf.ready ? "ready" : inf.state, inf.ready],
-          ["Memory", `${mem?.notes ?? 0} notes`, true],
-          ["Security", sec?.posture || "—", sec?.posture === "calm"],
-          ["Knowledge graph", `${graph?.nodes ?? 0} nodes`, true],
-          ["Agents", `${(manifest?.engines?.agents || []).length} roles`, true],
-          ["Documents", `${mem?.docs ?? docs.length} docs`, true],
+          ["Storage", `${mem?.notes ?? 0} notes`, true],
+          ["Security", sec?.posture || "—", sec?.posture !== "elevated"],
+          ["Agents", `${(manifest?.engines?.agents || []).length}`, true],
+          ["Exports", "md · pdf · xlsx", true],
+          ["Teach", `${teach.pct}%`, teach.pct >= 50],
         ].map(([name, metric, ok]) => (
           <div key={name} className={`primitive-card ${ok ? "ok" : "warn"}`}>
-            <span className="eyebrow">local</span>
+            <span className="eyebrow">env</span>
             <b>{name}</b>
             <span className="muted sm">{metric}</span>
           </div>
         ))}
       </div>
 
-      {/* Custom models (Transformers.js env) */}
-      <article className="result model-config" style={{ margin: "12px" }}>
-        <label>CUSTOM MODELS · TRANSFORMERS.JS ENV</label>
-        <p className="muted sm">
-          Mirrors Hugging Face settings: <code>env.localModelPath</code>,{" "}
-          <code>env.allowRemoteModels</code>, <code>env.backends.onnx.wasm.wasmPaths</code>. Convert
-          PyTorch → ONNX with Optimum, place under <code>public/models/</code>.
-        </p>
-        <div className="model-grid">
-          <label className="field">
-            <span>Model id (Hub id or local folder name)</span>
-            <input
-              value={modelCfg.modelId || ""}
-              onChange={(e) => setModelCfg((c) => ({ ...c, modelId: e.target.value }))}
-              placeholder="Xenova/all-MiniLM-L6-v2 or all-MiniLM-L6-v2"
-            />
-          </label>
-          <label className="field">
-            <span>localModelPath</span>
-            <input
-              value={modelCfg.localModelPath || ""}
-              onChange={(e) => setModelCfg((c) => ({ ...c, localModelPath: e.target.value }))}
-              placeholder="/models/"
-            />
-          </label>
-          <label className="field">
-            <span>wasmPaths (empty = CDN default)</span>
-            <input
-              value={modelCfg.wasmPaths || ""}
-              onChange={(e) => setModelCfg((c) => ({ ...c, wasmPaths: e.target.value }))}
-              placeholder="/wasm/"
-            />
-          </label>
-          <label className="field">
-            <span>Task</span>
-            <input
-              value={modelCfg.task || "feature-extraction"}
-              onChange={(e) => setModelCfg((c) => ({ ...c, task: e.target.value }))}
-              placeholder="feature-extraction"
-            />
-          </label>
-        </div>
-        <div className="chips tight model-toggles">
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={!!modelCfg.allowRemoteModels && !modelCfg.offlineOnly}
-              onChange={(e) =>
-                setModelCfg((c) => ({
-                  ...c,
-                  allowRemoteModels: e.target.checked,
-                  offlineOnly: e.target.checked ? false : c.offlineOnly,
-                }))
-              }
-            />
-            allowRemoteModels
-          </label>
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={modelCfg.allowLocalModels !== false}
-              onChange={(e) => setModelCfg((c) => ({ ...c, allowLocalModels: e.target.checked }))}
-            />
-            allowLocalModels
-          </label>
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={modelCfg.useBrowserCache !== false}
-              onChange={(e) => setModelCfg((c) => ({ ...c, useBrowserCache: e.target.checked }))}
-            />
-            useBrowserCache
-          </label>
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={!!modelCfg.offlineOnly}
-              onChange={(e) =>
-                setModelCfg((c) => ({
-                  ...c,
-                  offlineOnly: e.target.checked,
-                  allowRemoteModels: e.target.checked ? false : c.allowRemoteModels,
-                  allowLocalModels: true,
-                  wasmPaths: e.target.checked ? c.wasmPaths || "/wasm/" : c.wasmPaths,
-                }))
-              }
-            />
-            offline only (no Hub)
-          </label>
-        </div>
-        <div className="chips tight">
-          <button type="button" className="ghost" disabled={disabled} onClick={() => loadModel(true)}>
-            Apply & load
-          </button>
-          <button type="button" className="ghost" disabled={disabled} onClick={probeLocal}>
-            Probe /models/
-          </button>
-          <button type="button" className="ghost" onClick={applyHubPreset}>
-            Hub preset
-          </button>
-          <button type="button" className="ghost" onClick={applyOfflinePreset}>
-            Offline preset
-          </button>
-          {(Local.MODEL_PRESETS || []).map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              className="ghost"
-              onClick={() => {
-                setModelCfg((c) => ({ ...c, modelId: p.id, task: p.task }));
-                flash(`Preset · ${p.label}`);
-              }}
-            >
-              {p.id.split("/").pop()}
+      {section === "teach" && (
+        <div className="grid2 tight" style={{ margin: "12px" }}>
+          <article className="result">
+            <label>
+              TEACH · {teach.done}/{teach.total} · {teach.pct}%
+            </label>
+            <p className="muted sm">Complete lessons in order. Each ends with a quick check.</p>
+            <div className="lesson-list">
+              {Local.LESSONS.map((l) => (
+                <button
+                  key={l.id}
+                  type="button"
+                  className={`proto project-btn ${lessonId === l.id ? "yes" : ""} ${progress[l.id]?.done ? "done" : ""}`}
+                  onClick={() => {
+                    setLessonId(l.id);
+                    setQuizPick(null);
+                    setQuizMsg("");
+                  }}
+                >
+                  <b>
+                    {progress[l.id]?.done ? "✓ " : "○ "}
+                    {l.title}
+                  </b>
+                  <span className="muted sm">
+                    {l.track} · ~{l.minutes}m
+                  </span>
+                </button>
+              ))}
+            </div>
+          </article>
+          <article className="result">
+            <label>
+              {lesson.track.toUpperCase()} · {lesson.title}
+            </label>
+            <p>{lesson.teach}</p>
+            <p className="why-now">
+              <b>Do:</b> {lesson.do}
+            </p>
+            <p className="muted sm law-note">
+              <b>Security:</b> {lesson.security}
+            </p>
+            <label>Check</label>
+            <p className="muted sm">{lesson.quiz.q}</p>
+            {lesson.quiz.options.map((opt, i) => (
+              <label key={opt} className="toggle quiz-opt">
+                <input
+                  type="radio"
+                  name="quiz"
+                  checked={quizPick === i}
+                  onChange={() => setQuizPick(i)}
+                />
+                {opt}
+              </label>
+            ))}
+            <button type="button" className="forge" style={{ marginTop: 10 }} onClick={submitQuiz}>
+              Submit answer
             </button>
-          ))}
-        </div>
-        <div className="kv">
-          <span>Active model</span>
-          <b className="mono sm">{inf.model || modelCfg.modelId}</b>
-        </div>
-        <div className="kv">
-          <span>State</span>
-          <b>
-            {inf.state}
-            {inf.state === "loading" ? ` ${inf.progress}%` : ""}
-            {inf.error ? ` · ${inf.error}` : ""}
-          </b>
-        </div>
-        <div className="kv">
-          <span>env applied</span>
-          <b className="muted sm mono">
-            path={inf.settings?.localModelPath} · remote={String(inf.settings?.allowRemoteModels)} ·
-            wasm={inf.settings?.wasmPaths || "CDN"}
-          </b>
-        </div>
-        {probe && (
-          <p className={`muted sm ${probe.ok ? "up" : "down"}`}>
-            Probe: {probe.ok ? `OK ${probe.url}` : `miss · ${(probe.tried || []).join(" · ")}`}
-            {!probe.ok && probe.hint ? ` — ${probe.hint}` : ""}
-          </p>
-        )}
-        <pre className="code sm doc-preview">{`# Convert with Optimum (once)
-pip install "optimum[onnxruntime]" transformers
-optimum-cli export onnx --model sentence-transformers/all-MiniLM-L6-v2 --task feature-extraction ./web/public/models/all-MiniLM-L6-v2
-
-# WASM offline
-powershell -File scripts/setup-transformers-assets.ps1
-# → web/public/wasm/  then set wasmPaths=/wasm/
-`}</pre>
-      </article>
-
-      <div className="grid3">
-        <article className="result">
-          <label>LOCAL MEMORY</label>
-          <p className="muted sm">IndexedDB · embeddings attached when model is ready</p>
-          <textarea
-            className="local-textarea"
-            rows={4}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Note to remember (never paste keys/seeds)…"
-          />
-          <div className="chips tight">
-            <button type="button" className="ghost" disabled={disabled || !note.trim()} onClick={saveNote}>
-              Remember
-            </button>
-            <button type="button" className="ghost" disabled={disabled} onClick={refresh}>
-              Refresh
-            </button>
-          </div>
-          <label>Recent notes</label>
-          {notes.length === 0 ? (
-            <p className="muted sm">Empty — remember platform insights here.</p>
-          ) : (
-            notes.map((n) => (
-              <div key={n.id} className="proto">
-                <b className="muted sm">
-                  {n.kind} · {new Date(n.ts).toLocaleString()}
-                </b>
-                <p className="muted sm">{(n.text || "").slice(0, 180)}</p>
+            {quizMsg && <p className="muted sm">{quizMsg}</p>}
+          </article>
+          <article className="result">
+            <label>SECURITY PLAYBOOK</label>
+            {(manifest?.engines?.playbook || Local.securityPlaybook()).map((r) => (
+              <div key={r.rule} className="proto">
+                <b>{r.rule}</b>
+                <p className="muted sm">{r.how}</p>
+                <em className="law-chip mini" style={{ display: "inline-block" }}>
+                  {r.law}
+                </em>
               </div>
-            ))
-          )}
-        </article>
-
-        <article className="result">
-          <label>AUTONOMOUS RESEARCH AGENTS</label>
-          <p className="muted sm">Scout → Risk → Synthesizer · local embeddings + graph</p>
-          {(manifest?.engines?.agents || Local.listAgents()).map((a) => (
-            <div key={a.id} className="proto">
-              <b>
-                {a.name} · {a.id}
-              </b>
-              <p className="muted sm">{a.role}</p>
+            ))}
+          </article>
+          <article className="result">
+            <label>LIVE SECURITY SCAN</label>
+            <p className="muted sm">Paste public text only — gate blocks critical secrets on write paths.</p>
+            <textarea
+              className="local-textarea"
+              rows={4}
+              value={scanBox}
+              onChange={(e) => setScanBox(e.target.value)}
+              placeholder="Scan research notes, drafts, agent output…"
+            />
+            <div className="chips tight">
+              <button type="button" className="ghost" onClick={runScan}>
+                Scan now
+              </button>
+              <button type="button" className="ghost" disabled={disabled} onClick={runSecurityAudit}>
+                Full memory audit
+              </button>
             </div>
-          ))}
-          <textarea
-            className="local-textarea"
-            rows={3}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Research question…"
-          />
-          <button type="button" className="forge" disabled={disabled || !query.trim()} onClick={runResearch}>
-            Run research loop
-          </button>
-          {research && (
-            <div className="proto featured">
-              <span className="eyebrow">LAST RUN · {(research.elapsed_ms || 0).toFixed(0)}ms</span>
-              <b>{research.summary}</b>
-              <ul className="pillars">
-                {(research.synth?.insights || []).slice(0, 5).map((i) => (
-                  <li key={i.title}>
-                    <b>{i.title}</b> — {i.body}
-                  </li>
+            {scanResult && (
+              <div className={`proto ${scanResult.ok ? "yes" : "no"}`}>
+                <b>
+                  {scanResult.ok ? "CLEAN" : "FINDINGS"} · score {scanResult.score}
+                </b>
+                {(scanResult.findings || []).map((f) => (
+                  <p key={f.id + f.label} className="muted sm">
+                    [{f.severity}] {f.label} ×{f.count}
+                  </p>
                 ))}
-              </ul>
+              </div>
+            )}
+            <div className="kv">
+              <span>Posture</span>
+              <b className={sec?.posture === "calm" ? "up" : "down"}>{sec?.posture || "—"}</b>
             </div>
-          )}
-        </article>
-
-        <article className="result">
-          <label>SECURITY MONITOR</label>
-          <p className="muted sm">{sec?.doctrine}</p>
-          <div className="kv">
-            <span>Posture</span>
-            <b className={sec?.posture === "calm" ? "up" : "down"}>{sec?.posture || "—"}</b>
-          </div>
-          <div className="kv">
-            <span>Alerts</span>
-            <b>{sec?.alerts ?? 0}</b>
-          </div>
-          <div className="kv">
-            <span>Critical runs</span>
-            <b>{sec?.criticalRuns ?? 0}</b>
-          </div>
-          <button type="button" className="ghost" disabled={disabled} onClick={runSecurityAudit}>
-            Audit memory + generate brief
-          </button>
-          <label>Events</label>
-          {events.slice(0, 8).map((e) => (
-            <div key={e.id} className="proto">
-              <b className="muted sm">{e.kind}</b>
-              <p className="muted sm">{e.text || e.detail?.message}</p>
+            <div className="kv">
+              <span>Alerts</span>
+              <b>{sec?.alerts ?? 0}</b>
             </div>
-          ))}
-        </article>
-      </div>
+          </article>
+        </div>
+      )}
 
-      <div className="grid2 tight" style={{ margin: "12px" }}>
-        <article className="result">
-          <label>KNOWLEDGE GRAPH</label>
+      {section === "models" && (
+        <article className="result model-config" style={{ margin: "12px" }}>
+          <label>CUSTOM MODELS · TRANSFORMERS.JS</label>
           <p className="muted sm">
-            {graph?.nodes ?? 0} nodes · {graph?.edges ?? 0} edges · browser localStorage + memory
-            links
+            <code>env.localModelPath</code> · <code>allowRemoteModels</code> ·{" "}
+            <code>wasmPaths</code> — convert with Optimum into <code>public/models/</code>
           </p>
+          <div className="model-grid">
+            <label className="field">
+              <span>Model id</span>
+              <input
+                value={modelCfg.modelId || ""}
+                onChange={(e) => setModelCfg((c) => ({ ...c, modelId: e.target.value }))}
+              />
+            </label>
+            <label className="field">
+              <span>localModelPath</span>
+              <input
+                value={modelCfg.localModelPath || ""}
+                onChange={(e) => setModelCfg((c) => ({ ...c, localModelPath: e.target.value }))}
+              />
+            </label>
+            <label className="field">
+              <span>wasmPaths</span>
+              <input
+                value={modelCfg.wasmPaths || ""}
+                onChange={(e) => setModelCfg((c) => ({ ...c, wasmPaths: e.target.value }))}
+                placeholder="/wasm/ or empty for CDN"
+              />
+            </label>
+            <label className="field">
+              <span>Task</span>
+              <input
+                value={modelCfg.task || "feature-extraction"}
+                onChange={(e) => setModelCfg((c) => ({ ...c, task: e.target.value }))}
+              />
+            </label>
+          </div>
+          <div className="chips tight model-toggles">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={!!modelCfg.allowRemoteModels && !modelCfg.offlineOnly}
+                onChange={(e) =>
+                  setModelCfg((c) => ({
+                    ...c,
+                    allowRemoteModels: e.target.checked,
+                    offlineOnly: e.target.checked ? false : c.offlineOnly,
+                  }))
+                }
+              />
+              allowRemoteModels
+            </label>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={modelCfg.allowLocalModels !== false}
+                onChange={(e) => setModelCfg((c) => ({ ...c, allowLocalModels: e.target.checked }))}
+              />
+              allowLocalModels
+            </label>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={!!modelCfg.offlineOnly}
+                onChange={(e) =>
+                  setModelCfg((c) => ({
+                    ...c,
+                    offlineOnly: e.target.checked,
+                    allowRemoteModels: e.target.checked ? false : c.allowRemoteModels,
+                    wasmPaths: e.target.checked ? c.wasmPaths || "/wasm/" : c.wasmPaths,
+                  }))
+                }
+              />
+              offline only
+            </label>
+          </div>
           <div className="chips tight">
-            <button type="button" className="ghost" disabled={disabled} onClick={hydrateGraph}>
-              Hydrate from platform
+            <button type="button" className="ghost" disabled={disabled} onClick={() => loadModel(true)}>
+              Apply & load
+            </button>
+            <button type="button" className="ghost" disabled={disabled} onClick={probeLocal}>
+              Probe /models/
             </button>
             <button
               type="button"
               className="ghost"
               onClick={() => {
-                Local.clearGraph();
-                flash("Graph cleared");
-                refresh();
+                const n = Local.saveInferenceSettings({
+                  offlineOnly: false,
+                  allowRemoteModels: true,
+                  modelId: "Xenova/all-MiniLM-L6-v2",
+                  wasmPaths: "",
+                });
+                setModelCfg(n);
+                flash("Hub preset");
               }}
             >
-              Clear graph
+              Hub preset
             </button>
-          </div>
-          <div className="kg-nodes">
-            {nodes.map((n) => (
-              <span key={n.id} className="badge on" title={n.id}>
-                {n.type}:{n.label?.slice?.(0, 24) || n.id}
-              </span>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                const n = Local.saveInferenceSettings({
+                  offlineOnly: true,
+                  allowRemoteModels: false,
+                  localModelPath: "/models/",
+                  wasmPaths: "/wasm/",
+                });
+                setModelCfg(n);
+                flash("Offline preset");
+              }}
+            >
+              Offline preset
+            </button>
+            {(Local.MODEL_PRESETS || []).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="ghost"
+                onClick={() => setModelCfg((c) => ({ ...c, modelId: p.id, task: p.task }))}
+              >
+                {p.id.split("/").pop()}
+              </button>
             ))}
           </div>
+          {probe && (
+            <p className={`muted sm ${probe.ok ? "up" : "down"}`}>
+              Probe: {probe.ok ? probe.url : (probe.tried || []).join(" · ")}
+            </p>
+          )}
+          <pre className="code sm doc-preview">{`optimum-cli export onnx --model sentence-transformers/all-MiniLM-L6-v2 --task feature-extraction ./web/public/models/all-MiniLM-L6-v2
+powershell -File scripts/setup-transformers-assets.ps1`}</pre>
         </article>
+      )}
 
-        <article className="result">
-          <label>DOCUMENT GENERATION</label>
-          <p className="muted sm">Markdown reports saved to IndexedDB — download any time</p>
-          <div className="chips tight">
-            <button type="button" className="ghost" disabled={disabled} onClick={genOpsDoc}>
-              Platform ops doc
+      {section === "work" && (
+        <div className="grid3">
+          <article className="result">
+            <label>LOCAL MEMORY</label>
+            <p className="muted sm">{Local.TOOL_TIPS.memory.body}</p>
+            <textarea
+              className="local-textarea"
+              rows={4}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Note (never keys/seeds)…"
+            />
+            <div className="chips tight">
+              <button type="button" className="ghost" disabled={disabled || !note.trim()} onClick={saveNote}>
+                Remember
+              </button>
+              <button type="button" className="ghost" disabled={disabled} onClick={hydrateGraph}>
+                Hydrate graph
+              </button>
+            </div>
+            {notes.map((n) => (
+              <div key={n.id} className="proto">
+                <b className="muted sm">{n.kind}</b>
+                <p className="muted sm">{(n.text || "").slice(0, 160)}</p>
+              </div>
+            ))}
+          </article>
+          <article className="result">
+            <label>RESEARCH AGENTS</label>
+            <p className="muted sm">{Local.TOOL_TIPS.agents.body}</p>
+            {(manifest?.engines?.agents || Local.listAgents()).map((a) => (
+              <div key={a.id} className="proto">
+                <b>
+                  {a.name} · {a.id}
+                </b>
+                <p className="muted sm">{a.role}</p>
+              </div>
+            ))}
+            <textarea
+              className="local-textarea"
+              rows={3}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <button type="button" className="forge" disabled={disabled || !query.trim()} onClick={runResearch}>
+              Run research
             </button>
-            <button type="button" className="ghost" disabled={disabled} onClick={hydrateGraph}>
-              Knowledge map doc
-            </button>
-          </div>
-          <label>Saved docs</label>
-          {docs.map((d) => (
-            <button
-              key={d.id}
-              type="button"
-              className={`proto project-btn ${selectedDoc?.id === d.id ? "yes" : ""}`}
-              onClick={() => setSelectedDoc(d)}
-            >
-              <b>{d.title}</b>
-              <span className="muted sm">{new Date(d.ts).toLocaleString()}</span>
-            </button>
-          ))}
-          {selectedDoc && (
-            <>
-              <div className="chips tight">
+            {research && (
+              <div className="proto featured">
+                <b>{research.summary}</b>
+                <ul className="pillars">
+                  {(research.synth?.insights || []).slice(0, 4).map((i) => (
+                    <li key={i.title}>{i.title}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </article>
+          <article className="result">
+            <label>KNOWLEDGE GRAPH</label>
+            <p className="muted sm">
+              {graph?.nodes ?? 0} nodes · {graph?.edges ?? 0} edges
+            </p>
+            <div className="kg-nodes">
+              {nodes.map((n) => (
+                <span key={n.id} className="badge on">
+                  {n.type}:{String(n.label).slice(0, 20)}
+                </span>
+              ))}
+            </div>
+            <label>Events</label>
+            {events.slice(0, 6).map((e) => (
+              <div key={e.id} className="proto">
+                <b className="muted sm">{e.kind}</b>
+                <p className="muted sm">{e.text}</p>
+              </div>
+            ))}
+          </article>
+        </div>
+      )}
+
+      {section === "export" && (
+        <div className="grid2 tight" style={{ margin: "12px" }}>
+          <article className="result">
+            <label>PDF · EXCEL · MARKDOWN</label>
+            <p className="muted sm">
+              {Local.TOOL_TIPS.pdf.body} {Local.TOOL_TIPS.excel.body}
+            </p>
+            <div className="chips tight">
+              <button type="button" className="ghost" disabled={disabled} onClick={exportPdfSecurity}>
+                Security PDF
+              </button>
+              <button type="button" className="ghost" disabled={disabled} onClick={exportExcel}>
+                Inventory Excel
+              </button>
+              <button type="button" className="ghost" disabled={disabled || !research} onClick={exportResearchXlsx}>
+                Research Excel
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                disabled={disabled}
+                onClick={() =>
+                  withBusy(async () => {
+                    const plat = await api(`/platform?network=${network}`);
+                    const doc = await Local.generatePlatformOpsDoc(plat);
+                    setSelectedDoc(doc);
+                    flash("Ops markdown saved");
+                    await refresh();
+                  })
+                }
+              >
+                Ops Markdown
+              </button>
+            </div>
+            <label>Saved docs</label>
+            {docs.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                className={`proto project-btn ${selectedDoc?.id === d.id ? "yes" : ""}`}
+                onClick={() => setSelectedDoc(d)}
+              >
+                <b>{d.title}</b>
+                <span className="muted sm">{d.format || "md"}</span>
+              </button>
+            ))}
+            {selectedDoc && (
+              <>
                 <button
                   type="button"
                   className="ghost"
@@ -619,12 +716,38 @@ powershell -File scripts/setup-transformers-assets.ps1
                 >
                   Download .md
                 </button>
-              </div>
-              <pre className="code sm doc-preview">{selectedDoc.text?.slice(0, 4000)}</pre>
-            </>
-          )}
-        </article>
-      </div>
+                <pre className="code sm doc-preview">{selectedDoc.text?.slice(0, 3500)}</pre>
+              </>
+            )}
+          </article>
+          <article className="result">
+            <label>PACKAGED EXTENSION</label>
+            <p className="muted sm">{Local.TOOL_TIPS.extension.body}</p>
+            <div className="kv">
+              <span>Name</span>
+              <b>{manifest?.engines?.extension?.name || "THESIS Security Seatbelt"}</b>
+            </div>
+            <div className="kv">
+              <span>Permissions</span>
+              <b className="mono sm">
+                {(manifest?.engines?.extension?.permissions || ["activeTab", "storage"]).join(", ")}
+              </b>
+            </div>
+            <button type="button" className="forge" disabled={disabled} onClick={downloadExt}>
+              Download extension ZIP
+            </button>
+            <ol className="pillars">
+              <li>Unzip the package</li>
+              <li>chrome://extensions → Developer mode</li>
+              <li>Load unpacked → select folder</li>
+              <li>Pin popup · scan public text only</li>
+            </ol>
+            <p className="muted sm law-note">
+              <b>Security:</b> {Local.TOOL_TIPS.extension.security}
+            </p>
+          </article>
+        </div>
+      )}
 
       <article className="result" style={{ margin: "0 12px 12px" }}>
         <label>DOCTRINE</label>

@@ -101,14 +101,40 @@ export function CloudEngines({ api, network, busy: parentBusy, onNavigate }) {
           </p>
         </div>
         <div className="win-actions">
-          <button type="button" className="forge win-btn" disabled={disabled} onClick={runPipeline}>
-            Run full pipeline
+          <button
+            type="button"
+            className="forge win-btn"
+            disabled={disabled}
+            onClick={async () => {
+              setBusy(true);
+              setErr("");
+              try {
+                const data = await api("/system/run", {
+                  method: "POST",
+                  body: JSON.stringify({
+                    network,
+                    query: query || "Monad gas and vault",
+                    address: address || "",
+                    estimated_gas: Number(estimate) || 80000,
+                  }),
+                });
+                setPipeline(data.cloud || data);
+                setOut(data);
+                flash(data.headline || "system linked");
+              } catch (e) {
+                setErr(String(e.message || e));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            ▶ RUN SYSTEM
+          </button>
+          <button type="button" className="ghost" disabled={disabled} onClick={runPipeline}>
+            Cloud pipeline only
           </button>
           <button type="button" className="ghost" onClick={() => onNavigate?.("live")}>
             Platform shell
-          </button>
-          <button type="button" className="ghost" onClick={() => onNavigate?.("local")}>
-            Local AI
           </button>
         </div>
       </div>

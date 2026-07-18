@@ -36,13 +36,24 @@ def _platform_strip(network: str) -> Dict[str, Any]:
     """Kernel snapshot for the shell — platform, not pitch."""
     try:
         from .platform import platform_status
+        from .unified import system_status
 
         st = platform_status(network)
+        sys = system_status(network)
         return {
             "product": st.get("product"),
             "what_this_is": st.get("what_this_is"),
             "doctrine": st.get("doctrine"),
             "kernel": st.get("kernel"),
+            "system": {
+                "laws": sys.get("laws"),
+                "wallets_linked": sys.get("wallets_linked"),
+                "desk_equity": sys.get("desk_equity"),
+                "vault": sys.get("vault"),
+                "projects": sys.get("projects"),
+                "ai_no_keys": sys.get("ai_no_keys"),
+                "surfaces": sys.get("surfaces"),
+            },
             "primitives": [
                 {
                     "id": p.get("id"),
@@ -58,8 +69,18 @@ def _platform_strip(network: str) -> Dict[str, Any]:
                 "forged": (st.get("apps") or {}).get("forged_count"),
             },
             "pulse": st.get("pulse"),
-            "how_to_use": st.get("how_to_use"),
-            "api": st.get("api"),
+            "how_to_use": [
+                "1. PLATFORM → RUN SYSTEM (laws + cloud + desk + vault + company)",
+                "2. CLOUD tab for individual engines / pipeline",
+                "3. LOCAL AI for on-device memory, teach, PDF/Excel",
+                "4. DESK / HQ for tickets and mission approval",
+                "5. Contracts on Monad; engines on API host; UI is HQ",
+            ],
+            "api": {
+                **(st.get("api") or {}),
+                "system": "GET /system",
+                "system_run": "POST /system/run",
+            },
         }
     except Exception as exc:
         return {"error": str(exc)}

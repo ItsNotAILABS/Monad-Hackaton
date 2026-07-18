@@ -353,7 +353,7 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "2.4.0"
+    assert c.get("/health").json()["version"] == "2.5.0"
     assert c.get("/health").json().get("kind") == "platform"
     plat = c.get("/platform").json()
     assert plat.get("product") == "THESIS Platform"
@@ -377,6 +377,21 @@ def test_api_surface():
         json={"params": {"text": "exact approval and 7.5% gas margin"}},
     ).json()
     assert sec.get("ok")
+    sys = c.get("/system").json()
+    assert sys.get("laws", 0) >= 15 and sys.get("surfaces")
+    run = c.post(
+        "/system/run",
+        json={
+            "network": "monad-testnet",
+            "query": "gas and vault",
+            "run_company": True,
+            "run_desk": True,
+            "run_cloud": False,
+            "run_vault_route": True,
+        },
+    ).json()
+    assert run.get("ok") and run.get("steps")
+    assert any(s.get("step") == "desk.arena" for s in run["steps"])
     laws = c.get("/laws").json()
     assert laws.get("embedded") and laws.get("law_count", 0) >= 15
     land = c.get("/landing").json()

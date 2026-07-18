@@ -733,6 +733,65 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
   .model-config .model-grid { grid-template-columns: 1fr; }
 }
 
+.local-subnav {
+  margin: 0 12px 8px;
+}
+.lesson-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 420px;
+  overflow: auto;
+}
+.project-btn.done b { color: var(--accent2); }
+.quiz-opt {
+  display: flex !important;
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #0c0d16;
+}
+
+/* Shell polish */
+.shell {
+  max-width: 1360px;
+}
+.top h1 {
+  background: linear-gradient(90deg, #f4f2eb, #a794ff 55%, #2ee6a6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.top h1 i {
+  background: none;
+  -webkit-background-clip: unset;
+  color: #9b87ff;
+}
+.tabs button.on {
+  box-shadow: 0 0 0 1px #6d4aff88, 0 0 20px #6d4aff22;
+}
+.stats-chip .stat {
+  min-width: 48px;
+}
+.footer-platform {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9b97b0;
+}
+.footer-platform b { color: var(--accent2); font-weight: 500; }
+
 
 @media (max-width: 1400px) {
   .app-modules { grid-template-columns: repeat(4, 1fr); }

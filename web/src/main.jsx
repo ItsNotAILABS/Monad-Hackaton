@@ -67,6 +67,7 @@ function App() {
   const [hq, setHq] = useState(null);
   const [missionRoom, setMissionRoom] = useState(null);
   const [winPath, setWinPath] = useState(null);
+  const [systemRun, setSystemRun] = useState(null);
   const [companyObjective, setCompanyObjective] = useState(
     "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me what is happening."
   );
@@ -602,6 +603,55 @@ function App() {
     }
   }
 
+  /** Full product path — laws + cloud + desk + vault + company */
+  async function runSystem() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api("/system/run", {
+        method: "POST",
+        body: JSON.stringify({
+          network,
+          objective: companyObjective,
+          query: "Monad gas limits, vault policy gate, desk rejects, owner signs",
+          estimated_gas: 80000,
+        }),
+      });
+      setSystemRun(data);
+      // refresh linked surfaces so tabs stay in sync
+      const [dk, company, wl, ai, hm] = await Promise.all([
+        api("/desk"),
+        api("/company"),
+        api("/wallets"),
+        api("/ai"),
+        api(`/home?network=${network}`),
+      ]);
+      setDesk(dk);
+      setHq(company);
+      setWallets(wl);
+      setAiNode(ai);
+      setHome(hm);
+      if (data.company?.mission_id) {
+        try {
+          const m = await api(`/company/missions/${data.company.mission_id}`);
+          setMissionRoom(m.mission || m);
+        } catch {
+          /* optional */
+        }
+      }
+      setTab("live");
+      flash(
+        data.ok
+          ? `SYSTEM · desk reject ${(data.desk_arena || {}).n_rejected ?? "—"} · company ${data.company?.status || "—"}`
+          : "SYSTEM finished with issues — open steps"
+      );
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openMission(id) {
     setBusy(true);
     try {
@@ -758,14 +808,18 @@ function App() {
           network={network}
           busy={busy}
           winPath={winPath}
+          systemRun={systemRun}
           onNavigate={setTab}
           onAction={async (action, payload = {}) => {
             try {
+              if (action === "run_system" || action === "system_run") return runSystem();
               if (action === "win_path") return runWinPath();
               if (action === "platform_invoke") {
-                // Landing handles invoke; optionally navigate
                 if (payload.appId === "app.company" && payload.action === "run") return runCompany();
                 if (payload.appId === "app.desk" && payload.action === "arena") return runDeskArena();
+                if (payload.appId === "app.cloud") return runSystem();
+                if (payload.appId === "app.shell" && (payload.action === "run" || payload.action === "system"))
+                  return runSystem();
                 return;
               }
               if (action === "run_company") return runCompany();

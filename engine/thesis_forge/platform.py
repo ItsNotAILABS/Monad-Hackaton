@@ -30,6 +30,39 @@ from .wallets import registry_snapshot, sync_twins_from_wallets
 from .workspace import list_projects, load_project
 
 
+def _cloud_pipeline(network: str = "monad-testnet", query: str = "", address: str = "", estimated_gas: int = 80_000, **_k):
+    from .engines.orchestrator import run_cloud_pipeline
+
+    return run_cloud_pipeline(
+        network,
+        address=address or "",
+        query=query or "",
+        estimated_gas=int(estimated_gas or 80_000),
+    )
+
+
+def _system_run(network: str = "monad-testnet", **kw):
+    from .unified import run_system
+
+    allowed = {
+        "objective",
+        "query",
+        "address",
+        "estimated_gas",
+        "run_company",
+        "run_desk",
+        "run_cloud",
+        "run_vault_route",
+    }
+    return run_system(network, **{k: v for k, v in kw.items() if k in allowed})
+
+
+def _system_status(network: str = "monad-testnet", **_k):
+    from .unified import system_status
+
+    return system_status(network)
+
+
 def _vault_address() -> str:
     try:
         from .vault_route import _load_vault_address
@@ -501,6 +534,10 @@ def _invoke_handlers() -> Dict[str, Callable[..., Dict[str, Any]]]:
         ("app.academy", "list_quests"): academy_list,
         ("app.daily", "home"): daily_home_fn,
         ("app.nomos", "arena"): desk_arena,  # desk arena is the live reject surface
+        ("app.cloud", "pipeline"): _cloud_pipeline,
+        ("app.cloud", "run"): _system_run,
+        ("app.shell", "system"): _system_status,
+        ("app.shell", "run"): _system_run,
     }
 
 
