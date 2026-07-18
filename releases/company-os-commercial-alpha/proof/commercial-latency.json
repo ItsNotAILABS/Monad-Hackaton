@@ -1,0 +1,12 @@
+{
+  "schema": "thesis.commercial.latency.v1",
+  "environment": "local container, sqlite WAL, Python 3.12-compatible runtime",
+  "operations": {
+    "create_100_missions_ms": 402.671,
+    "create_mean_ms": 4.027,
+    "decide_100_missions_ms": 491.215,
+    "decision_mean_ms": 4.912,
+    "list_100_missions_ms": 5.99
+  },
+  "claims_boundary": "Local benchmark only; not production load testing."
+}
