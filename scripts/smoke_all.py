@@ -101,12 +101,24 @@ def main() -> int:
         len(apps["modules"]),
     )
 
-    # wallets + vault route path exist
     wl = c.get("/wallets").json()
     assert "links" in wl and wl.get("security", {}).get("stores_private_keys") is False
     desk = c.get("/desk").json()
     assert "tickets_recent" in desk
     print("wallets/desk integrated ok")
+
+    # Competition winner path
+    win = c.post("/demo/win-path").json()
+    assert win.get("ok") and win.get("proof", {}).get("reject_is_feature")
+    assert int(win.get("desk_arena", {}).get("n_rejected") or 0) >= 1
+    assert win.get("scorecard", {}).get("grade") in ("WINNER", "STRONG", "WIP")
+    print("win-path", win["scorecard"]["grade"], win["scorecard"]["pct"], "% rejects", win["desk_arena"]["n_rejected"])
+
+    j = c.get("/judge").json()
+    assert j.get("vaporware") is False
+    assert j.get("personal_problem") and j.get("scorecard")
+    assert j.get("winning_claim")
+    print("judge scorecard", j["scorecard"]["grade"], j["scorecard"]["passed"], "/", j["scorecard"]["total"])
 
     print("SMOKE_OK")
     return 0

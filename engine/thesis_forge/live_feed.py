@@ -32,6 +32,28 @@ from .workspace import list_projects
 _ROOT = Path(__file__).resolve().parents[2]
 _DEPLOY = _ROOT / "receipts" / "deployment.json"
 
+# Lazy import competition scorecard to avoid circular import weight at module load
+def _competition_strip(network: str) -> Dict[str, Any]:
+    try:
+        from .competition import WINNING_CLAIM, PERSONAL_PROBLEM, scorecard_live
+
+        card = scorecard_live(network)
+        return {
+            "hackathon": "Spark · Build Anything",
+            "url": "https://buildanything.so/hackathons/spark",
+            "winning_claim": WINNING_CLAIM,
+            "roommate_test": PERSONAL_PROBLEM["roommate_test"],
+            "problem_title": PERSONAL_PROBLEM["title"],
+            "scorecard_grade": card.get("grade"),
+            "scorecard_pct": card.get("pct"),
+            "scorecard_passed": card.get("passed"),
+            "scorecard_total": card.get("total"),
+            "cta": "WIN PATH",
+            "action": "win_path",
+        }
+    except Exception as exc:
+        return {"error": str(exc), "cta": "WIN PATH", "action": "win_path"}
+
 
 # Sourced from https://docs.monad.xyz/developer-essentials/best-practices
 BEST_PRACTICES: List[Dict[str, Any]] = [
@@ -1020,6 +1042,8 @@ def landing_feed(network: str = "monad-testnet") -> Dict[str, Any]:
             "best_practices": "https://docs.monad.xyz/developer-essentials/best-practices",
             "gas": "https://docs.monad.xyz/developer-essentials/gas-pricing",
             "network": "https://docs.monad.xyz/developer-essentials/network-information",
+            "spark": "https://buildanything.so/hackathons/spark",
         },
+        "competition": _competition_strip(network),
         "elapsed_ms": (time.time() - t0) * 1000,
     }

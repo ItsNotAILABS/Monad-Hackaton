@@ -520,6 +520,86 @@ code.sm { font-size: 10px; display: block; margin-top: 4px; word-break: break-al
 .stream-item.kind-ai { border-color: #a794ff55; }
 .stream-item.kind-apps { border-color: #ff8f9a44; }
 
+/* Competition winner strip */
+.win-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;
+  justify-content: space-between;
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f0b42944;
+  background:
+    radial-gradient(ellipse at 10% 0%, #f0b42918, transparent 50%),
+    radial-gradient(ellipse at 90% 100%, #6d4aff22, transparent 45%),
+    #0a0b12;
+}
+.win-copy {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.win-copy h2,
+.win-copy h3 {
+  margin: 6px 0 8px;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  line-height: 1.25;
+}
+.win-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 160px;
+}
+.win-btn {
+  min-width: 160px;
+  box-shadow: 0 0 28px #f0b42933;
+  border: 1px solid #f0b42966 !important;
+  background: linear-gradient(135deg, #f0b429, #ff7a18) !important;
+  color: #120c04 !important;
+  font-weight: 700;
+}
+.win-btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.win-result {
+  margin: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #2ee6a644;
+  background: linear-gradient(180deg, #0f1a14, #0a0b12);
+  box-shadow: 0 0 40px #2ee6a614;
+}
+.win-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.win-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+.win-result .proto.no {
+  border-color: #ff8f9a55;
+  margin-top: 6px;
+}
+.judge-panel .win-strip {
+  border-radius: 0;
+  margin-bottom: 0;
+}
+@media (max-width: 800px) {
+  .win-proof-grid { grid-template-columns: repeat(2, 1fr); }
+  .win-actions { align-items: stretch; width: 100%; }
+}
+
 @media (max-width: 1400px) {
   .app-modules { grid-template-columns: repeat(4, 1fr); }
   .grid4 { grid-template-columns: repeat(2, 1fr); }

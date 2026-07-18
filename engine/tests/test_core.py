@@ -353,12 +353,19 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "1.2.0"
+    assert c.get("/health").json()["version"] == "2.0.0"
     laws = c.get("/laws").json()
     assert laws.get("embedded") and laws.get("law_count", 0) >= 15
     land = c.get("/landing").json()
     assert land.get("ticker") and land.get("stream") and land.get("ai_brief")
-    assert c.get("/judge").json()["vaporware"] is False
+    assert land.get("apps", {}).get("modules")
+    assert land.get("competition", {}).get("winning_claim")
+    j = c.get("/judge").json()
+    assert j["vaporware"] is False
+    assert j.get("scorecard", {}).get("passed", 0) >= 10
+    assert j.get("personal_problem")
+    win = c.post("/demo/win-path").json()
+    assert win.get("ok") and win.get("proof", {}).get("reject_is_feature")
     body = {
         "name": "API Vault",
         "objective": "Coordinate Monad portfolio under user-owned financial laws safely.",

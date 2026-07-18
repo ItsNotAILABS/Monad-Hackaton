@@ -64,6 +64,7 @@ function App() {
   const [sandbox, setSandbox] = useState(null);
   const [hq, setHq] = useState(null);
   const [missionRoom, setMissionRoom] = useState(null);
+  const [winPath, setWinPath] = useState(null);
   const [companyObjective, setCompanyObjective] = useState(
     "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me what is happening."
   );
@@ -575,6 +576,30 @@ function App() {
     }
   }
 
+  async function runWinPath() {
+    setBusy(true);
+    setErr("");
+    try {
+      const data = await api(`/demo/win-path?network=${network}`, {
+        method: "POST",
+        body: "{}",
+      });
+      setWinPath(data);
+      setDesk(await api("/desk"));
+      setJudge(await api(`/judge?network=${network}`));
+      setTab("live");
+      flash(
+        data.proof?.reject_is_feature
+          ? `WIN PATH · ${data.desk_arena?.n_rejected} rejects · scorecard ${data.proof?.scorecard_grade}`
+          : "WIN PATH complete"
+      );
+    } catch (e) {
+      setErr(String(e.message || e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openMission(id) {
     setBusy(true);
     try {
@@ -704,9 +729,11 @@ function App() {
           api={api}
           network={network}
           busy={busy}
+          winPath={winPath}
           onNavigate={setTab}
           onAction={async (action, payload = {}) => {
             try {
+              if (action === "win_path") return runWinPath();
               if (action === "run_company") return runCompany();
               if (action === "connect_wallet")
                 return connectBrowserWallet(payload.kind || "metamask");
@@ -747,7 +774,6 @@ function App() {
                   tid = t?.ticket_id;
                 }
                 if (!tid) {
-                  // seed a routable path: run arena then route first accepted
                   await runDeskArena();
                   const d2 = await api("/desk");
                   const t2 = (d2.tickets_recent || []).find((x) =>
@@ -773,7 +799,6 @@ function App() {
                 setTab("academy");
                 return;
               }
-              // module tiles without special action
               if (payload.href) setTab(payload.href);
             } catch (e) {
               setErr(String(e.message || e));
@@ -2027,69 +2052,184 @@ function App() {
       )}
 
       {tab === "judge" && (
-        <section className="panel">
-          <article className="result judge">
-            <label>JUDGE / AI AGENT PROOF PANEL</label>
-            <p className="doctrine">{judge?.doctrine || health?.doctrine}</p>
-            <div className="grid2 tight">
-              <div>
-                <div className="kv">
-                  <span>Product</span>
-                  <b>{judge?.product}</b>
-                </div>
-                <div className="kv">
-                  <span>Version</span>
-                  <b>{judge?.version}</b>
-                </div>
-                <div className="kv">
-                  <span>Vaporware</span>
-                  <Pill ok={!judge?.vaporware}>{String(judge?.vaporware)}</Pill>
-                </div>
-                <div className="kv">
-                  <span>Live API</span>
-                  <Pill ok={judge?.live_api}>{String(judge?.live_api)}</Pill>
-                </div>
-                <div className="kv">
-                  <span>Contract set</span>
-                  <b>{(judge?.features?.contracts || []).join(", ")}</b>
-                </div>
-              </div>
-              <div>
-                <div className="kv">
-                  <span>Pipeline stages</span>
-                  <b>{judge?.features?.pipeline_stages}</b>
-                </div>
-                <div className="kv">
-                  <span>Academy quests</span>
-                  <b>{judge?.features?.academy_quests}</b>
-                </div>
-                <div className="kv">
-                  <span>Protocols</span>
-                  <b>{judge?.features?.protocols}</b>
-                </div>
-                <div className="kv">
-                  <span>Vault on chain</span>
-                  <Pill ok={judge?.checklist?.contract_address}>
-                    {judge?.checklist?.contract_address ? "yes" : "pending deploy"}
-                  </Pill>
-                </div>
-                <div className="kv">
-                  <span>Github</span>
-                  <a className="link" href={judge?.repo} target="_blank" rel="noreferrer">
-                    repo
-                  </a>
-                </div>
-              </div>
+        <section className="panel judge-panel">
+          <div className="win-strip">
+            <div className="win-copy">
+              <span className="eyebrow">
+                {(judge?.hackathon?.name || "SPARK").toUpperCase()} · JUDGE / AI AGENT PACK
+              </span>
+              <h2>{judge?.winning_claim || "Agents propose. Laws decide. Receipts remember."}</h2>
+              <p className="muted">{judge?.personal_problem?.roommate_test}</p>
             </div>
-            <label>REAL PATHS (not mocks)</label>
-            <ul className="pillars">
-              {(judge?.checklist?.real_api_paths || []).map((p) => (
-                <li key={p}>
-                  <code>{p}</code>
-                </li>
+            <div className="win-actions">
+              <button type="button" className="forge win-btn" disabled={busy} onClick={runWinPath}>
+                ▶ WIN PATH
+              </button>
+              <button type="button" className="ghost" onClick={() => setTab("live")}>
+                LIVE board
+              </button>
+              <a className="link" href={judge?.repo} target="_blank" rel="noreferrer">
+                GitHub
+              </a>
+            </div>
+          </div>
+
+          <div className="grid3">
+            <article className="result judge">
+              <label>PERSONAL PROBLEM (SPARK PROMPT)</label>
+              <p className="cert" style={{ fontSize: "1rem" }}>
+                {judge?.personal_problem?.title}
+              </p>
+              <p className="muted sm">{judge?.personal_problem?.i_have}</p>
+              <ul className="pillars">
+                {(judge?.personal_problem?.it_hurts || []).map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+              <label>SOLUTION</label>
+              <p className="muted sm">{judge?.solution?.what_it_is || judge?.solution?.one_liner}</p>
+              <div className="kv">
+                <span>Vaporware</span>
+                <Pill ok={!judge?.vaporware}>{String(judge?.vaporware)}</Pill>
+              </div>
+              <div className="kv">
+                <span>Live API</span>
+                <Pill ok={judge?.live_api}>{String(judge?.live_api)}</Pill>
+              </div>
+              <div className="kv">
+                <span>Version</span>
+                <b>{judge?.version || health?.version}</b>
+              </div>
+              <div className="kv">
+                <span>Vault recorded</span>
+                <Pill ok={judge?.checklist?.contract_address}>
+                  {judge?.checklist?.vault_address
+                    ? `${String(judge.checklist.vault_address).slice(0, 12)}…`
+                    : "pending deploy"}
+                </Pill>
+              </div>
+            </article>
+
+            <article className="result">
+              <label>
+                SCORECARD · {judge?.scorecard?.grade || "—"} · {judge?.scorecard?.pct ?? "—"}%
+              </label>
+              {(judge?.scorecard?.criteria || []).map((c) => (
+                <div key={c.id} className={`proto ${c.pass ? "yes" : "no"}`}>
+                  <header style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <b>{c.label}</b>
+                    <Pill ok={c.pass}>{c.pass ? "PASS" : "FAIL"}</Pill>
+                  </header>
+                  <p className="muted sm">{c.proof}</p>
+                </div>
               ))}
-            </ul>
-          </article>
+            </article>
+
+            <article className="result">
+              <label>90s DEMO SCRIPT</label>
+              {(judge?.demo_script_90s || []).map((b) => (
+                <div key={b.t} className="proto">
+                  <b>
+                    {b.t} · {b.beat}
+                  </b>
+                  <p className="muted sm">{b.say}</p>
+                  <p className="muted sm">
+                    <em>Show:</em> {b.show}
+                  </p>
+                </div>
+              ))}
+              <label>WHY WE WIN VS CROWD</label>
+              {(judge?.differentiation || []).map((d) => (
+                <div key={d.crowd} className="proto">
+                  <b>{d.crowd}</b>
+                  <p className="muted sm">→ {d.thesis}</p>
+                </div>
+              ))}
+            </article>
+          </div>
+
+          <div className="grid2 tight" style={{ margin: "12px" }}>
+            <article className="result">
+              <label>FEATURES (LIVE, NOT MOCK)</label>
+              <div className="kv">
+                <span>Pipeline stages</span>
+                <b>{judge?.features?.pipeline_stages}</b>
+              </div>
+              <div className="kv">
+                <span>Academy quests</span>
+                <b>{judge?.features?.academy_quests}</b>
+              </div>
+              <div className="kv">
+                <span>Protocols / venues</span>
+                <b>
+                  {judge?.features?.protocols} / {judge?.features?.trading_venues}
+                </b>
+              </div>
+              <div className="kv">
+                <span>Company OS / laws / AI twins</span>
+                <b>
+                  {[
+                    judge?.features?.company_os && "OS",
+                    judge?.features?.ecosystem_laws && "laws",
+                    judge?.features?.ai_sandbox_twins && "twins",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </b>
+              </div>
+              <div className="kv">
+                <span>Contracts</span>
+                <b className="muted sm">{(judge?.features?.contracts || []).join(", ")}</b>
+              </div>
+              <label>REAL API PATHS</label>
+              <ul className="pillars">
+                {(judge?.checklist?.real_api_paths || []).map((p) => (
+                  <li key={p}>
+                    <code>{p}</code>
+                  </li>
+                ))}
+              </ul>
+            </article>
+            <article className="result">
+              <label>MONAD ESSENTIALS</label>
+              <p className="muted sm">
+                {(judge?.monad_essentials?.gas_tip || {}).title}:{" "}
+                {(judge?.monad_essentials?.gas_tip || {}).body}
+              </p>
+              <div className="kv">
+                <span>Law count</span>
+                <b>{judge?.monad_essentials?.laws_runtime?.law_count}</b>
+              </div>
+              <a
+                className="link"
+                href={judge?.monad_essentials?.best_practices}
+                target="_blank"
+                rel="noreferrer"
+              >
+                docs.monad.xyz best practices →
+              </a>
+              <label>HOW TO DEMO</label>
+              <ol className="pillars">
+                {(judge?.submission?.how_to_demo || []).map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ol>
+              {winPath && (
+                <>
+                  <label>LAST WIN PATH PROOF</label>
+                  <p className="muted sm">{winPath.headline}</p>
+                  <div className="kv">
+                    <span>Rejects</span>
+                    <b className="up">{winPath.desk_arena?.n_rejected}</b>
+                  </div>
+                  <div className="kv">
+                    <span>Grade</span>
+                    <b>{winPath.proof?.scorecard_grade}</b>
+                  </div>
+                </>
+              )}
+            </article>
+          </div>
         </section>
       )}
 

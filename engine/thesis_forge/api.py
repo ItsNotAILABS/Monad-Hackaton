@@ -89,10 +89,11 @@ from .ecosystem_laws import (
     runtime_status,
 )
 from .live_feed import landing_feed
+from .competition import competition_pack, run_win_path, scorecard_live
 
 app = FastAPI(
     title="THESIS Forge API",
-    description="THESIS Company OS — miniature DeFi company for Monad (GM + departments)",
+    description="THESIS Company OS — Spark-ready Monad DeFi company (GM + departments)",
     version=__version__,
 )
 
@@ -506,6 +507,9 @@ def health():
             "/sandbox/*",
             "/wallets/*",
             "/desk/*",
+            "/landing",
+            "/competition",
+            "/demo/win-path",
             "/ecosystem",
             "/gas/*",
             "/intelligence/*",
@@ -933,17 +937,45 @@ def deployment_record(record: DeploymentRecord):
     return {"ok": True, "deployment": payload, "receipt": receipt}
 
 
+@app.get("/competition")
+def competition(network: str = Query("monad-testnet")):
+    """Spark competition pack — personal problem, scorecard, demo script."""
+    return competition_pack(network)
+
+
+@app.get("/competition/scorecard")
+def competition_scorecard(network: str = Query("monad-testnet")):
+    return scorecard_live(network)
+
+
+@app.post("/demo/win-path")
+def demo_win_path(network: str = Query("monad-testnet")):
+    """One-click competition proof: desk rejects + laws + scorecard."""
+    return run_win_path(network)
+
+
 @app.get("/judge")
-def judge_panel():
-    """Compact proof panel for Spark judges / AI judging agent."""
+def judge_panel(network: str = Query("monad-testnet")):
+    """Spark judge / AI judging agent proof panel (competition-winner grade)."""
     dep = _load_deployment()
-    projects = list_projects()[:5]
+    projects = list_projects()[:8]
+    pack = competition_pack(network)
+    vault = dep.get("primary_submission_address") or (dep.get("contracts") or {}).get(
+        "SovereignVault", ""
+    )
     return {
-        "schema": "thesis.judge.v1",
-        "product": "THESIS — Monad AI Workstation",
+        "schema": "thesis.judge.v2",
+        "product": pack["product"],
         "version": __version__,
-        "repo": "https://github.com/ItsNotAILABS/Monad-Hackaton",
-        "doctrine": "Agents propose. Laws decide. Receipts remember.",
+        "repo": pack["repo"],
+        "hackathon": pack["hackathon"],
+        "doctrine": pack["doctrine"],
+        "winning_claim": pack["winning_claim"],
+        "personal_problem": pack["personal_problem"],
+        "solution": pack["solution"],
+        "differentiation": pack["differentiation"],
+        "demo_script_90s": pack["demo_script_90s"],
+        "scorecard": pack["scorecard"],
         "live_api": True,
         "vaporware": False,
         "features": {
@@ -952,6 +984,11 @@ def judge_panel():
             "protocols": len(all_protocols()),
             "trading_venues": len(list_venues()),
             "trading_desk": True,
+            "company_os": True,
+            "ecosystem_laws": True,
+            "ai_sandbox_twins": True,
+            "wallet_link_public_only": True,
+            "live_landing": True,
             "contracts": [
                 "PolicyKernel",
                 "SovereignVault",
@@ -965,27 +1002,25 @@ def judge_panel():
         "deployment": dep,
         "recent_projects": projects,
         "receipt_tip": tip(),
+        "submission": pack["submission"],
         "checklist": {
             "public_github": True,
-            "contract_address": bool(
-                dep.get("primary_submission_address")
-                or (dep.get("contracts") or {}).get("SovereignVault")
-            ),
-            "hosted_url": "set after deploy web",
-            "demo_video": "operator",
-            "real_api_paths": [
-                "POST /pipeline",
-                "POST /arena/auto",
-                "POST /desk/arena",
-                "POST /desk/ticket",
-                "POST /academy/grade",
-            ],
+            "contract_address": bool(vault),
+            "vault_address": vault or None,
+            "hosted_url": "operator after web host",
+            "demo_video": "operator — use POST /demo/win-path for live proof",
+            "personal_problem": True,
+            "onchain_story": True,
+            "real_api_paths": pack["submission"]["api_proof"],
+            "scorecard_grade": pack["scorecard"]["grade"],
+            "scorecard_pct": pack["scorecard"]["pct"],
         },
+        "monad_essentials": pack["monad_essentials"],
     }
 
 
 @app.get("/demo/pack")
-def demo_pack():
+def demo_pack(network: str = Query("monad-testnet")):
     from .models import Category
 
     policy = Policy()
@@ -996,16 +1031,13 @@ def demo_pack():
         policy=policy,
     )
     pipe = run_pipeline(req, persist=True)
+    win = run_win_path(network)
+    pack = competition_pack(network)
     return {
-        "script": [
-            "0:00 Problem: trading bots + capital without desk risk + onchain laws.",
-            "0:25 STUDIO: pipeline → package + lawbook.",
-            "0:55 DESK: arena — reject degen perps / oversized tickets.",
-            "1:25 DESK: risk-accept a Kuru ticket → paper fill → PnL.",
-            "1:55 NOMOS + vault gate story for live capital later.",
-            "2:20 ACADEMY: one failure-first lab.",
-            "2:45 Close: agents propose, desk+laws decide, receipts remember.",
-        ],
+        "schema": "thesis.demo.pack.v2",
+        "script": [f"{b['t']} {b['beat']}: {b['say']}" for b in pack["demo_script_90s"]],
+        "demo_script_90s": pack["demo_script_90s"],
+        "win_path": win,
         "pipeline_preview": {
             "project_id": pipe.get("project_id"),
             "progress": pipe.get("progress"),
@@ -1013,10 +1045,16 @@ def demo_pack():
             "arena_rejected": (pipe.get("arena") or {}).get("n_rejected"),
             "receipt": (pipe.get("receipt") or {}).get("receipt_hash", "")[:24],
         },
-        "trading_preview": run_desk_arena(load_desk()),
+        "trading_preview": {
+            "n_accepted": win.get("desk_arena", {}).get("n_accepted"),
+            "n_rejected": win.get("desk_arena", {}).get("n_rejected"),
+            "rejected_samples": win.get("desk_arena", {}).get("rejected_samples"),
+        },
         "deployment": _load_deployment(),
         "quests": list_quests(),
         "judge": "/judge",
+        "competition": "/competition",
+        "winning_claim": win.get("winning_claim"),
     }
 
 

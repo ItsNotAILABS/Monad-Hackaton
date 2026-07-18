@@ -10,6 +10,7 @@ export function Landing({
   busy,
   onNavigate,
   onAction,
+  winPath,
 }) {
   const [feed, setFeed] = useState(null);
   const [err, setErr] = useState("");
@@ -87,6 +88,8 @@ export function Landing({
   const projects = apps.projects || {};
   const marks = market.marks || {};
   const route = vault.latest_route || null;
+  const comp = feed.competition || {};
+  const win = winPath || null;
 
   return (
     <section className={`panel landing-live ${flash ? "pulse-update" : ""}`}>
@@ -104,6 +107,11 @@ export function Landing({
           vault {vault.deployed ? "set" : "—"}
         </span>
         <span className="badge on">{projects.count || 0} apps</span>
+        {comp.scorecard_grade && (
+          <span className={`badge ${comp.scorecard_grade === "WINNER" ? "on" : "warn"}`}>
+            {comp.scorecard_grade} {comp.scorecard_pct}%
+          </span>
+        )}
         <span className="muted sm">
           THESIS laws {enforce.laws_consulted ?? "—"} · ok={String(enforce.ok ?? "—")}
         </span>
@@ -111,6 +119,90 @@ export function Landing({
           best-practices
         </a>
       </div>
+
+      {/* Spark competition winner strip */}
+      <div className="win-strip">
+        <div className="win-copy">
+          <span className="eyebrow">SPARK · BUILD ANYTHING · COMPETITION MODE</span>
+          <h3>{comp.winning_claim || feed.tagline}</h3>
+          <p className="muted sm">
+            <b>Personal problem:</b> {comp.problem_title || "AI + DeFi without brakes"}
+            {" · "}
+            <i>{comp.roommate_test || "Roommate-tested seatbelt for Monad ops."}</i>
+          </p>
+          <p className="muted sm">
+            Scorecard {comp.scorecard_passed}/{comp.scorecard_total} · grade{" "}
+            <b className="up">{comp.scorecard_grade || "…"}</b>
+          </p>
+        </div>
+        <div className="win-actions">
+          <button
+            type="button"
+            className="forge win-btn"
+            disabled={busy}
+            onClick={() => act("win_path")}
+          >
+            ▶ WIN PATH
+          </button>
+          <button type="button" className="ghost" onClick={() => onNavigate("judge")}>
+            JUDGE pack
+          </button>
+          <a className="link sm" href={comp.url || feed.docs?.spark} target="_blank" rel="noreferrer">
+            buildanything.so/spark
+          </a>
+        </div>
+      </div>
+
+      {win && (
+        <div className="win-result">
+          <div className="win-result-head">
+            <span className="live-dot" />
+            <b>{win.headline || "WIN PATH"}</b>
+            <span className="badge on">
+              {win.proof?.scorecard_grade} {win.proof?.scorecard_pct}%
+            </span>
+            <span className="muted sm">{(win.elapsed_ms || 0).toFixed?.(0) ?? win.elapsed_ms}ms</span>
+          </div>
+          <p className="muted sm">{win.roommate_test}</p>
+          <div className="win-proof-grid">
+            <div className="kv">
+              <span>Desk rejects</span>
+              <b className="up">{win.desk_arena?.n_rejected ?? 0}</b>
+            </div>
+            <div className="kv">
+              <span>Accepted</span>
+              <b>{win.desk_arena?.n_accepted ?? 0}</b>
+            </div>
+            <div className="kv">
+              <span>Laws live</span>
+              <b>{win.proof?.laws_embedded ?? "—"}</b>
+            </div>
+            <div className="kv">
+              <span>AI keys</span>
+              <b className="up">{win.proof?.ai_no_keys ? "NEVER" : "?"}</b>
+            </div>
+          </div>
+          {(win.desk_arena?.rejected_samples || []).slice(0, 3).map((r, i) => (
+            <div key={i} className="proto no">
+              <b>
+                REJECT · {r.agent} · {r.pair} · {r.venue}
+              </b>
+              <ul>
+                {(r.reasons || []).slice(0, 2).map((x) => (
+                  <li key={x}>{x}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          <div className="chips tight">
+            {(win.next_clicks || []).map((n) => (
+              <button key={n.tab} type="button" className="ghost" onClick={() => onNavigate(n.tab)}>
+                {n.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="ticker-wrap">
         <div className="ticker" key={`t-${tick}`}>
@@ -159,6 +251,9 @@ export function Landing({
           <h2>{feed.tagline}</h2>
           <p className="muted">{brief.narrative || brief.coach_headline}</p>
           <div className="chips">
+            <button type="button" className="forge" disabled={busy} onClick={() => act("win_path")}>
+              ▶ WIN PATH
+            </button>
             <button type="button" className="forge" disabled={busy} onClick={() => act("run_company")}>
               STAFF COMPANY →
             </button>
@@ -174,8 +269,8 @@ export function Landing({
             <button type="button" className="ghost" disabled={busy} onClick={() => act("forge")}>
               Forge app
             </button>
-            <button type="button" className="ghost" onClick={() => onNavigate("hq")}>
-              HQ
+            <button type="button" className="ghost" onClick={() => onNavigate("judge")}>
+              JUDGE
             </button>
           </div>
         </div>
