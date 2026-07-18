@@ -227,6 +227,20 @@ export function Nomos({
               <b>{dual.ecosystem_law_count}</b>
             </div>
           ) : null}
+          <label style={{ marginTop: 14 }}>ARENA RULES (policy.evaluate)</label>
+          <div className="plans">
+            {(catalog?.arena_core?.rules?.rules || []).map((r) => (
+              <div key={r.id} className="plan">
+                <header>
+                  <b>{r.id}</b>
+                  <span className="pill warn">{r.op}</span>
+                </header>
+                <p>
+                  {r.field_action} vs {r.field_policy} · {r.human}
+                </p>
+              </div>
+            ))}
+          </div>
           <label style={{ marginTop: 14 }}>HOW IT WORKS</label>
           <ol className="pillars start-steps nomos-steps">
             {(catalog?.how_it_works || []).map((s) => (
@@ -235,6 +249,10 @@ export function Nomos({
               </li>
             ))}
           </ol>
+          <p className="muted sm" style={{ marginTop: 8 }}>
+            Core file: <code>{catalog?.arena_core?.file || "engine/thesis_forge/policy.py"}</code> ·{" "}
+            {(catalog?.arena_core?.pipeline || ["evaluate", "arbitrate", "arena_report"]).join(" → ")}
+          </p>
         </article>
       </div>
 
@@ -275,6 +293,30 @@ export function Nomos({
                   <code className="sm">{String(arena.receipt.receipt_hash).slice(0, 18)}…</code>
                 </div>
               ) : null}
+              {arena.scoreboard?.length ? (
+                <>
+                  <label style={{ marginTop: 10 }}>SCOREBOARD</label>
+                  <div className="plans">
+                    {arena.scoreboard.map((row) => (
+                      <div
+                        key={`${row.rank}-${row.agent}`}
+                        className={`plan ${row.accepted ? "yes" : "no"}`}
+                      >
+                        <header>
+                          <b>
+                            #{row.rank} · {row.agent} · {row.protocol}
+                          </b>
+                          <span className={`pill ${row.accepted ? "ok" : "bad"}`}>
+                            {row.outcome || (row.accepted ? "ACCEPT" : "REJECT")}
+                          </span>
+                        </header>
+                        <p>score {row.score}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+              <label style={{ marginTop: 10 }}>EVALUATIONS</label>
               <div className="plans">
                 {evals.map((row, i) => (
                   <div

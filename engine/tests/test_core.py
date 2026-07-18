@@ -69,6 +69,12 @@ def test_agents_propose_and_arena():
     rep = arena_report(plans, req.policy)
     assert rep["n_rejected"] >= 1
     assert rep["n_accepted"] >= 1
+    assert rep["reject_is_a_feature"] is True
+    assert rep["doctrine"]
+    assert rep["scoreboard"]
+    assert rep["scoreboard"][0]["accepted"] is True
+    assert len(rep["rules_applied"]) >= 6
+    assert "slippage-limit" in rep["rules_applied"]
 
 
 def test_policy_accepts_lawful_action():

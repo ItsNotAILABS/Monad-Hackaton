@@ -187,17 +187,22 @@ Connects to ItsNotAILABS work on sovereign AI swarms and agent orchestration und
 
 | Layer | Path |
 |-------|------|
-| Policy engine | `engine/thesis_forge/policy.py` |
+| **Arena core** | `engine/thesis_forge/policy.py` — evaluate → arbitrate → arena_report |
 | Agent plans | `engine/thesis_forge/agents.py` |
+| Models | `engine/thesis_forge/models.py` — Action · Policy · Evaluation |
 | Department runner | `engine/thesis_forge/company/departments.py` → `run_nomos` |
 | Catalog API | `engine/thesis_forge/nomos.py` · `GET /nomos` |
+| HTTP surface | `engine/thesis_forge/api.py` |
 | UI | `web/src/Nomos.jsx` · tab **NOMOS** |
 | Contracts | `contracts/src/PolicyKernel.sol`, `LawBook.sol`, `SovereignVault.sol`, … |
+
+Deep dive: **[NOMOS_ARENA.md](./NOMOS_ARENA.md)** (models + evaluate/arbitrate/report + API).
 
 ---
 
 ## Related docs
 
+- [NOMOS_ARENA.md](./NOMOS_ARENA.md) — **arena code walkthrough**  
 - [COMPANY_OS.md](./COMPANY_OS.md) — departments + SLAs  
 - [ECOSYSTEM_LAWS.md](./ECOSYSTEM_LAWS.md) — runtime lawbook  
 - [PLATFORM.md](./PLATFORM.md) — primitives + apps  

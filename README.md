@@ -235,6 +235,7 @@ Doctrine: **Owner remains sovereign.**
 | [docs/LOCAL_AI.md](docs/LOCAL_AI.md) | Browser Transformers.js |
 | [docs/COMPANY_OS.md](docs/COMPANY_OS.md) | Departments + SLAs |
 | [docs/NOMOS.md](docs/NOMOS.md) | **Risk/law arena · REJECT is a feature** |
+| [docs/NOMOS_ARENA.md](docs/NOMOS_ARENA.md) | Arena core: evaluate → arbitrate → report |
 | [docs/ECOSYSTEM_LAWS.md](docs/ECOSYSTEM_LAWS.md) | Runtime lawbook |
 | [docs/SPARK.md](docs/SPARK.md) | Hackathon submission notes |
 | [CHARTER.md](CHARTER.md) | Product charter |

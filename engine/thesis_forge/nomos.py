@@ -11,12 +11,13 @@ from typing import Any, Dict, List, Optional
 from .agents import propose_plans
 from .ecosystem_laws import embed_ecosystem_laws, get_ecosystem_laws, runtime_status
 from .models import Action, BuildRequest, Policy
-from .policy import arena_report, evaluate
+from .policy import DOCTRINE as POLICY_DOCTRINE
+from .policy import TAGLINE as POLICY_TAGLINE
+from .policy import arena_report, evaluate, rule_catalog
 from .receipts import seal, tip
 
-DOCTRINE = "Agents propose. Laws decide. Owner signs. Receipts remember."
-
-TAGLINE = "Auto multi-agent propose + arena (REJECT is a feature)"
+DOCTRINE = POLICY_DOCTRINE
+TAGLINE = POLICY_TAGLINE
 
 DEPARTMENT_WORKFLOW: List[Dict[str, str]] = [
     {
@@ -248,6 +249,11 @@ def nomos_payload(network: str = "monad-testnet") -> Dict[str, Any]:
         "onchain": ONCHAIN,
         "safety": SAFETY_LAYERS,
         "reject_is_a_feature": True,
+        "arena_core": {
+            "file": "engine/thesis_forge/policy.py",
+            "pipeline": ["evaluate", "arbitrate", "arena_report"],
+            "rules": rule_catalog(),
+        },
         "sla": {
             "id": "nomos",
             "name": "Risk SLA",
@@ -257,11 +263,13 @@ def nomos_payload(network: str = "monad-testnet") -> Dict[str, Any]:
         "network": network,
         "receipt_tip": tip()[:16] if tip() else None,
         "docs": "docs/NOMOS.md",
+        "docs_arena": "docs/NOMOS_ARENA.md",
         "related": {
             "company": "docs/COMPANY_OS.md",
             "laws": "docs/ECOSYSTEM_LAWS.md",
             "platform": "docs/PLATFORM.md",
             "spark": "docs/SPARK.md",
+            "arena_impl": "docs/NOMOS_ARENA.md",
         },
     }
 

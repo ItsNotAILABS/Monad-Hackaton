@@ -186,9 +186,13 @@ def main() -> int:
     assert nom.get("reject_is_a_feature") is True
     assert nom.get("doctrine")
     assert (nom.get("ecosystem") or {}).get("law_count", 0) >= 1
+    rules = (nom.get("arena_core") or {}).get("rules") or {}
+    assert len(rules.get("rules") or []) >= 6
+    assert rules.get("pipeline") == ["evaluate", "arbitrate", "arena_report"]
     nr = c.post("/nomos/run", json=body).json()
     assert nr.get("n_rejected", 0) >= 1
     assert nr.get("reject_is_a_feature") is True
+    assert nr.get("scoreboard")
     print(
         "nomos",
         nom.get("tagline", "")[:40],
@@ -198,6 +202,8 @@ def main() -> int:
         nr.get("n_accepted"),
         "winner",
         (nr.get("winner") or {}).get("action", {}).get("agent"),
+        "scoreboard",
+        len(nr.get("scoreboard") or []),
     )
 
     j = c.get("/judge").json()
