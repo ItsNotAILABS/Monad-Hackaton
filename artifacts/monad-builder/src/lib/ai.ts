@@ -1,6 +1,10 @@
 /**
  * AI client utilities for MonadBuilder+ frontend.
  * All streaming endpoints parse SSE data: {...} lines.
+ *
+ * Model tiers used server-side:
+ *   gpt-5-nano  — chat, component gen, template match (fast, cheapest)
+ *   gpt-5-mini  — analyze, build-dapp, audit, scripts (needs reliable reasoning)
  */
 
 const AI_BASE = "/api/ai";
@@ -8,6 +12,25 @@ const AI_BASE = "/api/ai";
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+/** Thrown when the server returns 429 (rate limit exceeded). */
+export class RateLimitError extends Error {
+  retryAfter: number;
+  constructor(retryAfter: number) {
+    super(`Rate limit exceeded — please wait ${retryAfter}s before trying again.`);
+    this.name = "RateLimitError";
+    this.retryAfter = retryAfter;
+  }
+}
+
+/** Check a non-streaming response for rate limit errors. */
+async function guardJson(res: Response) {
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    throw new RateLimitError(body.retryAfter ?? 60);
+  }
+  return res;
 }
 
 /** Stream a chat response. Calls onChunk for each delta, onDone when finished. */
@@ -22,6 +45,13 @@ export async function streamChat(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages, context }),
   });
+
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    onChunk(`\n⚠ Too many requests — please wait ${body.retryAfter ?? 60}s before sending another message.`);
+    onDone();
+    return;
+  }
 
   if (!res.body) { onDone(); return; }
   const reader = res.body.getReader();
@@ -60,6 +90,13 @@ export async function streamAnalysis(
     body: JSON.stringify({ type, data }),
   });
 
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    onChunk(`\n⚠ Rate limit reached — please wait ${body.retryAfter ?? 60}s.`);
+    onDone();
+    return;
+  }
+
   if (!res.body) { onDone(); return; }
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -89,14 +126,17 @@ export async function generateComponent(
   existingTypes: string[] = []
 ): Promise<{ type: string; name: string; props: Record<string, any>; reasoning: string } | null> {
   try {
-    const res = await fetch(`${AI_BASE}/generate-component`, {
+    const res = await guardJson(await fetch(`${AI_BASE}/generate-component`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, existingTypes }),
-    });
+    }));
     const data = await res.json();
     return data.ok ? data.component : null;
-  } catch { return null; }
+  } catch (err) {
+    if (err instanceof RateLimitError) throw err;
+    return null;
+  }
 }
 
 /** Build a full dApp from a one-sentence idea. Returns projectName + pre-configured components. */
@@ -104,14 +144,17 @@ export async function buildDapp(
   prompt: string
 ): Promise<{ projectName: string; components: Array<{ id: string; type: string; props: Record<string, any>; order: number }> } | null> {
   try {
-    const res = await fetch(`${AI_BASE}/build-dapp`, {
+    const res = await guardJson(await fetch(`${AI_BASE}/build-dapp`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
-    });
+    }));
     const data = await res.json();
     return data.ok ? { projectName: data.projectName, components: data.components } : null;
-  } catch { return null; }
+  } catch (err) {
+    if (err instanceof RateLimitError) throw err;
+    return null;
+  }
 }
 
 /** Stream an AI audit of the current dApp. */
@@ -126,6 +169,13 @@ export async function streamAuditDapp(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ projectName, components }),
   });
+
+  if (res.status === 429) {
+    const body = await res.json().catch(() => ({}));
+    onChunk(`\n⚠ Rate limit reached — please wait ${body.retryAfter ?? 60}s.`);
+    onDone();
+    return;
+  }
 
   if (!res.body) { onDone(); return; }
   const reader = res.body.getReader();
@@ -157,14 +207,17 @@ export async function recommendTemplate(
   templates: Array<{ id: number; name: string; category: string; description: string }>
 ): Promise<{ templateId: number; reason: string } | null> {
   try {
-    const res = await fetch(`${AI_BASE}/recommend-template`, {
+    const res = await guardJson(await fetch(`${AI_BASE}/recommend-template`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description, templates }),
-    });
+    }));
     const data = await res.json();
     return data.ok ? { templateId: data.templateId, reason: data.reason } : null;
-  } catch { return null; }
+  } catch (err) {
+    if (err instanceof RateLimitError) throw err;
+    return null;
+  }
 }
 
 /** Generate a Monad script from a description. */
@@ -173,12 +226,15 @@ export async function generateScript(
   lang: "python" | "js" = "python"
 ): Promise<string | null> {
   try {
-    const res = await fetch(`${AI_BASE}/script`, {
+    const res = await guardJson(await fetch(`${AI_BASE}/script`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, lang }),
-    });
+    }));
     const data = await res.json();
     return data.ok ? data.script : null;
-  } catch { return null; }
+  } catch (err) {
+    if (err instanceof RateLimitError) throw err;
+    return null;
+  }
 }

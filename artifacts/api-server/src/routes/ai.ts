@@ -82,6 +82,35 @@ chainRouter.get("/gas", async (_req, res) => {
   }
 });
 
+// ─── Rate limiter (in-memory, per-IP, sliding window) ─────────────────────
+const rateLimitWindows = new Map<string, number[]>();
+const RATE_LIMIT_MAX = 40;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function checkRateLimit(ip: string): { allowed: boolean; retryAfter: number } {
+  const now = Date.now();
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  const hits = (rateLimitWindows.get(ip) ?? []).filter((t) => t > cutoff);
+  if (hits.length >= RATE_LIMIT_MAX) {
+    const oldest = hits[0];
+    const retryAfter = Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000);
+    return { allowed: false, retryAfter };
+  }
+  hits.push(now);
+  rateLimitWindows.set(ip, hits);
+  return { allowed: true, retryAfter: 0 };
+}
+
+aiRouter.use((req, res, next) => {
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+  const { allowed, retryAfter } = checkRateLimit(ip);
+  if (!allowed) {
+    res.status(429).json({ error: "Rate limit exceeded — too many AI requests. Please wait.", retryAfter });
+    return;
+  }
+  next();
+});
+
 // ─── Streaming chat ────────────────────────────────────────────────────────
 aiRouter.post("/chat", async (req, res) => {
   const { messages = [], context = "" } = req.body as {
@@ -99,8 +128,8 @@ aiRouter.post("/chat", async (req, res) => {
       : MONAD_SYSTEM;
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
-      max_completion_tokens: 8192,
+      model: "gpt-5-nano",       // lightweight: conversational responses don't need heavy reasoning
+      max_completion_tokens: 4096,
       messages: [
         { role: "system", content: systemContent },
         ...messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
@@ -128,7 +157,7 @@ aiRouter.post("/generate-component", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
+      model: "gpt-5-mini",       // mini: nano truncates JSON mid-output; mini is reliable + still cheap
       max_completion_tokens: 1024,
       messages: [
         {
@@ -192,8 +221,8 @@ aiRouter.post("/analyze", async (req, res) => {
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
-      max_completion_tokens: 8192,
+      model: "gpt-5-mini",       // mini: analysis needs some reasoning, but not the heavyweight models
+      max_completion_tokens: 4096,
       messages: [
         { role: "system", content: MONAD_SYSTEM },
         { role: "user", content: prompts[type] ?? `Analyze: ${data}` },
@@ -223,8 +252,8 @@ aiRouter.post("/build-dapp", async (req, res) => {
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5.6-terra",
-      max_completion_tokens: 2048,
+      model: "gpt-5-mini",       // mini: reliable JSON output; token budget raised for 5-6 component objects
+      max_completion_tokens: 3072,
       messages: [
         {
           role: "system",
@@ -271,9 +300,22 @@ Common props:
       ],
     });
 
-    const raw = response.choices[0]?.message?.content ?? "{}";
+    const raw = response.choices[0]?.message?.content ?? "";
+    if (!raw) {
+      res.status(500).json({ ok: false, error: "AI returned an empty response — please try again." });
+      return;
+    }
     const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(cleaned);
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      // Model returned truncated or non-JSON — log and surface clearly
+      console.error("[build-dapp] JSON parse failed. finish_reason:", response.choices[0]?.finish_reason, "raw:", raw.slice(0, 300));
+      res.status(500).json({ ok: false, error: "AI response was not valid JSON. Try a simpler prompt." });
+      return;
+    }
 
     // Assign stable IDs and order to components
     const components = (parsed.components ?? []).map((c: any, i: number) => ({
@@ -329,8 +371,8 @@ Be specific to the actual components listed. Do not give generic advice.`;
 
   try {
     const stream = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
-      max_completion_tokens: 4096,
+      model: "gpt-5-mini",       // mini: structured audit with sections needs reliable formatting
+      max_completion_tokens: 3072,
       messages: [
         { role: "system", content: MONAD_SYSTEM },
         { role: "user", content: auditPrompt },
@@ -367,7 +409,7 @@ aiRouter.post("/recommend-template", async (req, res) => {
       .join("\n");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
+      model: "gpt-5-mini",       // mini: nano produces empty JSON; mini is still fast and cheap
       max_completion_tokens: 256,
       messages: [
         {
@@ -408,8 +450,8 @@ aiRouter.post("/script", async (req, res) => {
         : "Generate Node.js using only built-in fetch (Node 18+). No npm installs.";
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5.6-luna",
-      max_completion_tokens: 2048,
+      model: "gpt-5-mini",       // mini: script generation needs accurate stdlib-only code
+      max_completion_tokens: 1536,
       messages: [
         {
           role: "system",
