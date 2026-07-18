@@ -118,7 +118,8 @@ Browser (React HQ)
 
 | Tab | What you use it for |
 |-----|---------------------|
-| **BUILDER** | AI daily brief + **one-tap morning** (streak/XP) |
+| **BUILDER** | AI daily brief + **one-tap morning** (streak/XP) · STT notes |
+| **AGENT** | Long-horizon delta AI · self-evolve · X marketing drafts |
 | **PLATFORM** | Kernel, market, **▶ RUN SYSTEM**, app registry |
 | **TOOLS** | Shippable actions + MCP for any AI |
 | **TERM** | Sovereign web terminal · vault · ecosystem · PDF reports |
@@ -210,6 +211,10 @@ powershell -File scripts/run_polyglot.ps1
 | `POST` | `/auto/loop` | Auto paper exec: arena + signals + strategy |
 | `GET` | `/hybrid` | Blockchain + Web Worker hybrid catalog |
 | `POST` | `/hybrid/run` | Node worker_threads hybrid op |
+| `GET` | `/agent` | Long-horizon agent skills / memory |
+| `POST` | `/agent/step` | Delta attention → fast decode → evolve |
+| `POST` | `/x/from-actions` | Draft X post from real user actions |
+| `GET` | `/x/queue` | Marketing draft queue + intent URLs |
 | `POST` | `/company/run` | Staff Company OS |
 | `POST` | `/arena/auto` | Propose agents + arbitrate (REJECT demo) |
 | `POST` | `/desk/arena` | Trading rejects + accepts |
