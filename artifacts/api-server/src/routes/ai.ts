@@ -436,6 +436,110 @@ Return ONLY valid JSON — no markdown:
   }
 });
 
+// ─── Refine dApp from follow-up prompt ───────────────────────────────────
+aiRouter.post("/refine-dapp", async (req, res) => {
+  const { projectName, currentComponents, refinementPrompt } = req.body as {
+    projectName: string;
+    currentComponents: Array<{ type: string; props: Record<string, any> }>;
+    refinementPrompt: string;
+  };
+
+  if (!refinementPrompt?.trim()) {
+    res.status(400).json({ ok: false, error: "refinementPrompt is required" });
+    return;
+  }
+
+  try {
+    const currentSummary = (currentComponents ?? [])
+      .map((c, i) => {
+        const extra = c.props?.title ? ` (title: "${c.props.title}")` : c.props?.label ? ` (label: "${c.props.label}")` : "";
+        return `${i + 1}. ${c.type}${extra}`;
+      })
+      .join("\n") || "(canvas is empty)";
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-5-mini",       // mini: reliable JSON for multi-component layout
+      max_completion_tokens: 3072,
+      messages: [
+        {
+          role: "system",
+          content: `${MONAD_SYSTEM}
+
+You refine an existing MonadBuilder+ dApp layout based on a user instruction.
+Return ONLY valid JSON — no markdown, no explanation:
+{
+  "components": [
+    {
+      "type": "<component type>",
+      "props": { <component-specific props with correct Monad values> }
+    }
+    // 4-8 components total, ordered logically for a dApp page
+  ]
+}
+
+Rules:
+- Preserve components from the current layout that still make sense after the instruction.
+- Add, remove, or reorder components to fulfill the instruction. Be decisive.
+- Always keep wallet-connect if already present.
+- Do not duplicate component types unless the instruction explicitly calls for it.
+- Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
+
+Component types available: wallet-connect, token-swap, nft-gallery, dao-vote, stats-bar,
+price-chart, token-balance, gas-price, recent-transactions, hero-section, button, text-block, image-block
+
+Common props:
+- wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
+- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
+- nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
+- dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
+- stats-bar: { items: 3, chainId: 143 }
+- price-chart: { token: "MON", chainId: 143 }
+- hero-section: { title: "...", subtitle: "..." }
+- button: { label: "...", variant: "primary" }`,
+        },
+        {
+          role: "user",
+          content: `dApp: "${projectName ?? "My Monad dApp"}"
+
+Current components on canvas:
+${currentSummary}
+
+User instruction: "${refinementPrompt}"
+
+Return an updated component list that incorporates this instruction.`,
+        },
+      ],
+    });
+
+    const raw = response.choices[0]?.message?.content ?? "";
+    if (!raw) {
+      res.status(500).json({ ok: false, error: "AI returned an empty response — please try again." });
+      return;
+    }
+    const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      console.error("[refine-dapp] JSON parse failed. finish_reason:", response.choices[0]?.finish_reason, "raw:", raw.slice(0, 300));
+      res.status(500).json({ ok: false, error: "AI response was not valid JSON. Try a simpler instruction." });
+      return;
+    }
+
+    const components = (parsed.components ?? []).map((c: any, i: number) => ({
+      id: `comp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 7)}`,
+      type: c.type,
+      props: c.props ?? {},
+      order: i,
+    }));
+
+    res.json({ ok: true, components });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
 // ─── Script generator ─────────────────────────────────────────────────────
 aiRouter.post("/script", async (req, res) => {
   const { prompt, lang = "python" } = req.body as {

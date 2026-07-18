@@ -103,7 +103,7 @@ export default function Dashboard() {
 
       await new Promise<void>((resolve, reject) => {
         updateProject.mutate(
-          { id: project.id, data: { components: result.components } },
+          { id: project.id, data: { components: result.components as any } },
           { onSuccess: () => resolve(), onError: reject }
         );
       });

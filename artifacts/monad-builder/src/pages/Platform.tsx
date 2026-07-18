@@ -79,7 +79,7 @@ function ToolsTab({ offline }: { offline: boolean }) {
   const [tools, setTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, unknown>>({});
+  const [results, setResults] = useState<Record<string, any>>({});
   const [gasEst, setGasEst] = useState("80000");
   const [termCmd, setTermCmd] = useState("help");
 
@@ -92,7 +92,7 @@ function ToolsTab({ offline }: { offline: boolean }) {
 
   useEffect(() => { if (!offline) load(); }, [offline, load]);
 
-  const runTool = async (id: string, params: Record<string, unknown> = {}) => {
+  const runTool = async (id: string, params: Record<string, any> = {}) => {
     setRunning(id);
     const r = await enginePost(`/tools/${id}/run`, params);
     setResults(prev => ({ ...prev, [id]: r }));
@@ -178,7 +178,7 @@ function CloudTab({ offline }: { offline: boolean }) {
   const [engines, setEngines] = useState<Engine[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState<string | null>(null);
-  const [results, setResults] = useState<Record<string, unknown>>({});
+  const [results, setResults] = useState<Record<string, any>>({});
   const [addr, setAddr] = useState("");
   const [gasEst, setGasEst] = useState("80000");
 
@@ -191,7 +191,7 @@ function CloudTab({ offline }: { offline: boolean }) {
 
   useEffect(() => { if (!offline) load(); }, [offline, load]);
 
-  const runEngine = async (id: string, params: Record<string, unknown> = {}) => {
+  const runEngine = async (id: string, params: Record<string, any> = {}) => {
     setRunning(id);
     const r = await enginePost(`/engines/${id}/run`, { network: "monad-testnet", ...params });
     setResults(prev => ({ ...prev, [id]: r }));
@@ -263,9 +263,9 @@ function CloudTab({ offline }: { offline: boolean }) {
 }
 
 function JudgeTab({ offline }: { offline: boolean }) {
-  const [scorecard, setScorecard] = useState<unknown>(null);
-  const [judge, setJudge] = useState<unknown>(null);
-  const [winPath, setWinPath] = useState<unknown>(null);
+  const [scorecard, setScorecard] = useState<any>(null);
+  const [judge, setJudge] = useState<any>(null);
+  const [winPath, setWinPath] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [runningWin, setRunningWin] = useState(false);
 
@@ -346,8 +346,8 @@ function JudgeTab({ offline }: { offline: boolean }) {
 }
 
 function HQTab({ offline }: { offline: boolean }) {
-  const [hq, setHq] = useState<unknown>(null);
-  const [brief, setBrief] = useState<unknown>(null);
+  const [hq, setHq] = useState<any>(null);
+  const [brief, setBrief] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [runningBrief, setRunningBrief] = useState(false);
 
@@ -407,8 +407,8 @@ function HQTab({ offline }: { offline: boolean }) {
 }
 
 function DeskTab({ offline }: { offline: boolean }) {
-  const [desk, setDesk] = useState<unknown>(null);
-  const [arenaResult, setArenaResult] = useState<unknown>(null);
+  const [desk, setDesk] = useState<any>(null);
+  const [arenaResult, setArenaResult] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [runningArena, setRunningArena] = useState(false);
 
@@ -525,7 +525,7 @@ function LawsTab({ offline }: { offline: boolean }) {
 }
 
 function ContractsTab({ offline }: { offline: boolean }) {
-  const [deployment, setDeployment] = useState<unknown>(null);
+  const [deployment, setDeployment] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {

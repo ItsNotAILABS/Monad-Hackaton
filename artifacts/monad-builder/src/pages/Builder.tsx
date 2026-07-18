@@ -11,9 +11,10 @@ import { Zap, Play, Save, ChevronLeft, Layout, Webhook, FileText, Globe } from "
 import { Button } from "@/components/ui/button";
 import { COMPONENT_PALETTE } from "@/components/builder/palette";
 import { ComponentPreview } from "@/components/builder/ComponentPreview";
-import { ComponentData } from "@workspace/api-client-react";
+import { ComponentData, ComponentDataType } from "@workspace/api-client-react";
 import { Input } from "@/components/ui/input";
 import { AIComponentPrompt } from "@/components/ai/AIComponentPrompt";
+import { AIRefinePanel } from "@/components/ai/AIRefinePanel";
 import { useSetAIContext } from "@/lib/aiPageContext";
 
 // Props that are Monad network config — shown read-only in a separate section
@@ -77,7 +78,7 @@ export default function Builder() {
   const handleAddComponent = (type: string, defaultProps: Record<string, any>) => {
     const newComp: ComponentData = {
       id: `comp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      type,
+      type: type as ComponentDataType,
       props: { ...defaultProps },
       order: components.length
     };
@@ -236,10 +237,19 @@ export default function Builder() {
           </div>
 
           {/* AI component generator */}
-          <div className="p-3 border-t border-white/5">
+          <div className="p-3 border-t border-white/5 space-y-3">
             <AIComponentPrompt
               existingTypes={components.map((c) => c.type)}
               onAdd={handleAddComponent}
+            />
+            <AIRefinePanel
+              projectName={project?.name ?? "My Monad dApp"}
+              currentComponents={components}
+              onRefined={(newComps) => {
+                setComponents(newComps);
+                setSelectedId(null);
+                saveChanges(newComps);
+              }}
             />
           </div>
         </div>

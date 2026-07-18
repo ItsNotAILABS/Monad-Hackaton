@@ -111,7 +111,7 @@ export default function Home() {
       // Update it with the AI-generated components
       await new Promise<void>((resolve, reject) => {
         updateProject.mutate(
-          { id: project.id, data: { components: result.components } },
+          { id: project.id, data: { components: result.components as any } },
           {
             onSuccess: () => resolve(),
             onError: reject,

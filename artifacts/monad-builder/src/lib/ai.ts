@@ -220,6 +220,26 @@ export async function recommendTemplate(
   }
 }
 
+/** Refine an existing dApp canvas from a follow-up instruction. */
+export async function refineDapp(
+  projectName: string,
+  currentComponents: Array<{ type: string; props: Record<string, any> }>,
+  refinementPrompt: string
+): Promise<Array<{ id: string; type: string; props: Record<string, any>; order: number }> | null> {
+  try {
+    const res = await guardJson(await fetch(`${AI_BASE}/refine-dapp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectName, currentComponents, refinementPrompt }),
+    }));
+    const data = await res.json();
+    return data.ok ? data.components : null;
+  } catch (err) {
+    if (err instanceof RateLimitError) throw err;
+    return null;
+  }
+}
+
 /** Generate a Monad script from a description. */
 export async function generateScript(
   prompt: string,
