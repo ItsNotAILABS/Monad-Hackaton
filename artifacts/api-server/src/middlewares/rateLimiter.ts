@@ -90,7 +90,7 @@ async function incrementIpCounter(date: string, ip: string): Promise<number> {
 
 // ─── Global circuit-breaker ───────────────────────────────────────────────────
 /** Max AI calls across ALL IPs in a single UTC calendar day. */
-const DAILY_GLOBAL_LIMIT = 500;
+export const DAILY_GLOBAL_LIMIT = 500;
 
 /** UTC date string "YYYY-MM-DD" for today. */
 function todayUtc(): string {

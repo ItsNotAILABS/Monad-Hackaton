@@ -9,11 +9,53 @@
  */
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { aiRateLimiter } from "../middlewares/rateLimiter";
+import { aiRateLimiter, DAILY_GLOBAL_LIMIT } from "../middlewares/rateLimiter";
 
 export const aiRouter = Router();
 
-// Apply rate limiting to all AI endpoints (40 requests / 15 min per IP)
+// ─── Budget status (no rate limit — read-only, safe to call freely) ──────────
+import { db, aiDailyBudgetTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
+
+/** UTC date string "YYYY-MM-DD" for today. */
+function todayUtcDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Unix timestamp (ms) of the next UTC midnight. */
+function nextUtcMidnightMs(): number {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+}
+
+/**
+ * GET /api/ai/budget
+ * Returns today's AI call count, the daily limit, and seconds until reset.
+ * Does NOT count as an AI call — purely informational.
+ */
+aiRouter.get("/budget", async (_req, res) => {
+  try {
+    const rows = await db
+      .select({ callCount: aiDailyBudgetTable.callCount })
+      .from(aiDailyBudgetTable)
+      .where(eq(aiDailyBudgetTable.date, todayUtcDate()))
+      .limit(1);
+
+    const callCount = rows[0]?.callCount ?? 0;
+    const secondsUntilReset = Math.ceil((nextUtcMidnightMs() - Date.now()) / 1000);
+
+    res.json({
+      callCount,
+      limit: DAILY_GLOBAL_LIMIT,
+      secondsUntilReset,
+      resetAt: new Date(nextUtcMidnightMs()).toISOString(),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to read budget", details: err.message });
+  }
+});
+
+// Apply rate limiting to all remaining AI endpoints (40 requests / 15 min per IP)
 // Implemented in middlewares/rateLimiter.ts — uses req.ip with trust proxy
 aiRouter.use(aiRateLimiter);
 

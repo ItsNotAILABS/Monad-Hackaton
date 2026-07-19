@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Zap, Terminal, Layers, Sparkles } from "lucide-react";
 import { LiveBlockTicker } from "@/components/ai/LiveBlockTicker";
+import { AiBudgetIndicator } from "@/components/ai/AiBudgetIndicator";
 
 export function Navbar() {
   const [location] = useLocation();
@@ -29,6 +30,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-5">
           <LiveBlockTicker />
+          <AiBudgetIndicator />
 
           {navLink("/templates", "Templates")}
           {navLink("/dashboard", "Dashboard")}
