@@ -9,7 +9,7 @@
  */
 import { Router } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { aiRateLimiter, DAILY_GLOBAL_LIMIT } from "../middlewares/rateLimiter";
+import { aiRateLimiter, DAILY_GLOBAL_LIMIT, BUDGET_WARN_THRESHOLD } from "../middlewares/rateLimiter";
 
 export const aiRouter = Router();
 
@@ -47,6 +47,7 @@ aiRouter.get("/budget", async (_req, res) => {
     res.json({
       callCount,
       limit: DAILY_GLOBAL_LIMIT,
+      warnThreshold: BUDGET_WARN_THRESHOLD,
       secondsUntilReset,
       resetAt: new Date(nextUtcMidnightMs()).toISOString(),
     });

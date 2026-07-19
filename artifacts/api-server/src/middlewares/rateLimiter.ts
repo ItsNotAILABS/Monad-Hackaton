@@ -92,6 +92,16 @@ async function incrementIpCounter(date: string, ip: string): Promise<number> {
 /** Max AI calls across ALL IPs in a single UTC calendar day. */
 export const DAILY_GLOBAL_LIMIT = 500;
 
+/**
+ * Fraction of DAILY_GLOBAL_LIMIT at which admins are warned.
+ * Configurable via AI_BUDGET_WARN_THRESHOLD env var (0–1, default 0.8).
+ * The warning is logged at WARN level at most once per UTC calendar day.
+ */
+export const BUDGET_WARN_THRESHOLD = (() => {
+  const raw = parseFloat(process.env.AI_BUDGET_WARN_THRESHOLD ?? "0.8");
+  return Number.isFinite(raw) && raw > 0 && raw < 1 ? raw : 0.8;
+})();
+
 /** UTC date string "YYYY-MM-DD" for today. */
 function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
@@ -99,6 +109,12 @@ function todayUtc(): string {
 
 /** Unix timestamp (ms) after which the cached exhaustion flag expires (UTC midnight). */
 let exhaustedUntil = 0;
+
+/**
+ * UTC date on which the budget-warning was last emitted.
+ * Empty string = not yet fired today.  Resets naturally when the date rolls over.
+ */
+let budgetWarnFiredDate = "";
 
 /** UTC midnight timestamp (ms) for the end of the current UTC day. */
 function nextUtcMidnightMs(): number {
@@ -245,6 +261,22 @@ export async function aiRateLimiter(
     }
 
     const dailyCount = await incrementDailyCounter();
+
+    // ── Budget warning: fire once per UTC day when threshold is crossed ───
+    const today = todayUtc();
+    if (
+      budgetWarnFiredDate !== today &&
+      dailyCount >= Math.ceil(BUDGET_WARN_THRESHOLD * DAILY_GLOBAL_LIMIT)
+    ) {
+      budgetWarnFiredDate = today;
+      const pct = Math.round((dailyCount / DAILY_GLOBAL_LIMIT) * 100);
+      console.warn(
+        `[rateLimiter] WARN: Daily AI budget at ${pct}% — ${dailyCount}/${DAILY_GLOBAL_LIMIT} calls used today (UTC ${today}). ` +
+        `Threshold: ${Math.round(BUDGET_WARN_THRESHOLD * 100)}%. ` +
+        `Resets at UTC midnight. Set AI_BUDGET_WARN_THRESHOLD env var to adjust.`
+      );
+    }
+
     if (dailyCount > DAILY_GLOBAL_LIMIT) {
       exhaustedUntil = nextUtcMidnightMs();
       const retryAfter = Math.ceil((exhaustedUntil - now2) / 1000);
