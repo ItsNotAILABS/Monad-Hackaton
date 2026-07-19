@@ -13,7 +13,7 @@ import { Router, Request, Response } from "express";
 const router = Router();
 
 const GITHUB_CLIENT_ID = process.env["GITHUB_CLIENT_ID"] ?? "";
-const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRET"] ?? "";
+const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRETS"] ?? "";
 const APP_BASE_URL = process.env["APP_BASE_URL"] ?? "https://monados.medinatechlabs.net";
 const GITHUB_REDIRECT_URI = `${APP_BASE_URL}/api/auth/github/callback`;
 
