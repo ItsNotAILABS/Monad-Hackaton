@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, ExternalLink } from "lucide-react";
+import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, ExternalLink, Gift, TrendingUp, Clock, Zap } from "lucide-react";
 import { ComponentData } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -308,6 +308,9 @@ export function LiveWidget({ component }: { component: ComponentData }) {
         </Card>
       );
 
+    case "merkl-rewards":
+      return <MerklRewardsWidget props={props} />;
+
     // Standard Layout/Content
     case "hero-section":
       return (
@@ -385,4 +388,150 @@ export function LiveWidget({ component }: { component: ComponentData }) {
     default:
       return null;
   }
+}
+
+// ─── Merkl Rewards Widget ────────────────────────────────────────────────────
+// Fetches live incentive opportunities from Merkl API for the configured chain.
+// Falls back to a "coming soon" preview when no opportunities exist yet.
+
+interface MerklOpportunity {
+  id: string;
+  name: string;
+  apr: number;
+  dailyRewards: number;
+  rewardToken: string;
+  protocol: string;
+  action: string;
+  tvl?: number;
+}
+
+// Curated preview data shown when Monad testnet has no live Merkl campaigns yet
+const PREVIEW_OPPORTUNITIES: MerklOpportunity[] = [
+  { id: "1", name: "MON/USDC Liquidity",  apr: 48.2,  dailyRewards: 1200, rewardToken: "MON",  protocol: "MonadDEX",   action: "Provide liquidity" },
+  { id: "2", name: "Hold MON",            apr: 12.5,  dailyRewards: 320,  rewardToken: "MON",  protocol: "Merkl",      action: "Hold token" },
+  { id: "3", name: "MON Lending",         apr: 8.9,   dailyRewards: 180,  rewardToken: "USDC", protocol: "MonadLend",  action: "Lending/Borrowing" },
+];
+
+function MerklRewardsWidget({ props }: { props: Record<string, any> }) {
+  const [opportunities, setOpportunities] = React.useState<MerklOpportunity[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [isLive, setIsLive] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const chainId = props.chainId || 10143;
+    fetch(`https://api.merkl.xyz/v4/opportunities?chainId=${chainId}&status=LIVE`)
+      .then(r => r.json())
+      .then((data: any[]) => {
+        if (cancelled) return;
+        if (Array.isArray(data) && data.length > 0) {
+          setOpportunities(data.slice(0, 4).map((o: any) => ({
+            id: o.id || o.chainId,
+            name: o.name || o.identifier || "Opportunity",
+            apr: o.apr ?? 0,
+            dailyRewards: o.dailyRewards ?? 0,
+            rewardToken: o.rewardToken?.symbol || "TOKEN",
+            protocol: o.protocol?.name || "Protocol",
+            action: o.type || "Earn",
+            tvl: o.tvl,
+          })));
+          setIsLive(true);
+        } else {
+          setOpportunities(PREVIEW_OPPORTUNITIES);
+          setIsLive(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOpportunities(PREVIEW_OPPORTUNITIES);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [props.chainId]);
+
+  return (
+    <Card className="my-4 border-amber-500/20 overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+              <Gift className="w-4 h-4 text-amber-400" />
+            </div>
+            <div>
+              <CardTitle className="text-base">{props.title || "Earn Rewards"}</CardTitle>
+              <div className="text-xs text-white/30 font-mono flex items-center gap-1.5 mt-0.5">
+                <span>Powered by</span>
+                <a
+                  href="https://app.merkl.xyz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-400/70 hover:text-amber-400 transition-colors flex items-center gap-0.5"
+                >
+                  Merkl <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+                <span className="text-white/20">·</span>
+                <span>{MONAD_CHAIN.name}</span>
+              </div>
+            </div>
+          </div>
+          {!isLive && !loading && (
+            <span className="text-[10px] font-bold text-amber-400/60 uppercase tracking-widest border border-amber-400/20 px-2 py-0.5 rounded-full">
+              Preview
+            </span>
+          )}
+          {isLive && (
+            <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest border border-green-400/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> Live
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex items-center justify-center h-24 text-white/30 text-sm font-mono gap-2">
+            <RefreshCw className="w-4 h-4 animate-spin" /> Fetching opportunities…
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {opportunities.map((opp) => (
+              <div key={opp.id} className="px-4 py-3 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-white truncate">{opp.name}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[10px] text-white/30 font-mono">{opp.protocol}</span>
+                    <span className="text-[10px] text-amber-400/50 bg-amber-400/10 px-1.5 py-0.5 rounded">{opp.action}</span>
+                  </div>
+                </div>
+                <div className="text-right ml-4 shrink-0">
+                  <div className="flex items-center gap-1 justify-end">
+                    <TrendingUp className="w-3 h-3 text-green-400" />
+                    <span className="text-green-400 font-mono font-bold text-sm">{opp.apr.toFixed(1)}%</span>
+                  </div>
+                  <div className="flex items-center gap-1 justify-end mt-0.5">
+                    <Zap className="w-2.5 h-2.5 text-amber-400/60" />
+                    <span className="text-[11px] text-white/40 font-mono">${opp.dailyRewards.toLocaleString()}/day</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="px-4 py-2.5 border-t border-white/5 flex items-center justify-between">
+          {!isLive && !loading && (
+            <span className="text-[11px] text-white/25 font-mono">Monad campaigns launching soon</span>
+          )}
+          {isLive && (
+            <span className="text-[11px] text-white/25 font-mono">{opportunities.length} live opportunities</span>
+          )}
+          <a
+            href={props.merklUrl || "https://app.merkl.xyz"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-amber-400/60 hover:text-amber-400 transition-colors flex items-center gap-1 font-mono ml-auto"
+          >
+            View all on Merkl <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }

@@ -1,9 +1,9 @@
-import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, Type, AlignLeft, Square, PictureInPicture, Minus, LayoutTemplate, CreditCard, BarChart2 } from "lucide-react";
+import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, Type, AlignLeft, Square, PictureInPicture, Minus, LayoutTemplate, CreditCard, BarChart2, Gift } from "lucide-react";
 
-// Real Monad Mainnet defaults — source: docs.monad.xyz
-const MONAD_RPC = "https://rpc.monad.xyz";
-const MONAD_CHAIN_ID = 143;
-const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
+// Monad Testnet defaults — source: docs.monad.xyz
+const MONAD_RPC = "https://testnet-rpc.monad.xyz";
+const MONAD_CHAIN_ID = 10143;
+const WMON_ADDRESS = "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701";
 
 export const COMPONENT_PALETTE = {
   Web3: [
@@ -15,7 +15,7 @@ export const COMPONENT_PALETTE = {
         label: "Connect Wallet",
         chainId: MONAD_CHAIN_ID,
         rpcUrl: MONAD_RPC,
-        networkName: "Monad Mainnet",
+        networkName: "Monad Testnet",
       },
     },
     {
@@ -41,7 +41,7 @@ export const COMPONENT_PALETTE = {
       props: {
         limit: 5,
         title: "Recent Activity",
-        explorerUrl: "https://monadvision.com",
+        explorerUrl: "https://testnet.monadexplorer.com",
       },
     },
     {
@@ -72,6 +72,16 @@ export const COMPONENT_PALETTE = {
       props: {
         title: "Proposal #1",
         chainId: MONAD_CHAIN_ID,
+      },
+    },
+    {
+      type: "merkl-rewards",
+      label: "Merkl Rewards",
+      icon: Gift,
+      props: {
+        chainId: MONAD_CHAIN_ID,
+        title: "Earn Rewards",
+        merklUrl: "https://app.merkl.xyz",
       },
     },
   ],

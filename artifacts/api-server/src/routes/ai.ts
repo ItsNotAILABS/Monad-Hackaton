@@ -72,7 +72,7 @@ const MONAD_SYSTEM = `You are the MonadBuilder+ AI — an expert on:
 
 Available dApp components (type → description):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
-  token-swap, price-chart, dao-vote,
+  token-swap, price-chart, dao-vote, merkl-rewards,
   hero-section, card, stats-row, divider,
   heading, paragraph, button, image
 
@@ -124,7 +124,7 @@ async function expandPrompt(raw: string): Promise<string> {
 const VALID_COMPONENT_TYPES = new Set([
   // Web3
   "wallet-connect", "token-balance", "nft-gallery", "transaction-feed",
-  "token-swap", "price-chart", "dao-vote",
+  "token-swap", "price-chart", "dao-vote", "merkl-rewards",
   // Layout
   "hero-section", "card", "stats-row", "divider",
   // Content
@@ -150,6 +150,11 @@ const TYPE_ALIASES: Record<string, string> = {
   "gas-tracker":         "stats-row",
   "liquidity-pool":      "token-swap",
   "swap-widget":         "token-swap",
+  "merkl":               "merkl-rewards",
+  "merkl-widget":        "merkl-rewards",
+  "rewards":             "merkl-rewards",
+  "yield-farming":       "merkl-rewards",
+  "incentives":          "merkl-rewards",
   "nft-mint":            "nft-gallery",
   "nft-collection":      "nft-gallery",
   "governance":          "dao-vote",
@@ -320,7 +325,7 @@ You generate MonadBuilder+ component configs. Return ONLY valid JSON (no markdow
 
 Valid component types ONLY (use exactly these strings):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
-  token-swap, price-chart, dao-vote,
+  token-swap, price-chart, dao-vote, merkl-rewards,
   hero-section, card, stats-row, divider,
   heading, paragraph, button, image
 
@@ -452,7 +457,7 @@ Make every prop value specific to the described dApp — never use generic place
 
 Valid component types ONLY (use exactly these strings):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
-  token-swap, price-chart, dao-vote,
+  token-swap, price-chart, dao-vote, merkl-rewards,
   hero-section, card, stats-row, divider,
   heading, paragraph, button, image
 
@@ -673,7 +678,7 @@ Rules:
 
 Valid component types ONLY (use exactly these strings):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
-  token-swap, price-chart, dao-vote,
+  token-swap, price-chart, dao-vote, merkl-rewards,
   hero-section, card, stats-row, divider,
   heading, paragraph, button, image
 

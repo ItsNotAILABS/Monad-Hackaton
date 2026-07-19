@@ -24,6 +24,7 @@ export const ComponentDataType = {
   'token-swap': 'token-swap',
   'price-chart': 'price-chart',
   'dao-vote': 'dao-vote',
+  'merkl-rewards': 'merkl-rewards',
   heading: 'heading',
   paragraph: 'paragraph',
   button: 'button',
