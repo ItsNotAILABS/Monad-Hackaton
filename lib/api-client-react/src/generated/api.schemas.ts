@@ -80,6 +80,8 @@ export interface Project {
   theme: ProjectTheme;
   status: ProjectStatus;
   publishedSlug?: string | null;
+  contractAddress?: string | null;
+  deployTxHash?: string | null;
   createdAt: string;
   updatedAt: string;
 }

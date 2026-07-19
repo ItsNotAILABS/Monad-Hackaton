@@ -37,11 +37,11 @@ export function LiveBlockTicker() {
 
   return (
     <a
-      href="https://monadvision.com"
+      href="https://testnet.monadexplorer.com"
       target="_blank"
       rel="noopener noreferrer"
       className="hidden md:flex items-center gap-1.5 text-xs font-mono hover:opacity-80 transition-opacity"
-      title="Latest Monad block — click to open MonadVision"
+      title="Latest Monad block — click to open Monad Explorer"
     >
       <Activity className={`w-3 h-3 transition-colors ${flash ? "text-green-400" : "text-white/20"}`} />
       <span className={`transition-colors ${flash ? "text-green-400" : "text-white/25"}`}>

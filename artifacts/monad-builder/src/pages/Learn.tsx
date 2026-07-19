@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { GraduationCap, Trophy, Key, Zap, CheckCircle, ArrowRight, ExternalLink, RefreshCw, Bot, Star, ChevronRight, Copy, Check, X } from "lucide-react";
@@ -378,7 +378,7 @@ function AgentWalletsPanel() {
     setSeeding(false);
   };
 
-  useState(() => { load(); });
+  useEffect(() => { load(); }, []);
 
   return (
     <Card className="border-violet-500/20">

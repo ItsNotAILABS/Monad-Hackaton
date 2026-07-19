@@ -560,8 +560,8 @@ function ContractsTab({ offline }: { offline: boolean }) {
           <div className="text-xs text-white/40 mb-1">Spark submission address</div>
           <div className="font-mono text-sm text-primary break-all">{d.primary_submission_address}</div>
           <div className="flex gap-2 mt-2">
-            <a href={`https://monadvision.com/address/${d.primary_submission_address}`} target="_blank" rel="noopener noreferrer" className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">MonadVision <ExternalLink className="w-3 h-3" /></a>
-            <a href={`https://monadscan.com/address/${d.primary_submission_address}`} target="_blank" rel="noopener noreferrer" className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">Monadscan <ExternalLink className="w-3 h-3" /></a>
+            <a href={`https://testnet.monadexplorer.com/address/${d.primary_submission_address}`} target="_blank" rel="noopener noreferrer" className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">Monad Explorer <ExternalLink className="w-3 h-3" /></a>
+            <a href={`https://testnet.monadexplorer.com/address/${d.primary_submission_address}`} target="_blank" rel="noopener noreferrer" className="text-xs text-white/30 hover:text-white/60 flex items-center gap-1 transition-colors">Monad Explorer <ExternalLink className="w-3 h-3" /></a>
           </div>
         </div>
       )}
@@ -587,7 +587,7 @@ function ContractsTab({ offline }: { offline: boolean }) {
                   {addr && (
                     <div className="text-[11px] font-mono text-primary/70 mt-1 flex items-center gap-2">
                       {addr}
-                      <a href={`https://monadvision.com/address/${addr}`} target="_blank" rel="noopener noreferrer">
+                      <a href={`https://testnet.monadexplorer.com/address/${addr}`} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="w-3 h-3 text-white/25 hover:text-white/60" />
                       </a>
                     </div>

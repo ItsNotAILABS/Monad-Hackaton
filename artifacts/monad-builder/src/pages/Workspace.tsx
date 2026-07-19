@@ -176,13 +176,13 @@ export default function Workspace() {
   // Terminal / scripts
   const [termLines, setTermLines] = useState<TerminalLine[]>([
     { kind: "info", text: "Monad Workspace — Python runtime connected. Type a script or use Quick Actions." },
-    { kind: "info", text: `RPC: https://rpc.monad.xyz  |  Chain ID: 143  |  Monad Mainnet` },
+    { kind: "info", text: `RPC: https://testnet-rpc.monad.xyz  |  Chain ID: 10143  |  Monad Testnet` },
   ]);
   const [script, setScript] = useState(
-`# Python script — runs against Monad Mainnet
+`# Python script — runs against Monad Testnet
 import urllib.request, json
 
-rpc = "https://rpc.monad.xyz"
+rpc = "https://testnet-rpc.monad.xyz"
 req = urllib.request.Request(rpc,
   data=json.dumps({"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}).encode(),
   headers={"Content-Type":"application/json"})
@@ -369,7 +369,7 @@ print(f"Latest Monad block: {int(r['result'], 16):,}")
               Monad Workspace
             </h1>
             <p className="text-sm text-white/45 mt-0.5">
-              Upload files · Execute Python/Node.js · Query Monad Mainnet (Chain 143)
+              Upload files · Execute Python/Node.js · Query Monad Testnet (Chain 10143)
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -573,9 +573,9 @@ print(f"Latest Monad block: {int(r['result'], 16):,}")
                       </Button>
                     </div>
                     <div className="flex gap-4 text-xs font-mono text-white/30">
-                      <span>rpc.monad.xyz</span>
+                      <span>testnet-rpc.monad.xyz</span>
                       <span>·</span>
-                      <span>Chain 143</span>
+                      <span>Chain 10143</span>
                     </div>
                   </div>
 

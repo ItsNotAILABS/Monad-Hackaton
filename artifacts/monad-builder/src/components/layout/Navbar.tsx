@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Zap, Terminal, Layers, Sparkles } from "lucide-react";
+import { Zap, Terminal, Layers, Sparkles, GraduationCap, Globe } from "lucide-react";
 import { LiveBlockTicker } from "@/components/ai/LiveBlockTicker";
 import { AiBudgetIndicator } from "@/components/ai/AiBudgetIndicator";
 
@@ -37,10 +37,11 @@ export function Navbar() {
           {navLink("/workspace", "Workspace", <Terminal className="w-3.5 h-3.5" />)}
           {navLink("/platform", "Platform", <Layers className="w-3.5 h-3.5" />)}
           {navLink("/ai", "AI Studio", <Sparkles className="w-3.5 h-3.5" />)}
+          {navLink("/gallery", "Gallery", <Globe className="w-3.5 h-3.5" />)}
           {navLink("/learn", "Learn & Earn", <GraduationCap className="w-3.5 h-3.5" />)}
 
           <Link
-            href="/dashboard"
+            href="/dashboard?build=1"
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-bold shadow-[0_0_15px_rgba(131,110,249,0.4)] hover:shadow-[0_0_25px_rgba(131,110,249,0.65)] hover:bg-primary/90 transition-all"
           >
             Start Building

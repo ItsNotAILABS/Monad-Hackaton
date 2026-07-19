@@ -10,6 +10,7 @@ import Workspace from '@/pages/Workspace';
 import Platform from '@/pages/Platform';
 import AIStudio from '@/pages/AIStudio';
 import Learn from '@/pages/Learn';
+import Gallery from '@/pages/Gallery';
 import { AIAssistant } from '@/components/ai/AIAssistant';
 import { AIPageContextProvider, useAIPageContext } from '@/lib/aiPageContext';
 
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/platform" component={Platform} />
       <Route path="/ai" component={AIStudio} />
       <Route path="/learn" component={Learn} />
+      <Route path="/gallery" component={Gallery} />
       <Route component={NotFound} />
     </Switch>
   );

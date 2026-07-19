@@ -14,7 +14,7 @@ const STARTERS = [
   "Explain THESIS OS laws in plain English",
   "What's the Monad gas model vs Ethereum?",
   "Which components for a DAO governance dApp?",
-  "How does WMON work on Chain 143?",
+  "How does WMON work on Chain 10143?",
 ];
 
 function MessageBubble({ msg }: { msg: ChatMessage }) {

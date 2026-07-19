@@ -172,7 +172,7 @@ export default function Templates() {
         <div className="text-center py-16 mb-8 border-b border-white/10">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Template Gallery</h1>
           <p className="text-xl text-white/60 max-w-2xl mx-auto">
-            Kickstart your Monad dApp with a production-ready template. Every component is pre-wired to Monad Mainnet (Chain ID 143).
+            Kickstart your Monad dApp with a production-ready template. Every component is pre-wired to Monad Testnet (Chain ID 10143).
           </p>
         </div>
 
@@ -297,7 +297,7 @@ export default function Templates() {
                         <span>·</span>
                         <span className="flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-400/60" />
-                          Chain 143
+                          Chain 10143
                         </span>
                       </div>
                     </CardContent>
