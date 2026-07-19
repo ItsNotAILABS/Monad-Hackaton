@@ -20,7 +20,7 @@
  */
 import { Request, Response, NextFunction } from "express";
 import { db, aiDailyBudgetTable, aiIpLimitsTable } from "@workspace/db";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 
 // ─── Per-IP sliding window ───────────────────────────────────────────────────
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -125,6 +125,44 @@ async function incrementDailyCounter(): Promise<number> {
     })
     .returning({ callCount: aiDailyBudgetTable.callCount });
   return rows[0]?.callCount ?? 1;
+}
+
+// ─── Startup warmup ───────────────────────────────────────────────────────────
+/**
+ * Read today's global counter from the DB and pre-set the in-process
+ * exhaustion cache if the limit is already reached.
+ *
+ * Call this once during server startup — before the HTTP server begins
+ * accepting requests — so that a cold-start after hitting the daily cap
+ * does not allow even a single extra request through.
+ *
+ * This is a read-only SELECT (no increment), so it adds no counts to the
+ * budget and adds no latency to normal request handling.
+ */
+export async function warmupRateLimiter(): Promise<void> {
+  try {
+    const date = todayUtc();
+    const rows = await db
+      .select({ callCount: aiDailyBudgetTable.callCount })
+      .from(aiDailyBudgetTable)
+      .where(eq(aiDailyBudgetTable.date, date))
+      .limit(1);
+
+    const count = rows[0]?.callCount ?? 0;
+    if (count >= DAILY_GLOBAL_LIMIT) {
+      exhaustedUntil = nextUtcMidnightMs();
+      console.info(
+        `[rateLimiter] Startup warmup: daily budget already exhausted (${count}/${DAILY_GLOBAL_LIMIT}). Circuit-breaker armed until UTC midnight.`
+      );
+    } else {
+      console.info(
+        `[rateLimiter] Startup warmup: ${count}/${DAILY_GLOBAL_LIMIT} AI calls used today.`
+      );
+    }
+  } catch (err) {
+    // Non-fatal — the per-request DB check is still the authoritative guard.
+    console.error("[rateLimiter] Startup warmup failed (non-fatal):", err);
+  }
 }
 
 // ─── Combined middleware ───────────────────────────────────────────────────────
