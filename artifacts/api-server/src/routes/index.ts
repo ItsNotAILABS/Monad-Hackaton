@@ -6,6 +6,7 @@ import statsRouter from "./stats";
 import { workspaceRouter } from "./workspace";
 import { aiRouter, chainRouter } from "./ai";
 import proxyRouter from "./proxy";
+import walletsRouter from "./wallets";
 
 const router: IRouter = Router();
 
@@ -17,5 +18,6 @@ router.use(workspaceRouter);
 router.use("/ai", aiRouter);
 router.use("/chain", chainRouter);
 router.use(proxyRouter);
+router.use(walletsRouter);
 
 export default router;

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, ExternalLink, Gift, TrendingUp, Clock, Zap } from "lucide-react";
+import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, ExternalLink, Gift, TrendingUp, Clock, Zap, GraduationCap, Trophy, HelpCircle, Bot, Key, CheckCircle, Copy, Check, Star } from "lucide-react";
 import { ComponentData } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -311,6 +311,21 @@ export function LiveWidget({ component }: { component: ComponentData }) {
     case "merkl-rewards":
       return <MerklRewardsWidget props={props} />;
 
+    case "learn-card":
+      return <LearnCardWidget props={props} />;
+
+    case "quiz-widget":
+      return <QuizWidget props={props} />;
+
+    case "reward-badge":
+      return <RewardBadgeWidget props={props} />;
+
+    case "auto-wallet":
+      return <AutoWalletWidget props={props} />;
+
+    case "ai-agent-wallet":
+      return <AIAgentWalletWidget props={props} />;
+
     // Standard Layout/Content
     case "hero-section":
       return (
@@ -388,6 +403,286 @@ export function LiveWidget({ component }: { component: ComponentData }) {
     default:
       return null;
   }
+}
+
+// ─── Learn Card Widget ───────────────────────────────────────────────────────
+function LearnCardWidget({ props }: { props: Record<string, any> }) {
+  const [done, setDone] = React.useState(false);
+  const steps: string[] = Array.isArray(props.steps) ? props.steps : ["Explore", "Understand", "Apply"];
+
+  return (
+    <Card className="my-4 border-violet-500/20 overflow-hidden">
+      <div className="h-1 w-full bg-gradient-to-r from-primary via-violet-500 to-secondary" />
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-5 h-5 text-violet-400" />
+          </div>
+          <div className="flex-1">
+            <CardTitle className="text-base leading-tight">{props.title || "Lesson"}</CardTitle>
+            <p className="text-xs text-white/50 mt-1 leading-relaxed">{props.description || "Complete this module to earn MON rewards."}</p>
+          </div>
+          {props.reward && (
+            <div className="shrink-0 text-right">
+              <div className="text-xs text-amber-400/70 font-mono">Earn</div>
+              <div className="text-sm font-bold text-amber-400">{props.reward}</div>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-2">
+        {steps.map((step: string, i: number) => (
+          <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${done || i === 0 ? "border-violet-500/20 bg-violet-500/5" : "border-white/5 bg-white/[0.01]"}`}>
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${done ? "bg-green-500/20 text-green-400" : i === 0 ? "bg-violet-500/20 text-violet-400" : "bg-white/5 text-white/30"}`}>
+              {done ? <Check className="w-3 h-3" /> : i + 1}
+            </div>
+            <span className="text-sm text-white/70">{step}</span>
+          </div>
+        ))}
+        <Button
+          className={`w-full mt-2 ${done ? "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30" : "shadow-[0_0_15px_rgba(131,110,249,0.3)]"}`}
+          onClick={() => setDone(true)}
+          variant={done ? "outline" : "default"}
+        >
+          {done ? <><CheckCircle className="w-4 h-4 mr-2" /> Module Complete — Reward Claimed!</> : "Mark Complete & Claim Reward"}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Quiz Widget ─────────────────────────────────────────────────────────────
+function QuizWidget({ props }: { props: Record<string, any> }) {
+  const [selected, setSelected] = React.useState<number | null>(null);
+  const [submitted, setSubmitted] = React.useState(false);
+  const options: string[] = Array.isArray(props.options) ? props.options : ["Option A", "Option B", "Option C", "Option D"];
+  const correct: number = Number(props.correctIndex ?? 0);
+  const isRight = selected === correct;
+
+  return (
+    <Card className="my-4 border-blue-500/20 overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2 mb-1">
+          <HelpCircle className="w-4 h-4 text-blue-400" />
+          <span className="text-[10px] font-bold text-blue-400/70 uppercase tracking-widest">Quiz</span>
+          {props.reward && <span className="ml-auto text-xs text-amber-400 font-mono">{props.reward} reward</span>}
+        </div>
+        <CardTitle className="text-base">{props.question || "What is Monad?"}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {options.map((opt: string, i: number) => {
+          const isSelected = selected === i;
+          const showResult = submitted;
+          const isCorrect = i === correct;
+          let cls = "border-white/10 bg-white/[0.02] text-white/70 hover:border-blue-500/30 hover:bg-blue-500/5";
+          if (showResult && isCorrect) cls = "border-green-500/40 bg-green-500/10 text-green-400";
+          else if (showResult && isSelected && !isCorrect) cls = "border-red-500/40 bg-red-500/10 text-red-400";
+          else if (isSelected && !showResult) cls = "border-blue-500/40 bg-blue-500/10 text-blue-400";
+          return (
+            <button
+              key={i}
+              disabled={submitted}
+              onClick={() => setSelected(i)}
+              className={`w-full text-left p-3 rounded-xl border text-sm transition-all ${cls}`}
+            >
+              <span className="font-mono text-[11px] opacity-50 mr-2">{String.fromCharCode(65 + i)}.</span>
+              {opt}
+            </button>
+          );
+        })}
+        {!submitted ? (
+          <Button className="w-full mt-2" disabled={selected === null} onClick={() => setSubmitted(true)}>
+            Submit Answer
+          </Button>
+        ) : (
+          <div className={`mt-2 p-3 rounded-xl text-sm font-medium flex items-center gap-2 ${isRight ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
+            {isRight ? <><Trophy className="w-4 h-4" /> Correct! {props.reward && `${props.reward} earned`}</> : <><HelpCircle className="w-4 h-4" /> Incorrect — the answer is {options[correct]}</>}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Reward Badge Widget ─────────────────────────────────────────────────────
+function RewardBadgeWidget({ props }: { props: Record<string, any> }) {
+  const rarityColor: Record<string, string> = {
+    Common: "text-white/50 border-white/20",
+    Uncommon: "text-green-400 border-green-500/30",
+    Rare: "text-blue-400 border-blue-500/30",
+    Epic: "text-violet-400 border-violet-500/40",
+    Legendary: "text-amber-400 border-amber-500/40",
+  };
+  const rarity = props.rarity || "Rare";
+  const color = rarityColor[rarity] || rarityColor.Rare;
+  return (
+    <div className={`my-4 p-5 rounded-2xl border text-center ${color} bg-white/[0.02]`}>
+      <div className="text-5xl mb-3">{props.icon || "🏆"}</div>
+      <div className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${color.split(" ")[0]}`}>{rarity} Achievement</div>
+      <div className="text-lg font-bold text-white mb-1">{props.title || "Pioneer"}</div>
+      <div className="text-xs text-white/40 mb-3 max-w-xs mx-auto">{props.description || "Completed a Monad education module"}</div>
+      {props.reward && (
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono">
+          <Star className="w-3 h-3" /> {props.reward} MON reward
+        </div>
+      )}
+      <div className="mt-3 text-[10px] text-white/20 font-mono">{MONAD_CHAIN.name} · Soulbound</div>
+    </div>
+  );
+}
+
+// ─── Auto Wallet Widget (for non-crypto users) ───────────────────────────────
+function AutoWalletWidget({ props }: { props: Record<string, any> }) {
+  const [wallet, setWallet] = React.useState<{address: string; created: boolean} | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  const generate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/wallets/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: "My Web3 Wallet", role: "user" }),
+      });
+      const data = await res.json();
+      setWallet({ address: data.address, created: true });
+    } catch {
+      // Preview fallback
+      setWallet({ address: "0x" + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(""), created: false });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="my-4 border-primary/20 overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <Key className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-base">{props.title || "Your Web3 Identity"}</CardTitle>
+            <p className="text-xs text-white/40 mt-0.5">No MetaMask needed.</p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {!wallet ? (
+          <div className="space-y-3">
+            <p className="text-sm text-white/60">{props.description || "We generate a secure wallet for you instantly — no downloads, no seed phrases to memorize."}</p>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs text-white/40 mb-3">
+              {["Instant", "Free", "On Monad"].map(f => (
+                <div key={f} className="p-2 rounded-lg border border-white/5 bg-white/[0.02]">
+                  <div className="text-primary/70 font-bold">{f}</div>
+                </div>
+              ))}
+            </div>
+            <Button className="w-full" onClick={generate} disabled={loading}>
+              {loading ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Generating…</> : <><Key className="w-4 h-4 mr-2" /> Generate My Wallet</>}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="p-3 rounded-xl border border-green-500/20 bg-green-500/5">
+              <div className="text-[10px] text-green-400/60 uppercase tracking-widest mb-1 font-bold">Your Address</div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-green-400 text-xs break-all flex-1">{wallet.address}</span>
+                <button onClick={() => { navigator.clipboard.writeText(wallet.address); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className="shrink-0 text-white/30 hover:text-green-400">
+                  {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <a href="https://faucet.monad.xyz" target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-primary/20 text-primary text-xs font-medium hover:bg-primary/10 transition-colors">
+                <Zap className="w-3.5 h-3.5" /> Get Free MON
+              </a>
+              <a href={`https://testnet.monadexplorer.com/address/${wallet.address}`} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl border border-white/10 text-white/50 text-xs hover:bg-white/5 transition-colors">
+                <ExternalLink className="w-3 h-3" /> Explorer
+              </a>
+            </div>
+            <p className="text-[11px] text-white/25 text-center font-mono">{MONAD_CHAIN.name} · Chain {MONAD_CHAIN.chainId}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── AI Agent Wallet Widget ───────────────────────────────────────────────────
+function AIAgentWalletWidget({ props }: { props: Record<string, any> }) {
+  const [agents, setAgents] = React.useState<{label: string; address: string; role: string; balanceCache?: string}[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch("/api/wallets?role=agent")
+      .then(r => r.json())
+      .then((data: any[]) => {
+        if (!cancelled && Array.isArray(data) && data.length > 0) setAgents(data.slice(0, 4));
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const DEMO_AGENTS = [
+    { label: "THESIS Governance Agent", address: "0x7a3b...9f2c", role: "agent", balanceCache: "2.5" },
+    { label: "Builder Agent",           address: "0x4e1d...8a7f", role: "agent", balanceCache: "1.2" },
+    { label: "Auditor Agent",           address: "0x2c9a...3d4e", role: "agent", balanceCache: "0.8" },
+    { label: "Rewards Agent",           address: "0xf1b2...6c5d", role: "agent", balanceCache: "5.0" },
+  ];
+
+  const display = agents.length > 0 ? agents : DEMO_AGENTS;
+
+  return (
+    <Card className="my-4 border-violet-500/20 overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-2">
+          <Bot className="w-5 h-5 text-violet-400" />
+          <CardTitle className="text-base">{props.agentName ? `${props.agentName} Wallet` : "AI Agent Wallets"}</CardTitle>
+          {agents.length === 0 && !loading && (
+            <span className="ml-auto text-[10px] text-white/30 border border-white/10 px-2 py-0.5 rounded-full">Demo</span>
+          )}
+        </div>
+        <div className="text-xs text-white/30 font-mono">{MONAD_CHAIN.name} · {display.length} active agents</div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {loading ? (
+          <div className="flex items-center justify-center py-6 text-white/30 text-xs gap-2 font-mono">
+            <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Loading agents…
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {display.map((agent, i) => (
+              <div key={i} className="px-4 py-3 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                <div className="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 text-violet-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-white truncate">{agent.label}</div>
+                  <div className="text-[10px] font-mono text-white/30 truncate">{agent.address}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-sm font-mono font-bold text-primary">{agent.balanceCache ?? "—"} <span className="text-white/30 text-xs">MON</span></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="px-4 py-2.5 border-t border-white/5 flex items-center justify-between">
+          <span className="text-[11px] text-white/20 font-mono">AI agents hold real testnet MON</span>
+          <a href="https://testnet.monadexplorer.com" target="_blank" rel="noopener noreferrer"
+            className="text-[11px] text-violet-400/50 hover:text-violet-400 flex items-center gap-1">
+            Explorer <ExternalLink className="w-2.5 h-2.5" />
+          </a>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 // ─── Merkl Rewards Widget ────────────────────────────────────────────────────

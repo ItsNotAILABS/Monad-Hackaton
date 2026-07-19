@@ -14,7 +14,7 @@ interface Habit {
 }
 
 const HABITS: Habit[] = [
-  { id: "chain",   label: "Check chain status",       detail: "Monad Mainnet · Chain 143 · 10k TPS",          link: "/platform" },
+  { id: "chain",   label: "Check chain status",       detail: "Monad Testnet · Chain 10143 · 10k TPS",          link: "/platform" },
   { id: "gas",     label: "Review gas prices",         detail: "Pay limit × price — not gas used",             link: "/platform" },
   { id: "brief",   label: "Read morning brief",        detail: "THESIS OS daily brief on the dashboard",       link: "/dashboard" },
   { id: "dapps",   label: "Review your published dApps", detail: "Preview and test your live projects",        link: "/dashboard" },

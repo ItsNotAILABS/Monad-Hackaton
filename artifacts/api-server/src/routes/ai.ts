@@ -125,6 +125,7 @@ const VALID_COMPONENT_TYPES = new Set([
   // Web3
   "wallet-connect", "token-balance", "nft-gallery", "transaction-feed",
   "token-swap", "price-chart", "dao-vote", "merkl-rewards",
+  "learn-card", "quiz-widget", "reward-badge", "ai-agent-wallet", "auto-wallet",
   // Layout
   "hero-section", "card", "stats-row", "divider",
   // Content
@@ -150,6 +151,18 @@ const TYPE_ALIASES: Record<string, string> = {
   "gas-tracker":         "stats-row",
   "liquidity-pool":      "token-swap",
   "swap-widget":         "token-swap",
+  "learn":               "learn-card",
+  "lesson":              "learn-card",
+  "education":           "learn-card",
+  "quiz":                "quiz-widget",
+  "question":            "quiz-widget",
+  "badge":               "reward-badge",
+  "achievement":         "reward-badge",
+  "nft-badge":           "reward-badge",
+  "ai-wallet":           "ai-agent-wallet",
+  "agent-wallet":        "ai-agent-wallet",
+  "burner-wallet":       "auto-wallet",
+  "generated-wallet":    "auto-wallet",
   "merkl":               "merkl-rewards",
   "merkl-widget":        "merkl-rewards",
   "rewards":             "merkl-rewards",
@@ -218,7 +231,7 @@ export const chainRouter = ChainRouter();
 
 chainRouter.get("/block", async (_req, res) => {
   try {
-    const response = await fetch("https://rpc.monad.xyz", {
+    const response = await fetch("https://testnet-rpc.monad.xyz", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", method: "eth_blockNumber", params: [], id: 1 }),
@@ -235,13 +248,13 @@ chainRouter.get("/block", async (_req, res) => {
 chainRouter.get("/gas", async (_req, res) => {
   try {
     const [blockRes, gasRes] = await Promise.all([
-      fetch("https://rpc.monad.xyz", {
+      fetch("https://testnet-rpc.monad.xyz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", method: "eth_blockNumber", params: [], id: 1 }),
         signal: AbortSignal.timeout(5000),
       }),
-      fetch("https://rpc.monad.xyz", {
+      fetch("https://testnet-rpc.monad.xyz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", method: "eth_gasPrice", params: [], id: 2 }),

@@ -218,7 +218,7 @@ function runScript(
 
 // ─── Pre-built Monad Python scripts ──────────────────────────────────────────
 function buildMonadScript(action: string, params: Record<string, any>): string | null {
-  const RPC = "https://rpc.monad.xyz";
+  const RPC = "https://testnet-rpc.monad.xyz";
 
   const rpcCall = (method: string, rpcParams: any[]) => `
 import urllib.request, json, sys
@@ -249,7 +249,7 @@ chain_id   = int(r_chain["result"], 16)
 block_num  = int(r_block["result"], 16)
 gas_price  = int(r_gas["result"], 16)
 
-print("━━━  Monad Mainnet Status  ━━━")
+print("━━━  Monad Testnet Status  ━━━")
 print(f"  Chain ID    :  {chain_id}")
 print(f"  Latest Block:  {block_num:,}")
 print(f"  Gas Price   :  {gas_price / 1e9:.4f} Gwei")
@@ -305,7 +305,7 @@ if "error" in r:
 
 tx = r.get("result")
 if not tx:
-    print("❌ Transaction not found on Monad Mainnet"); sys.exit(1)
+    print("❌ Transaction not found on Monad Testnet"); sys.exit(1)
 
 mon_val = int(tx["value"], 16) / 1e18
 

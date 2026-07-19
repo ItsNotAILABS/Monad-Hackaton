@@ -67,7 +67,7 @@ catalogs:
       specifier: ^7.3.2
       version: 7.3.6
     zod:
-      specifier: ^3.25.76
+      specifier: 3.25.76
       version: 3.25.76
 
 overrides:
@@ -197,6 +197,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.20.0)(pg@8.22.0)
+      ethers:
+        specifier: ^6.17.0
+        version: 6.17.0
       express:
         specifier: ^5.2.1
         version: 5.2.1
@@ -212,6 +215,9 @@ importers:
       unzipper:
         specifier: ^0.12.5
         version: 0.12.5
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@types/cookie-parser':
         specifier: ^1.4.10

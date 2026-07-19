@@ -26,7 +26,7 @@ export const ListProjectsResponseItem = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -65,7 +65,7 @@ export const CreateProjectResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -101,7 +101,7 @@ export const GetProjectResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -135,7 +135,7 @@ export const UpdateProjectBody = zod.object({
   "description": zod.string().optional(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -153,7 +153,7 @@ export const UpdateProjectResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -199,7 +199,7 @@ export const PublishProjectResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -235,7 +235,7 @@ export const UnpublishProjectResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -270,7 +270,7 @@ export const ListTemplatesResponseItem = zod.object({
   "thumbnailUrl": zod.string().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -299,7 +299,7 @@ export const GetTemplateResponse = zod.object({
   "thumbnailUrl": zod.string().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),
@@ -327,7 +327,7 @@ export const GetDashboardStatsResponse = zod.object({
   "templateId": zod.number().nullish(),
   "components": zod.array(zod.object({
   "id": zod.string(),
-  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row']),
+  "type": zod.enum(['wallet-connect', 'token-balance', 'nft-gallery', 'transaction-feed', 'token-swap', 'price-chart', 'dao-vote', 'merkl-rewards', 'heading', 'paragraph', 'button', 'image', 'divider', 'hero-section', 'card', 'stats-row', 'learn-card', 'quiz-widget', 'reward-badge', 'ai-agent-wallet', 'auto-wallet']),
   "props": zod.record(zod.string(), zod.unknown()),
   "x": zod.number().optional(),
   "y": zod.number().optional(),

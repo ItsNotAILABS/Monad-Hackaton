@@ -416,7 +416,7 @@ export default function Home() {
           <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
             <Blocks className="w-10 h-10 text-secondary mb-4" />
             <h3 className="text-xl font-bold text-white mb-2">Monad Primitives</h3>
-            <p className="text-white/60">14 components across Web3, Layout, and Content — every one pre-wired to Monad Mainnet, Chain ID 143.</p>
+            <p className="text-white/60">20+ components across Web3, Education, Layout, and Content — every one pre-wired to Monad Testnet, Chain ID 10143.</p>
           </div>
           <div className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
             <Terminal className="w-10 h-10 text-primary mb-4" />

@@ -1,4 +1,4 @@
-import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, Type, AlignLeft, Square, PictureInPicture, Minus, LayoutTemplate, CreditCard, BarChart2, Gift } from "lucide-react";
+import { Wallet, Coins, Image as ImageIcon, List, RefreshCw, LineChart, Vote, Type, AlignLeft, Square, PictureInPicture, Minus, LayoutTemplate, CreditCard, BarChart2, Gift, GraduationCap, Trophy, HelpCircle, Bot, Key } from "lucide-react";
 
 // Monad Testnet defaults — source: docs.monad.xyz
 const MONAD_RPC = "https://testnet-rpc.monad.xyz";
@@ -82,6 +82,65 @@ export const COMPONENT_PALETTE = {
         chainId: MONAD_CHAIN_ID,
         title: "Earn Rewards",
         merklUrl: "https://app.merkl.xyz",
+      },
+    },
+  ],
+  Education: [
+    {
+      type: "learn-card",
+      label: "Lesson Card",
+      icon: GraduationCap,
+      props: {
+        title: "What is Monad?",
+        description: "Monad is a high-performance EVM blockchain with 10,000 TPS and 400ms block times.",
+        steps: ["Read the concept", "Understand the tech", "Try it yourself"],
+        reward: "0.1 MON",
+        moduleId: "monad-101",
+      },
+    },
+    {
+      type: "quiz-widget",
+      label: "Quiz + Reward",
+      icon: HelpCircle,
+      props: {
+        question: "What is Monad's block time?",
+        options: ["1 second", "400ms", "12 seconds", "5 seconds"],
+        correctIndex: 1,
+        reward: "0.05 MON",
+        moduleId: "monad-quiz-1",
+      },
+    },
+    {
+      type: "reward-badge",
+      label: "Achievement Badge",
+      icon: Trophy,
+      props: {
+        title: "Monad Pioneer",
+        description: "Completed the Monad fundamentals course",
+        icon: "🏆",
+        rarity: "Rare",
+        reward: "0.5 MON",
+      },
+    },
+    {
+      type: "auto-wallet",
+      label: "Auto Wallet",
+      icon: Key,
+      props: {
+        title: "Your Web3 Identity",
+        description: "No MetaMask needed — we generate a wallet for you instantly.",
+        showFaucet: true,
+        chainId: MONAD_CHAIN_ID,
+      },
+    },
+    {
+      type: "ai-agent-wallet",
+      label: "AI Agent Wallet",
+      icon: Bot,
+      props: {
+        agentName: "THESIS Agent",
+        role: "Governance",
+        chainId: MONAD_CHAIN_ID,
       },
     },
   ],

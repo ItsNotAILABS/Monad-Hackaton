@@ -4,3 +4,4 @@ export * from "./conversations";
 export * from "./messages";
 export * from "./aiDailyBudget";
 export * from "./aiIpLimits";
+export * from "./wallets";

@@ -37,6 +37,7 @@ export function Navbar() {
           {navLink("/workspace", "Workspace", <Terminal className="w-3.5 h-3.5" />)}
           {navLink("/platform", "Platform", <Layers className="w-3.5 h-3.5" />)}
           {navLink("/ai", "AI Studio", <Sparkles className="w-3.5 h-3.5" />)}
+          {navLink("/learn", "Learn & Earn", <GraduationCap className="w-3.5 h-3.5" />)}
 
           <Link
             href="/dashboard"
