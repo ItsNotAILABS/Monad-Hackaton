@@ -7,8 +7,9 @@ import {
   getGetProjectQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Zap, Play, Save, ChevronLeft, Layout, Webhook, FileText, Globe } from "lucide-react";
+import { Zap, Play, Save, ChevronLeft, Layout, Webhook, FileText, Globe, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { COMPONENT_PALETTE } from "@/components/builder/palette";
 import { ComponentPreview } from "@/components/builder/ComponentPreview";
 import { ComponentData, ComponentDataType } from "@workspace/api-client-react";
@@ -59,6 +60,7 @@ export default function Builder() {
 
   const [components, setComponents] = useState<ComponentData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const initializedForId = useRef<number | null>(null);
 
@@ -132,6 +134,22 @@ export default function Builder() {
     );
   }, [id, updateProject, queryClient]);
 
+  const handleShare = useCallback(() => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      toast.success("Link copied!", {
+        description: "Share this link to let anyone open this canvas.",
+        duration: 3000,
+      });
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      toast.error("Could not copy link", {
+        description: "Please copy the URL from your browser's address bar.",
+      });
+    });
+  }, []);
+
   const handlePublish = () => {
     publishProject.mutate({ id }, {
       onSuccess: () => {
@@ -195,6 +213,16 @@ export default function Builder() {
           </span>
           <Button variant="secondary" size="sm" className="gap-2" asChild>
             <Link href={`/preview/${id}`}><Play className="w-4 h-4" /> Preview</Link>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="gap-2"
+            onClick={handleShare}
+            title="Copy shareable link to clipboard"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
+            {copied ? "Copied!" : "Share"}
           </Button>
           <Button size="sm" onClick={handlePublish} disabled={publishProject.isPending} className="gap-2">
             {publishProject.isPending ? "Publishing..." : "Publish App"}
