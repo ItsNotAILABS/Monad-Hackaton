@@ -14,35 +14,31 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSetAIContext } from "@/lib/aiPageContext";
 
-// Real Monad Mainnet data — source: docs.monad.xyz
+// Monad Testnet data — source: docs.monad.xyz
 const MONAD_NETWORK = {
-  name: "Monad Mainnet",
-  chainId: 143,
+  name: "Monad Testnet",
+  chainId: 10143,
   currency: "MON",
   tps: "10,000",
   blockTime: "400ms",
   finality: "800ms",
   rpcUrls: [
-    { url: "https://rpc.monad.xyz",  provider: "QuickNode" },
-    { url: "https://rpc1.monad.xyz", provider: "Alchemy" },
-    { url: "https://rpc2.monad.xyz", provider: "Goldsky" },
-    { url: "https://rpc3.monad.xyz", provider: "Ankr" },
+    { url: "https://testnet-rpc.monad.xyz", provider: "Official" },
   ],
   explorers: [
-    { name: "MonadVision", url: "https://monadvision.com" },
-    { name: "Monadscan",   url: "https://monadscan.com" },
+    { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" },
   ],
-  wrappedMON: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+  wrappedMON: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
   version: "v0.14.5 / MONAD_NINE",
   maxContractSize: "128 KB",
 };
 
 const BUILD_STEPS = [
-  "Understanding your dApp concept…",
-  "Choosing the right components…",
-  "Configuring Monad network values…",
-  "Assembling your canvas…",
-  "Almost ready…",
+  "✨ Expanding your idea into an expert spec…",
+  "🏗️ Choosing the right components…",
+  "⚡ Configuring Monad Testnet values…",
+  "🎨 Assembling your canvas…",
+  "🚀 Almost ready…",
 ];
 
 function CopyButton({ value }: { value: string }) {
@@ -69,6 +65,7 @@ export default function Home() {
   const [building, setBuilding] = useState(false);
   const [buildStep, setBuildStep] = useState(0);
   const [buildError, setBuildError] = useState("");
+  const [enrichedPrompt, setEnrichedPrompt] = useState("");
   const stepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useSetAIContext("Current page: Home — user is exploring MonadBuilder+. Help them understand the platform, suggest what kind of dApp to build, and explain Monad/THESIS features.");
@@ -91,12 +88,18 @@ export default function Home() {
     if (!trimmed || building) return;
 
     setBuildError("");
+    setEnrichedPrompt("");
     setBuilding(true);
     startStepCycle();
 
     try {
       const result = await buildDapp(trimmed);
       if (!result) throw new Error("AI could not generate a dApp — try rephrasing.");
+
+      // Show enriched prompt briefly before navigating
+      if (result.enrichedPrompt && result.enrichedPrompt !== trimmed) {
+        setEnrichedPrompt(result.enrichedPrompt);
+      }
 
       // Surface any type remapping/drop warnings from the AI validator
       if (result.warnings.length > 0) {
@@ -220,12 +223,28 @@ export default function Home() {
               </motion.div>
             )}
 
+            {/* Enriched prompt callout — shown once expanded spec is ready */}
+            {enrichedPrompt && !buildError && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="mt-4 p-4 rounded-xl border border-primary/20 bg-primary/5 text-left"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-[11px] font-bold text-primary uppercase tracking-widest">AI expanded your idea</span>
+                </div>
+                <p className="text-sm text-white/60 leading-relaxed">{enrichedPrompt}</p>
+              </motion.div>
+            )}
+
             {buildError && (
               <p className="mt-3 text-sm text-red-400 text-center">{buildError}</p>
             )}
 
             <p className="mt-3 text-xs text-white/20 text-center">
-              Try: "A token swap interface for MON/USDC" · "A DAO voting dashboard" · "An NFT gallery with wallet connect"
+              Try: "token swap for MON/USDC" · "DAO voting dashboard" · "NFT gallery with staking rewards"
             </p>
           </div>
 

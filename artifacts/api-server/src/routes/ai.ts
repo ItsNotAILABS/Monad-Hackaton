@@ -63,11 +63,11 @@ aiRouter.use(aiRateLimiter);
 const MONAD_SYSTEM = `You are the MonadBuilder+ AI — an expert on:
 - MonadBuilder+: a no-code drag-and-drop dApp builder for Monad blockchain
 - THESIS OS: a governance engine where agents propose, laws decide, receipts remember, owner signs
-- Monad network: Chain ID 143, 10,000 TPS, 400ms block time, 800ms finality, Fusaka EVM fork
-  - RPC: https://rpc.monad.xyz (also rpc1/rpc2/rpc3.monad.xyz)
+- Monad network: Chain ID 10143 (Testnet), 10,000 TPS, 400ms block time, 800ms finality, Fusaka EVM fork
+  - RPC: https://testnet-rpc.monad.xyz
   - Gas model: you pay gas_LIMIT × gas_PRICE (not gas_USED like Ethereum) — always set tight limits
-  - Native token: MON, WMON: 0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A
-  - Block explorers: monadvision.com, monadscan.com
+  - Native token: MON, WMON: 0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701
+  - Block explorer: https://testnet.monadexplorer.com
   - Max contract size: 128 KB
 
 Available dApp components (type → description):
@@ -83,6 +83,41 @@ THESIS OS modules: EcosystemLaw (immutable global rules), LawBook (owner-tunable
 Be concise, technically precise, and opinionated. Prefer Monad-specific advice over generic Web3 advice.
 When asked to generate components, always output valid JSON. When explaining gas, always emphasize
 the limit×price model. When discussing THESIS, always emphasize the law-first governance model.`;
+
+// ─── Prompt Expander ─────────────────────────────────────────────────────────
+// Transforms any short user idea into a rich, senior-architect-level dApp spec
+// before handing it to the builder model. Uses luna (fast) since this is a
+// rewriting task — no heavy reasoning needed, just vocabulary and domain depth.
+const EXPANDER_SYSTEM = `You are a senior Web3 dApp architect specialising in Monad blockchain.
+Your only job is to transform a short, vague user idea into a precise, rich dApp specification
+that a component-layout AI can act on immediately.
+
+Rules:
+- Output ONLY the expanded specification as plain prose — no JSON, no markdown headers, no bullet lists.
+- Write 3-5 dense sentences max.
+- Always name the exact dApp vertical (DeFi AMM, NFT launchpad, DAO governance, GameFi rewards, etc.)
+- Specify concrete token pairs, token names, or NFT collection themes where relevant.
+- Name which Monad-native performance traits (10k TPS, 400ms blocks, sub-second finality) make this dApp possible.
+- Describe the UX flow: what the user sees first, what action they take, what confirmation they get.
+- Mention THESIS OS governance hooks where natural (proposal → vote → vault execution pattern).
+- Never add features the user did not imply. Stay true to their intent, just make it precise and vivid.`;
+
+async function expandPrompt(raw: string): Promise<string> {
+  try {
+    const res = await openai.chat.completions.create({
+      model: "gpt-5.6-luna",       // fast rewrite — no reasoning depth needed
+      max_completion_tokens: 300,  // 3-5 dense sentences
+      messages: [
+        { role: "system", content: EXPANDER_SYSTEM },
+        { role: "user", content: raw },
+      ],
+    });
+    const expanded = res.choices[0]?.message?.content?.trim();
+    return expanded && expanded.length > raw.length ? expanded : raw;
+  } catch {
+    return raw; // expansion is best-effort — never block the build
+  }
+}
 
 // ─── Component type validation ────────────────────────────────────────────
 // Source of truth: artifacts/monad-builder/src/components/builder/palette.ts
@@ -290,14 +325,14 @@ Valid component types ONLY (use exactly these strings):
   heading, paragraph, button, image
 
 Common props by type:
-- wallet-connect: { label, chainId: 143, networkName: "Monad Mainnet" }
-- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- nft-gallery: { limit: 8, columns: 4, contractAddress: "0x..." }
-- dao-vote: { title, subtitle, chainId: 143 }
-- stats-row: { items: 3, chainId: 143 }
-- price-chart: { token: "MON", chainId: 143 }
-- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
+- wallet-connect: { label, chainId: 10143, networkName: "Monad Testnet" }
+- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- token-balance: { token: "<symbol>", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- nft-gallery: { title: "<collection>", limit: 6, columns: 3, contractAddress: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701" }
+- dao-vote: { title, chainId: 10143 }
+- stats-row: { items: 3, chainId: 10143 }
+- price-chart: { asset: "<symbol>", chainId: 10143 }
+- transaction-feed: { limit: 5, explorerUrl: "https://testnet.monadexplorer.com" }
 - hero-section: { title, subtitle }
 - button: { label, variant: "primary" }
 - paragraph: { text }`,
@@ -370,7 +405,9 @@ aiRouter.post("/analyze", async (req, res) => {
 });
 
 // ─── Build dApp from prompt ────────────────────────────────────────────────
-// Model: gpt-5.6-terra — full dApp generation needs reasoning quality; 2048 for 5-6 component JSON
+// Two-step pipeline:
+//   1. expandPrompt() — luna rewrites the user's idea into a rich expert spec
+//   2. gpt-5.6-terra  — builds the full component JSON from the enriched spec
 aiRouter.post("/build-dapp", async (req, res) => {
   const { prompt } = req.body as { prompt: string };
 
@@ -380,6 +417,9 @@ aiRouter.post("/build-dapp", async (req, res) => {
   }
 
   try {
+    // Step 1 — expand the user's raw idea into an architect-level specification
+    const enrichedPrompt = await expandPrompt(prompt.trim());
+
     const response = await openai.chat.completions.create({
       model: "gpt-5.6-terra", // terra: full dApp layout needs coherent multi-component reasoning
       max_completion_tokens: 2048, // 5-6 component JSON fits comfortably in 2048
@@ -388,23 +428,27 @@ aiRouter.post("/build-dapp", async (req, res) => {
           role: "system",
           content: `${MONAD_SYSTEM}
 
-You generate a complete MonadBuilder+ dApp layout from a one-sentence idea.
+You generate a complete MonadBuilder+ dApp layout from a detailed specification.
 Return ONLY valid JSON — no markdown, no explanation:
 {
-  "projectName": "<short catchy dApp name derived from the idea>",
+  "projectName": "<short punchy dApp name — 2-3 words, brandable>",
   "components": [
     {
       "type": "<component type>",
-      "props": { <component-specific props with correct Monad values> }
+      "props": { <component-specific props tailored to the spec with correct Monad Testnet values> }
     }
-    // 5-6 components total, ordered logically for a dApp page
+    // 6-8 components total, ordered logically for a production dApp page
   ]
 }
 
-Always include 5-6 components. Always start with a hero-section or stats-row.
-Always include wallet-connect near the top. End with a button or paragraph call-to-action.
-Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
-Tailor the dApp type (DeFi/NFT/DAO/token) to the user's idea.
+Always include 6-8 components. Always start with hero-section.
+Include wallet-connect as the second component.
+Add stats-row to show Monad network performance (10k TPS, 400ms blocks, <1s finality).
+Include at least 2 Web3-specific components relevant to the dApp type.
+End with a transaction-feed or a paragraph + button call-to-action.
+Set chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz", networkName: "Monad Testnet" on ALL Web3 components.
+Derive token names, NFT collection names, DAO proposal text, and chart assets directly from the spec.
+Make every prop value specific to the described dApp — never use generic placeholders like "My Token" or "My dApp".
 
 Valid component types ONLY (use exactly these strings):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
@@ -412,22 +456,22 @@ Valid component types ONLY (use exactly these strings):
   hero-section, card, stats-row, divider,
   heading, paragraph, button, image
 
-Common props:
-- wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
-- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
-- dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
-- stats-row: { items: 3, chainId: 143 }
-- price-chart: { token: "MON", chainId: 143 }
-- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
-- hero-section: { title: "...", subtitle: "..." }
-- button: { label: "...", variant: "primary" }
-- paragraph: { text: "..." }`,
+Prop reference — customise values to match the spec:
+- hero-section:       { title: "<dApp name>", subtitle: "<value prop in one line>" }
+- wallet-connect:     { label: "Connect Wallet", chainId: 10143, networkName: "Monad Testnet" }
+- stats-row:          { items: 3, chainId: 10143 }
+- token-swap:         { fromToken: "<token A>", toToken: "<token B>", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- token-balance:      { token: "<symbol>", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- nft-gallery:        { title: "<collection name>", columns: 3, limit: 6, contractAddress: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701" }
+- dao-vote:           { title: "<proposal title>", chainId: 10143 }
+- price-chart:        { asset: "<symbol>", chainId: 10143 }
+- transaction-feed:   { title: "Recent Activity", limit: 5, explorerUrl: "https://testnet.monadexplorer.com" }
+- button:             { label: "<action verb + noun>", variant: "primary" }
+- paragraph:          { text: "<specific description of what this dApp does for the user>" }`,
         },
         {
           role: "user",
-          content: `Build a dApp for: "${prompt}"`,
+          content: enrichedPrompt,
         },
       ],
     });
@@ -465,7 +509,7 @@ Common props:
       order: i,
     }));
 
-    res.json({ ok: true, projectName: parsed.projectName ?? "My Monad dApp", components, warnings });
+    res.json({ ok: true, projectName: parsed.projectName ?? "My Monad dApp", components, warnings, enrichedPrompt });
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err.message });
   }
@@ -506,7 +550,7 @@ Identify any components that could generate heavy gas usage on Monad (remember: 
 Suggest where THESIS OS laws, PolicyKernel proposals, or ReceiptChain logging would add governance value to this specific dApp.
 
 ## Missing Pieces
-List the top 3-5 components or features this dApp needs to be production-ready on Monad Mainnet (Chain ID 143).
+List the top 3-5 components or features this dApp needs to be production-ready on Monad Testnet (Chain ID 10143).
 
 Be specific to the actual components listed. Do not give generic advice.`;
 
@@ -624,7 +668,8 @@ Rules:
 - Add, remove, or reorder components to fulfill the instruction. Be decisive.
 - Always keep wallet-connect if already present.
 - Do not duplicate component types unless the instruction explicitly calls for it.
-- Set chainId: 143, rpcUrl: "https://rpc.monad.xyz", networkName: "Monad Mainnet" on all Web3 components.
+- Set chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz", networkName: "Monad Testnet" on all Web3 components.
+- Make every prop value specific to the described dApp — never use placeholders.
 
 Valid component types ONLY (use exactly these strings):
   wallet-connect, token-balance, nft-gallery, transaction-feed,
@@ -633,17 +678,17 @@ Valid component types ONLY (use exactly these strings):
   heading, paragraph, button, image
 
 Common props:
-- wallet-connect: { label: "Connect Wallet", chainId: 143, networkName: "Monad Mainnet" }
-- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- token-balance: { asset: "MON", chainId: 143, rpcUrl: "https://rpc.monad.xyz" }
-- nft-gallery: { limit: 8, columns: 4, contractAddress: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A" }
-- dao-vote: { title: "Governance", subtitle: "Vote on proposals", chainId: 143 }
-- stats-row: { items: 3, chainId: 143 }
-- price-chart: { token: "MON", chainId: 143 }
-- transaction-feed: { limit: 5, explorerUrl: "https://monadvision.com" }
-- hero-section: { title: "...", subtitle: "..." }
-- button: { label: "...", variant: "primary" }
-- paragraph: { text: "..." }`,
+- wallet-connect: { label: "Connect Wallet", chainId: 10143, networkName: "Monad Testnet" }
+- token-swap: { fromToken: "MON", toToken: "USDC", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- token-balance: { token: "<symbol>", chainId: 10143, rpcUrl: "https://testnet-rpc.monad.xyz" }
+- nft-gallery: { title: "<collection>", columns: 3, limit: 6, contractAddress: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701" }
+- dao-vote: { title: "<proposal>", chainId: 10143 }
+- stats-row: { items: 3, chainId: 10143 }
+- price-chart: { asset: "<symbol>", chainId: 10143 }
+- transaction-feed: { title: "Recent Activity", limit: 5, explorerUrl: "https://testnet.monadexplorer.com" }
+- hero-section: { title: "<dApp name>", subtitle: "<one-line value prop>" }
+- button: { label: "<action>", variant: "primary" }
+- paragraph: { text: "<specific description>" }`,
         },
         {
           role: "user",
@@ -719,8 +764,8 @@ aiRouter.post("/script", async (req, res) => {
           content: `${MONAD_SYSTEM}
 
 You generate scripts that interact with Monad blockchain. ${langNote}
-Always use RPC URL: https://rpc.monad.xyz
-Chain ID: 143
+Always use RPC URL: https://testnet-rpc.monad.xyz
+Chain ID: 10143
 Return ONLY the script — no markdown fences, no explanation outside comments.`,
         },
         { role: "user", content: prompt },

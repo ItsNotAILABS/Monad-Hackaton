@@ -146,6 +146,8 @@ export interface BuildDappResult {
   components: Array<{ id: string; type: string; props: Record<string, any>; order: number }>;
   /** Non-fatal notices: component types that were remapped or dropped by the server validator. */
   warnings: string[];
+  /** The AI-expanded version of the user's original prompt, shown in the UI for transparency. */
+  enrichedPrompt?: string;
 }
 
 /** Build a full dApp from a one-sentence idea. Returns projectName + pre-configured components. */
@@ -158,7 +160,12 @@ export async function buildDapp(prompt: string): Promise<BuildDappResult | null>
     }));
     const data = await res.json();
     return data.ok
-      ? { projectName: data.projectName, components: data.components, warnings: data.warnings ?? [] }
+      ? {
+          projectName: data.projectName,
+          components: data.components,
+          warnings: data.warnings ?? [],
+          enrichedPrompt: data.enrichedPrompt,
+        }
       : null;
   } catch (err) {
     if (err instanceof RateLimitError) throw err;
