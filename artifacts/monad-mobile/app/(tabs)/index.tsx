@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Platform,
   RefreshControl,
+  TextInput,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -35,6 +37,8 @@ async function fetchProjects(): Promise<Project[]> {
 export default function ProjectsScreen() {
   const colors = useColors();
   const router = useRouter();
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'all' | 'live' | 'draft'>('all');
 
   const { data, isLoading, isError, refetch, isRefetching } = useQuery<Project[]>({
     queryKey: ['projects'],
@@ -47,13 +51,29 @@ export default function ProjectsScreen() {
     router.push(`/project/${id}`);
   }, [router]);
 
+  const handleOpenBuilder = useCallback(() => {
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    Linking.openURL(`https://${domain}/`);
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!data) return [];
+    return data.filter(p => {
+      const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
+      const matchesFilter =
+        filter === 'all' ||
+        (filter === 'live' && p.status === 'published') ||
+        (filter === 'draft' && p.status === 'draft');
+      return matchesSearch && matchesFilter;
+    });
+  }, [data, search, filter]);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
     listContent: {
-      paddingTop: 16,
       paddingBottom: Platform.OS === 'web' ? 100 : 32,
     },
     center: {
@@ -106,19 +126,72 @@ export default function ProjectsScreen() {
     },
     headerContainer: {
       paddingHorizontal: 16,
-      paddingBottom: 16,
+      paddingBottom: 12,
       ...(Platform.OS === 'web' ? { paddingTop: 67 } : {}),
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: 4,
     },
     headerTitle: {
       fontSize: 28,
       fontFamily: 'Inter_700Bold',
       color: colors.foreground,
-      marginBottom: 4,
+    },
+    buildButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
+      backgroundColor: colors.primary,
+      borderRadius: colors.radius,
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+    },
+    buildButtonText: {
+      fontSize: 13,
+      fontFamily: 'Inter_600SemiBold',
+      color: '#FFFFFF',
     },
     headerSubtitle: {
       fontSize: 14,
       fontFamily: 'Inter_400Regular',
       color: colors.mutedForeground,
+      marginBottom: 12,
+    },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.card,
+      borderRadius: colors.radius,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 10,
+      gap: 8,
+      marginBottom: 10,
+    },
+    searchInput: {
+      flex: 1,
+      height: 38,
+      fontSize: 14,
+      fontFamily: 'Inter_400Regular',
+      color: colors.foreground,
+    },
+    filterRow: {
+      flexDirection: 'row',
+      gap: 6,
+      marginBottom: 4,
+    },
+    filterChip: {
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      borderRadius: 20,
+      borderWidth: 1,
+    },
+    filterChipText: {
+      fontSize: 12,
+      fontFamily: 'Inter_500Medium',
     },
     countBadge: {
       flexDirection: 'row',
@@ -131,7 +204,24 @@ export default function ProjectsScreen() {
       fontFamily: 'Inter_500Medium',
       color: colors.primary,
     },
+    noResultsContainer: {
+      paddingVertical: 32,
+      alignItems: 'center',
+      gap: 8,
+    },
+    noResultsText: {
+      fontSize: 14,
+      fontFamily: 'Inter_400Regular',
+      color: colors.mutedForeground,
+      textAlign: 'center',
+    },
   });
+
+  const FILTERS: { key: typeof filter; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'live', label: 'Live' },
+    { key: 'draft', label: 'Draft' },
+  ];
 
   if (isLoading) {
     return (
@@ -155,45 +245,106 @@ export default function ProjectsScreen() {
     );
   }
 
+  const published = data?.filter(p => p.status === 'published').length ?? 0;
+
+  const ListHeader = (
+    <View style={styles.headerContainer}>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>My dApps</Text>
+        <TouchableOpacity style={styles.buildButton} onPress={handleOpenBuilder}>
+          <Feather name="zap" size={13} color="#FFFFFF" />
+          <Text style={styles.buildButtonText}>Build</Text>
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.headerSubtitle}>MonadBuilder+ · Chain ID 143</Text>
+
+      {/* Search bar */}
+      <View style={styles.searchRow}>
+        <Feather name="search" size={15} color={colors.mutedForeground} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search dApps…"
+          placeholderTextColor={colors.mutedForeground}
+          value={search}
+          onChangeText={setSearch}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+        />
+        {search.length > 0 && Platform.OS !== 'ios' && (
+          <TouchableOpacity onPress={() => setSearch('')}>
+            <Feather name="x" size={15} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Filter chips */}
+      <View style={styles.filterRow}>
+        {FILTERS.map(f => {
+          const active = filter === f.key;
+          return (
+            <TouchableOpacity
+              key={f.key}
+              style={[
+                styles.filterChip,
+                {
+                  backgroundColor: active ? colors.primary : colors.card,
+                  borderColor: active ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={() => setFilter(f.key)}
+            >
+              <Text style={[styles.filterChipText, { color: active ? '#FFFFFF' : colors.mutedForeground }]}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <View style={styles.countBadge}>
+        <Feather name="zap" size={12} color={colors.primary} />
+        <Text style={styles.countText}>
+          {data?.length ?? 0} project{(data?.length ?? 0) !== 1 ? 's' : ''} · {published} live
+        </Text>
+      </View>
+    </View>
+  );
+
   if (!data || data.length === 0) {
     return (
-      <View style={styles.center}>
-        <View style={styles.emptyIcon}>
-          <Feather name="layers" size={24} color={colors.mutedForeground} />
+      <View style={styles.container}>
+        {ListHeader}
+        <View style={styles.center}>
+          <View style={styles.emptyIcon}>
+            <Feather name="layers" size={24} color={colors.mutedForeground} />
+          </View>
+          <Text style={styles.emptyTitle}>No dApps yet</Text>
+          <Text style={styles.emptySubtitle}>
+            Tap Build to open the web builder,{'\n'}then come back to browse your dApps here.
+          </Text>
         </View>
-        <Text style={styles.emptyTitle}>No dApps yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Build your first Monad dApp using the web builder, then come back to browse it here.
-        </Text>
       </View>
     );
   }
 
-  const published = data.filter(p => p.status === 'published').length;
-
   return (
     <View style={styles.container}>
       <FlatList
-        data={data}
+        data={filtered}
         keyExtractor={item => String(item.id)}
         renderItem={({ item }) => (
           <ProjectCard project={item} onPress={() => handlePress(item.id)} />
         )}
         contentContainerStyle={styles.listContent}
-        ListHeaderComponent={
-          <View style={styles.headerContainer}>
-            <Text style={styles.headerTitle}>My dApps</Text>
-            <Text style={styles.headerSubtitle}>MonadBuilder+ — Chain ID 143</Text>
-            <View style={styles.countBadge}>
-              <Feather name="zap" size={12} color={colors.primary} />
-              <Text style={styles.countText}>
-                {data.length} project{data.length !== 1 ? 's' : ''} · {published} live
-              </Text>
-            </View>
+        ListHeaderComponent={ListHeader}
+        ListEmptyComponent={
+          <View style={styles.noResultsContainer}>
+            <Feather name="search" size={24} color={colors.mutedForeground} />
+            <Text style={styles.noResultsText}>No dApps match "{search}"</Text>
           </View>
         }
         showsVerticalScrollIndicator={false}
-        scrollEnabled={data.length > 0}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}

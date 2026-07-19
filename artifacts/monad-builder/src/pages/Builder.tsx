@@ -154,7 +154,20 @@ export default function Builder() {
     publishProject.mutate({ id }, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(id) });
-        setLocation(`/preview/${id}`);
+        const liveUrl = `${window.location.origin}/preview/${id}`;
+        toast.success("🚀 Deployed to Monad Testnet!", {
+          description: liveUrl,
+          duration: 8000,
+          action: {
+            label: "Open",
+            onClick: () => setLocation(`/preview/${id}`),
+          },
+        });
+        // Brief delay so the toast is visible before navigating
+        setTimeout(() => setLocation(`/preview/${id}`), 1800);
+      },
+      onError: () => {
+        toast.error("Deploy failed", { description: "Could not publish your dApp. Please try again." });
       }
     });
   };
@@ -224,8 +237,9 @@ export default function Builder() {
             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
             {copied ? "Copied!" : "Share"}
           </Button>
-          <Button size="sm" onClick={handlePublish} disabled={publishProject.isPending} className="gap-2">
-            {publishProject.isPending ? "Publishing..." : "Publish App"}
+          <Button size="sm" onClick={handlePublish} disabled={publishProject.isPending} className="gap-2 bg-primary hover:bg-primary/90">
+            <Globe className="w-4 h-4" />
+            {publishProject.isPending ? "Deploying…" : project.status === "published" ? "Redeploy" : "Deploy to Monad"}
           </Button>
         </div>
       </header>

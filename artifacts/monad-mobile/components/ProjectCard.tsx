@@ -30,36 +30,41 @@ interface ProjectCardProps {
   onPress: () => void;
 }
 
+// Matches the current VALID_COMPONENT_TYPES palette in api-server
 const COMPONENT_TYPE_COLORS: Record<string, string> = {
-  'wallet-connect': '#836EF9',
-  'token-swap': '#22C55E',
-  'nft-gallery': '#F59E0B',
-  'dao-vote': '#6366F1',
-  'stats-bar': '#3B82F6',
-  'price-chart': '#10B981',
-  'token-balance': '#F97316',
-  'gas-price': '#EF4444',
-  'recent-transactions': '#8B5CF6',
-  'hero-section': '#EC4899',
-  'button': '#64748B',
-  'text-block': '#94A3B8',
-  'image-block': '#F59E0B',
+  'wallet-connect':    '#836EF9',
+  'token-swap':        '#22C55E',
+  'token-balance':     '#F97316',
+  'nft-gallery':       '#F59E0B',
+  'transaction-feed':  '#8B5CF6',
+  'price-chart':       '#10B981',
+  'dao-vote':          '#6366F1',
+  'stats-row':         '#3B82F6',
+  'hero-section':      '#EC4899',
+  'card':              '#64748B',
+  'divider':           '#475569',
+  'heading':           '#94A3B8',
+  'paragraph':         '#94A3B8',
+  'button':            '#836EF9',
+  'image':             '#F59E0B',
 };
 
 const COMPONENT_LABELS: Record<string, string> = {
-  'wallet-connect': 'Wallet',
-  'token-swap': 'Swap',
-  'nft-gallery': 'NFT',
-  'dao-vote': 'DAO',
-  'stats-bar': 'Stats',
-  'price-chart': 'Chart',
-  'token-balance': 'Balance',
-  'gas-price': 'Gas',
-  'recent-transactions': 'Txns',
-  'hero-section': 'Hero',
-  'button': 'Button',
-  'text-block': 'Text',
-  'image-block': 'Image',
+  'wallet-connect':    'Wallet',
+  'token-swap':        'Swap',
+  'token-balance':     'Balance',
+  'nft-gallery':       'NFT',
+  'transaction-feed':  'Txns',
+  'price-chart':       'Chart',
+  'dao-vote':          'DAO',
+  'stats-row':         'Stats',
+  'hero-section':      'Hero',
+  'card':              'Card',
+  'divider':           'Divider',
+  'heading':           'Heading',
+  'paragraph':         'Text',
+  'button':            'Button',
+  'image':             'Image',
 };
 
 function timeAgo(dateStr: string): string {
@@ -70,6 +75,16 @@ function timeAgo(dateStr: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+/** Friendly label for a component type — falls back to the raw type string */
+function label(type: string): string {
+  return COMPONENT_LABELS[type] ?? type.replace(/-/g, ' ');
+}
+
+/** Accent color for a component type dot */
+function color(type: string): string {
+  return COMPONENT_TYPE_COLORS[type] ?? '#64748B';
 }
 
 export function ProjectCard({ project, onPress }: ProjectCardProps) {
@@ -83,7 +98,7 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
       backgroundColor: colors.card,
       borderRadius: colors.radius + 4,
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: isPublished ? 'rgba(131,110,249,0.25)' : colors.border,
       marginHorizontal: 16,
       marginBottom: 12,
       overflow: 'hidden',
@@ -91,16 +106,16 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
         ios: {
           shadowColor: '#836EF9',
           shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
+          shadowOpacity: isPublished ? 0.18 : 0.06,
           shadowRadius: 8,
         },
-        android: { elevation: 4 },
+        android: { elevation: isPublished ? 6 : 3 },
       }),
     },
     accentBar: {
       height: 2,
       backgroundColor: colors.primary,
-      opacity: isPublished ? 1 : 0.3,
+      opacity: isPublished ? 1 : 0.25,
     },
     body: {
       padding: 16,
@@ -233,15 +248,8 @@ export function ProjectCard({ project, onPress }: ProjectCardProps) {
             <View style={styles.chipsRow}>
               {topComponents.map((c, i) => (
                 <View key={i} style={styles.chip}>
-                  <View
-                    style={[
-                      styles.chipDot,
-                      { backgroundColor: COMPONENT_TYPE_COLORS[c.type] ?? '#64748B' },
-                    ]}
-                  />
-                  <Text style={styles.chipText}>
-                    {COMPONENT_LABELS[c.type] ?? c.type}
-                  </Text>
+                  <View style={[styles.chipDot, { backgroundColor: color(c.type) }]} />
+                  <Text style={styles.chipText}>{label(c.type)}</Text>
                 </View>
               ))}
               {overflow > 0 && (

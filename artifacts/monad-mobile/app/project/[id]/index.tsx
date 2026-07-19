@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Linking,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
@@ -59,6 +60,12 @@ export default function ProjectDetailScreen() {
   function handleAudit() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push(`/project/${id}/audit`);
+  }
+
+  function handleViewLive() {
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(`https://${domain}/preview/${id}`);
   }
 
   const styles = StyleSheet.create({
@@ -284,15 +291,15 @@ export default function ProjectDetailScreen() {
         </View>
       </View>
 
-      {/* Published link */}
-      {project.status === 'published' && project.publishedSlug && (
-        <View style={styles.publishedCard}>
+      {/* Published link — tappable to open the live dApp */}
+      {project.status === 'published' && (
+        <TouchableOpacity style={styles.publishedCard} onPress={handleViewLive} activeOpacity={0.75}>
           <Feather name="globe" size={14} color="#22C55E" />
           <Text style={styles.publishedText}>
-            Published as /{project.publishedSlug}
+            {project.publishedSlug ? `Deployed · /${project.publishedSlug}` : 'Deployed to Monad Testnet'}
           </Text>
           <Feather name="external-link" size={13} color="#22C55E" />
-        </View>
+        </TouchableOpacity>
       )}
 
       {/* Components list */}
