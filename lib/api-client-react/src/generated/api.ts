@@ -563,11 +563,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Publish a project
  */
 export const usePublishProject = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishProject>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publishProject>>, TError,{id: number; contractAddress?: string; deployTxHash?: string}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof publishProject>>,
         TError,
-        {id: number},
+        {id: number; contractAddress?: string; deployTxHash?: string},
         TContext
       > => {
       return useMutation(getPublishProjectMutationOptions(options));

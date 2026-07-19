@@ -298,7 +298,7 @@ export default function ChainScreen() {
       <Animated.View style={[styles.blockCard, { backgroundColor: flashColor }]}>
         <Text style={styles.blockLabel}>Latest Block</Text>
         <Text style={styles.blockNumber}>{blockDisplay}</Text>
-        <Text style={styles.blockSub}>Updates every 400ms · Monad Mainnet</Text>
+        <Text style={styles.blockSub}>Updates every 400ms · Monad Testnet</Text>
       </Animated.View>
 
       {/* Gas price */}

@@ -157,21 +157,55 @@ export default function Preview() {
           </div>
         )}
 
-        <footer className="mt-16 py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* On-chain contract badge */}
+        {(project as any).contractAddress && (
+          <div className="mt-6 p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
+              <span className="text-xs font-bold text-green-400 uppercase tracking-widest">On-Chain · Monad Testnet</span>
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/30 w-16 shrink-0">Contract</span>
+                <a
+                  href={`https://testnet.monadexplorer.com/address/${(project as any).contractAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-mono text-green-400/80 hover:text-green-400 transition-colors flex items-center gap-1 truncate"
+                >
+                  {(project as any).contractAddress}
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+              </div>
+              {(project as any).deployTxHash && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/30 w-16 shrink-0">Tx Hash</span>
+                  <a
+                    href={`https://testnet.monadexplorer.com/tx/${(project as any).deployTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-mono text-white/40 hover:text-white/70 transition-colors flex items-center gap-1 truncate"
+                  >
+                    {(project as any).deployTxHash}
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <footer className="mt-8 py-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-white/30 text-xs">
             <Zap className="w-3.5 h-3.5 text-primary/50" />
             <span>Built with <span className="text-white/50 font-medium">MonadBuilder+</span></span>
           </div>
           <div className="flex items-center gap-4 text-xs text-white/25">
-            <a href="https://monadvision.com" target="_blank" rel="noopener noreferrer"
+            <a href="https://testnet.monadexplorer.com" target="_blank" rel="noopener noreferrer"
               className="hover:text-white/50 transition-colors flex items-center gap-1">
-              MonadVision <ExternalLink className="w-3 h-3" />
+              Monad Explorer <ExternalLink className="w-3 h-3" />
             </a>
-            <a href="https://monadscan.com" target="_blank" rel="noopener noreferrer"
-              className="hover:text-white/50 transition-colors flex items-center gap-1">
-              Monadscan <ExternalLink className="w-3 h-3" />
-            </a>
-            <span className="font-mono">Chain 143</span>
+            <span className="font-mono">Chain 10143</span>
           </div>
         </footer>
       </main>

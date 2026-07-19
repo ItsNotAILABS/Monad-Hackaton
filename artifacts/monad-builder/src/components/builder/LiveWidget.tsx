@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-// Real Monad Mainnet network configuration — source: docs.monad.xyz
+// Monad Testnet network configuration — source: docs.monad.xyz
 const MONAD_CHAIN = {
-  chainId: 143,
-  name: "Monad Mainnet",
+  chainId: 10143,
+  name: "Monad Testnet",
   currency: "MON",
-  rpcUrl: "https://rpc.monad.xyz",
-  explorerUrl: "https://monadvision.com",
-  explorerName: "MonadVision",
-  wrappedMON: "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A",
+  rpcUrl: "https://testnet-rpc.monad.xyz",
+  explorerUrl: "https://testnet.monadexplorer.com",
+  explorerName: "Monad Explorer",
+  wrappedMON: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
 };
 
 // Fake transaction hashes that look realistic

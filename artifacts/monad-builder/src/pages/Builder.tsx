@@ -3,11 +3,10 @@ import { useRoute, Link, useLocation } from "wouter";
 import {
   useGetProject,
   useUpdateProject,
-  usePublishProject,
   getGetProjectQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Zap, Play, Save, ChevronLeft, Layout, Webhook, FileText, Globe, Share2, Check } from "lucide-react";
+import { Zap, Play, ChevronLeft, Layout, Webhook, FileText, Globe, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { COMPONENT_PALETTE } from "@/components/builder/palette";
@@ -17,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { AIComponentPrompt } from "@/components/ai/AIComponentPrompt";
 import { AIRefinePanel } from "@/components/ai/AIRefinePanel";
 import { useSetAIContext } from "@/lib/aiPageContext";
+import { deployToMonadTestnet } from "@/lib/monadDeploy";
 
 // Props that are Monad network config — shown read-only in a separate section
 const NETWORK_CONFIG_KEYS = new Set([
@@ -56,7 +56,6 @@ export default function Builder() {
   });
 
   const updateProject = useUpdateProject();
-  const publishProject = usePublishProject();
 
   const [components, setComponents] = useState<ComponentData[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -150,26 +149,71 @@ export default function Builder() {
     });
   }, []);
 
-  const handlePublish = () => {
-    publishProject.mutate({ id }, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(id) });
-        const liveUrl = `${window.location.origin}/preview/${id}`;
-        toast.success("🚀 Deployed to Monad Testnet!", {
-          description: liveUrl,
-          duration: 8000,
+  const [isDeploying, setIsDeploying] = useState(false);
+
+  const handlePublish = async () => {
+    if (isDeploying) return;
+    setIsDeploying(true);
+
+    let contractAddress: string | undefined;
+    let deployTxHash: string | undefined;
+
+    // Try on-chain deployment via MetaMask/wallet
+    const hasWallet = !!(window as any).ethereum;
+    if (hasWallet) {
+      const deployToast = toast.loading("⛓️ Deploying contract to Monad Testnet…", {
+        description: "Check your wallet to confirm the transaction.",
+        duration: 120_000,
+      });
+      try {
+        const slug = project?.publishedSlug ?? `app-${id}-${Date.now()}`;
+        const result = await deployToMonadTestnet(project?.name ?? "MonadDApp", slug);
+        contractAddress = result.contractAddress;
+        deployTxHash = result.txHash;
+        toast.dismiss(deployToast);
+        toast.success("✅ Contract deployed!", {
+          description: `${result.contractAddress.slice(0, 10)}…${result.contractAddress.slice(-8)}`,
+          duration: 6000,
           action: {
-            label: "Open",
-            onClick: () => setLocation(`/preview/${id}`),
+            label: "Explorer ↗",
+            onClick: () => window.open(result.explorerUrl, "_blank"),
           },
         });
-        // Brief delay so the toast is visible before navigating
-        setTimeout(() => setLocation(`/preview/${id}`), 1800);
-      },
-      onError: () => {
-        toast.error("Deploy failed", { description: "Could not publish your dApp. Please try again." });
+      } catch (err: any) {
+        toast.dismiss(deployToast);
+        toast.warning("⚠️ Contract deploy skipped", {
+          description: err?.message ?? "Wallet rejected or unavailable. Saving to DB only.",
+          duration: 5000,
+        });
       }
-    });
+    } else {
+      toast.info("💡 Install MetaMask to deploy on-chain", {
+        description: "Saving your dApp without a contract address for now.",
+        duration: 4000,
+      });
+    }
+
+    // Always record in DB
+    try {
+      const res = await fetch(`/api/projects/${id}/publish`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractAddress, deployTxHash }),
+      });
+      if (!res.ok) throw new Error("DB publish failed");
+      queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(id) });
+      const liveUrl = `${window.location.origin}/preview/${id}`;
+      toast.success("🚀 Live on Monad Testnet!", {
+        description: liveUrl,
+        duration: 8000,
+        action: { label: "Open", onClick: () => setLocation(`/preview/${id}`) },
+      });
+      setTimeout(() => setLocation(`/preview/${id}`), 1800);
+    } catch {
+      toast.error("Deploy failed", { description: "Could not save your dApp. Please try again." });
+    } finally {
+      setIsDeploying(false);
+    }
   };
 
   if (isLoading) {
@@ -237,9 +281,9 @@ export default function Builder() {
             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Share2 className="w-4 h-4" />}
             {copied ? "Copied!" : "Share"}
           </Button>
-          <Button size="sm" onClick={handlePublish} disabled={publishProject.isPending} className="gap-2 bg-primary hover:bg-primary/90">
+          <Button size="sm" onClick={handlePublish} disabled={isDeploying} className="gap-2 bg-primary hover:bg-primary/90">
             <Globe className="w-4 h-4" />
-            {publishProject.isPending ? "Deploying…" : project.status === "published" ? "Redeploy" : "Deploy to Monad"}
+            {isDeploying ? "Deploying…" : project.status === "published" ? "Redeploy" : "Deploy to Monad"}
           </Button>
         </div>
       </header>
@@ -390,7 +434,7 @@ export default function Builder() {
                       ))}
                     </div>
                     <p className="text-[10px] text-white/20 leading-relaxed">
-                      Network config is pre-set to Monad Mainnet and cannot be changed.
+                      Network config is pre-set to Monad Testnet (Chain ID 10143) and cannot be changed.
                     </p>
                   </div>
                 )}

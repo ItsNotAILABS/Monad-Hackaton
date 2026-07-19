@@ -36,6 +36,8 @@ export const projectsTable = pgTable("projects", {
   theme: jsonb("theme").notNull().$type<Record<string, string>>().default({}),
   status: text("status").notNull().default("draft"), // draft | published
   publishedSlug: text("published_slug"),
+  contractAddress: text("contract_address"),
+  deployTxHash: text("deploy_tx_hash"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

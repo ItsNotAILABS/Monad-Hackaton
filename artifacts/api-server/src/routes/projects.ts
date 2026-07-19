@@ -140,10 +140,17 @@ router.post("/projects/:id/publish", async (req, res): Promise<void> => {
   }
 
   const slug = existing.publishedSlug ?? `app-${existing.id}-${Date.now()}`;
+  const { contractAddress, deployTxHash } = req.body ?? {};
 
   const [project] = await db
     .update(projectsTable)
-    .set({ status: "published", publishedSlug: slug, updatedAt: new Date() })
+    .set({
+      status: "published",
+      publishedSlug: slug,
+      ...(contractAddress ? { contractAddress } : {}),
+      ...(deployTxHash ? { deployTxHash } : {}),
+      updatedAt: new Date(),
+    })
     .where(eq(projectsTable.id, params.data.id))
     .returning();
 

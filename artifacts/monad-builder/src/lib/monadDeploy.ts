@@ -1,0 +1,144 @@
+import { ethers } from "ethers";
+
+// Monad Testnet — Chain ID 10143
+export const MONAD_TESTNET = {
+  chainId: "0x279F", // 10143 in hex
+  chainName: "Monad Testnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: ["https://testnet-rpc.monad.xyz"],
+  blockExplorerUrls: ["https://testnet.monadexplorer.com"],
+};
+
+// Pre-compiled MonadDApp.sol (solc 0.8.24, optimizer 200 runs)
+// Source: contracts/MonadDApp.sol
+const CONTRACT_BYTECODE =
+  "0x608060405234801561000f575f5ffd5b5060405161070b38038061070b83398101604081905261002e91610140565b5f6100398382610234565b5060016100468282610234565b50600280546001600160a01b031916339081179091554260038190556040517fa6c73e64441e440510b703882fc5d822c8e2867e8748ee5a0f138f9faa55cfbb916100949186918691610320565b60405180910390a25050610355565b634e487b7160e01b5f52604160045260245ffd5b5f82601f8301126100c6575f5ffd5b81516001600160401b038111156100df576100df6100a3565b604051601f8201601f19908116603f011681016001600160401b038111828210171561010d5761010d6100a3565b604052818152838201602001851015610124575f5ffd5b8160208501602083015e5f918101602001919091529392505050565b5f5f60408385031215610151575f5ffd5b82516001600160401b03811115610166575f5ffd5b610172858286016100b7565b602085015190935090506001600160401b0381111561018f575f5ffd5b61019b858286016100b7565b9150509250929050565b600181811c908216806101b957607f821691505b6020821081036101d757634e487b7160e01b5f52602260045260245ffd5b50919050565b601f82111561022f578282111561022f57805f5260205f20601f840160051c602085101561020857505f5b90810190601f840160051c035f5b8181101561022b575f83820155600101610216565b5050505b505050565b81516001600160401b0381111561024d5761024d6100a3565b6102618161025b84546101a5565b846101dd565b6020601f821160018114610293575f831561027c5750848201515b5f19600385901b1c1916600184901b1784556102eb565b5f84815260208120601f198516915b828110156102c257878501518255602094850194600190920191016102a2565b50848210156102df57868401515f19600387901b60f8161c191681555b505060018360011b0184555b5050505050565b5f81518084528060208401602086015e5f602082860101526020601f19601f83011685010191505092915050565b606081525f61033260608301866102f2565b828103602084015261034481866102f2565b915050826040830152949350505050565b6103a9806103625f395ff3fe608060405234801561000f575f5ffd5b5060043610610055575f3560e01c80630c97282c146100595780633aec242c146100775780635a9b0b891461007f5780638da5cb5b14610097578063eae4c19f146100c2575b5f5ffd5b6100616100d9565b60405161006e91906102e1565b60405180910390f35b610061610164565b610087610171565b60405161006e94939291906102fa565b6002546100aa906001600160a01b031681565b6040516001600160a01b03909116815260200161006e565b6100cb60035481565b60405190815260200161006e565b5f80546100e59061033b565b80601f01602080910402602001604051908101604052809291908181526020018280546101119061033b565b801561015c5780601f106101335761010080835404028352916020019161015c565b820191905f5260205f20905b81548152906001019060200180831161013f57829003601f168201915b505050505081565b600180546100e59061033b565b6060805f5f5f600160025f9054906101000a90046001600160a01b031660035483805461019d9061033b565b80601f01602080910402602001604051908101604052809291908181526020018280546101c99061033b565b80146102145780601f106101eb57610100808354040283529160200191610214565b820191905f5260205f20905b8154815290600101906020018083116101f757829003601f168201915b505050505093508280546102279061033b565b80601f01602080910402602001604051908101604052809291908181526020018280546102539061033b565b80146102e5780601f1061027557610100808354040283529160200191610214565b820191905f5260205f20905b8154815290600101906020018083116101f75782900360009060209081526102829061023b57829003601f168201915b50505050509250935093509350935090919293565b5f81518084528060208401602086015e5f602082860101526020601f19601f83011685010191505092915050565b602081525f6102f360208301846102b3565b9392505050565b608081525f61030c60808301876102b3565b828103602084015261031e81876102b3565b6001600160a01b0395909516604084015250506060015292915050565b600181811c9082168061034f57607f821691505b60208210810361036d57634e487b7160e01b5f52602260045260245ffd5b5091905056fea26469706673582212205bdf403822c17e04a8bfd62de159d1ba88e7bf6ba7cd7f737640f7e2954b186c64736f6c63430008240033";
+
+const CONTRACT_ABI = [
+  {
+    inputs: [
+      { internalType: "string", name: "_appName", type: "string" },
+      { internalType: "string", name: "_slug", type: "string" },
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: false, internalType: "string", name: "appName", type: "string" },
+      { indexed: false, internalType: "string", name: "publishedSlug", type: "string" },
+      { indexed: true, internalType: "address", name: "owner", type: "address" },
+      { indexed: false, internalType: "uint256", name: "deployedAt", type: "uint256" },
+    ],
+    name: "DAppDeployed",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "appName",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "deployedAt",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getInfo",
+    outputs: [
+      { internalType: "string", name: "name_", type: "string" },
+      { internalType: "string", name: "slug_", type: "string" },
+      { internalType: "address", name: "owner_", type: "address" },
+      { internalType: "uint256", name: "deployedAt_", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "publishedSlug",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
+export type DeployResult = {
+  contractAddress: string;
+  txHash: string;
+  explorerUrl: string;
+};
+
+/** Switch MetaMask to Monad Testnet (adds network if not present) */
+async function switchToMonadTestnet(provider: ethers.BrowserProvider) {
+  const ethereum = (window as any).ethereum;
+  try {
+    await ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: MONAD_TESTNET.chainId }],
+    });
+  } catch (err: any) {
+    // 4902 = chain not added yet
+    if (err.code === 4902) {
+      await ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [MONAD_TESTNET],
+      });
+    } else {
+      throw err;
+    }
+  }
+  // Re-check chain
+  const network = await provider.getNetwork();
+  if (Number(network.chainId) !== 10143) {
+    throw new Error("Please switch MetaMask to Monad Testnet (Chain ID 10143).");
+  }
+}
+
+/**
+ * Deploy MonadDApp contract to Monad Testnet via MetaMask.
+ * Returns tx hash + contract address, or throws with a user-friendly message.
+ */
+export async function deployToMonadTestnet(
+  appName: string,
+  slug: string
+): Promise<DeployResult> {
+  const ethereum = (window as any).ethereum;
+  if (!ethereum) {
+    throw new Error(
+      "No wallet detected. Install MetaMask or Rabby to deploy on-chain."
+    );
+  }
+
+  await ethereum.request({ method: "eth_requestAccounts" });
+  const provider = new ethers.BrowserProvider(ethereum);
+  await switchToMonadTestnet(provider);
+
+  const signer = await provider.getSigner();
+  const factory = new ethers.ContractFactory(CONTRACT_ABI, CONTRACT_BYTECODE, signer);
+  const contract = await factory.deploy(appName, slug);
+  const receipt = await contract.deploymentTransaction()!.wait(1);
+
+  if (!receipt || !receipt.contractAddress) {
+    throw new Error("Deployment transaction failed. Check your wallet and try again.");
+  }
+
+  return {
+    contractAddress: receipt.contractAddress,
+    txHash: receipt.hash,
+    explorerUrl: `${MONAD_TESTNET.blockExplorerUrls[0]}/tx/${receipt.hash}`,
+  };
+}

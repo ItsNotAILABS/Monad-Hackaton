@@ -41,6 +41,8 @@ export const ListProjectsResponseItem = zod.object({
 }),
   "status": zod.enum(['draft', 'published']),
   "publishedSlug": zod.string().nullish(),
+  "contractAddress": zod.string().nullish(),
+  "deployTxHash": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -78,6 +80,8 @@ export const CreateProjectResponse = zod.object({
 }),
   "status": zod.enum(['draft', 'published']),
   "publishedSlug": zod.string().nullish(),
+  "contractAddress": zod.string().nullish(),
+  "deployTxHash": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -112,6 +116,8 @@ export const GetProjectResponse = zod.object({
 }),
   "status": zod.enum(['draft', 'published']),
   "publishedSlug": zod.string().nullish(),
+  "contractAddress": zod.string().nullish(),
+  "deployTxHash": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -162,6 +168,8 @@ export const UpdateProjectResponse = zod.object({
 }),
   "status": zod.enum(['draft', 'published']),
   "publishedSlug": zod.string().nullish(),
+  "contractAddress": zod.string().nullish(),
+  "deployTxHash": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -206,6 +214,8 @@ export const PublishProjectResponse = zod.object({
 }),
   "status": zod.enum(['draft', 'published']),
   "publishedSlug": zod.string().nullish(),
+  "contractAddress": zod.string().nullish(),
+  "deployTxHash": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
