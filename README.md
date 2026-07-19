@@ -1,103 +1,139 @@
-# MonadBuilder+
+# MonadBuilder+ · THESIS OS
 
-> No-code drag-and-drop dApp builder for the Monad ecosystem.
+> No-code dApp builder + AI governance engine for the Monad ecosystem.
+> Built for the [Spark hackathon](https://buildanything.so/hackathons/spark).
 
-**Live demo:** [deploy to get URL]
-
----
-
-## What It Is
-
-A visual workspace where anyone can assemble a Monad dApp from pre-built Web3 components — without writing a single line of code. Built for the [Spark hackathon](https://buildanything.so/hackathons/spark) by BuildAnything.
-
-**The personal problem it solves:** Getting a dApp idea on Monad means days of setup before a single user can touch it — wallet adapters, RPC config, chain IDs, web3 plumbing. MonadBuilder+ collapses that to minutes.
+**Live:** [https://monados.medinatechlabs.net](https://monados.medinatechlabs.net)
+**GitHub:** [https://github.com/ItsNotAILABS/Monad-Hackaton](https://github.com/ItsNotAILABS/Monad-Hackaton)
 
 ---
 
-## Features
+## Two Apps, One Stack
 
-### Builder
-- Visual drag-and-drop canvas (3-panel: Component Library → Canvas → Inspector)
-- 14 components across 3 categories: Web3, Layout, Content
-- Real-time property inspector with human-friendly labels
-- Move up/down reordering with delete confirmation
+| App | What it does | Tech |
+|---|---|---|
+| **MonadBuilder+ Web** | Visual no-code dApp builder, deploy to Monad Testnet | Node.js · React · pnpm |
+| **THESIS Engine** | AI governance engine — agents, laws, receipts, vault | Python · FastAPI · uvicorn |
 
-### Web3 Components (all pre-wired to Monad Mainnet, Chain ID 143)
+They share one origin. The web app talks to the THESIS engine via `/engine/`.
+
+---
+
+## MonadBuilder+ (Web App)
+
+Build a Monad dApp in minutes:
+1. Describe your idea → AI builds the component layout
+2. Drag-and-drop to customise in the visual builder
+3. Hit **Deploy** → MetaMask signs → contract lives on Monad Testnet (Chain 10143)
+4. Share the live preview URL
+
+### Features
+- **20+ templates** — AMM DEX, NFT Launchpad, DAO, Staking, Yield Aggregator, P2E, RWA, Bridge, SocialFi, Lottery, Multi-Sig, and more
+- **AI builder** — GPT-powered idea → full dApp spec → component layout in seconds
+- **Learn & Earn** — interactive Web3 education with testnet MON rewards
+- **Gallery** — live iframe previews of every published dApp
+- **GitHub sign-in** — OAuth via GitHub account
+- **AI agent wallets** — 4 seeded agents (Governance, Builder, Auditor, Rewards) with Monad Testnet addresses
+
+### Web3 Components (all pre-wired to Monad Testnet, Chain ID 10143)
+
 | Component | Description |
 |---|---|
-| Wallet Connect | MetaMask/injected wallet button, Chain ID 143 |
-| Token Balance | MON balance display, WMON contract address |
-| Token Swap | USDC ↔ MON swap UI, live RPC endpoint |
-| NFT Gallery | Configurable grid, MonadVision explorer links |
-| DAO Proposal | Live voting UI with For/Against breakdown |
-| Price Chart | MON/USD candlestick widget |
-| Transaction Feed | Recent activity with MonadVision deep links |
-
-### Platform
-- Project CRUD with status (draft / published)
-- Template gallery: DeFi Dashboard, NFT Collection, DAO Governance, Token Landing Page, Portfolio Tracker
-- Live preview mode at `/preview/:id`
-- Publish to shareable URL
-- Dashboard with project stats
+| Wallet Connect | MetaMask/injected wallet, Chain 10143 |
+| Token Balance | MON balance with live RPC |
+| Token Swap | USDC ↔ MON via testnet-rpc.monad.xyz |
+| NFT Gallery | Configurable grid, explorer links |
+| DAO Vote | On-chain proposal + voting UI |
+| Price Chart | MON/USD candlestick |
+| Transaction Feed | Live activity feed |
+| Merkl Rewards | Claim interface |
+| Auto Wallet | Generate wallet without MetaMask |
+| AI Agent Wallet | Display agent wallet balances |
+| Learn Card / Quiz / Badge | Education + rewards |
 
 ---
 
-## Monad Network Config (baked in)
+## THESIS OS (Python Engine)
+
+AI governance layer for on-chain organisations:
+
+| Module | Role |
+|---|---|
+| **EcosystemLaw** | Immutable global rules |
+| **LawBook** | Owner-tunable policies |
+| **PolicyKernel** | Evaluates every proposal against laws |
+| **SovereignVault** | Executes only what PolicyKernel clears |
+| **ReceiptChain** | Immutable on-chain audit log |
+| **16 MCP tools** | Agent ↔ chain interaction |
+| **WIN PATH** | Daily governance workflow |
+
+---
+
+## Monad Testnet Config
 
 | Property | Value |
 |---|---|
-| Chain ID | `143` |
-| Network | Monad Mainnet |
-| Currency | MON |
-| RPC (QuickNode) | `https://rpc.monad.xyz` |
-| RPC (Alchemy) | `https://rpc1.monad.xyz` |
-| RPC (Goldsky) | `https://rpc2.monad.xyz` |
-| RPC (Ankr) | `https://rpc3.monad.xyz` |
-| Wrapped MON | `0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A` |
-| Explorer | [MonadVision](https://monadvision.com) · [Monadscan](https://monadscan.com) |
-| Throughput | 10,000 TPS |
-| Block time | 400ms |
-| Finality | 800ms |
-
-Source: [docs.monad.xyz](https://docs.monad.xyz)
+| Chain ID | `10143` |
+| RPC | `https://testnet-rpc.monad.xyz` |
+| Explorer | `https://testnet.monadexplorer.com` |
+| WMON | `0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701` |
+| USDC | `0xf817257fed379853cDe0fa4F97AB987181B1E5Ea` |
+| Block time | 400ms · 10,000 TPS · 800ms finality |
 
 ---
 
-## Tech Stack
-
-| Layer | Tech |
-|---|---|
-| Frontend | React + Vite, Tailwind CSS, shadcn/ui, Framer Motion |
-| Backend | Express 5, Drizzle ORM, PostgreSQL |
-| API | OpenAPI spec, auto-generated TypeScript client |
-| Monorepo | pnpm workspaces |
-| Deployment | Replit autoscale |
-
----
-
-## Project Structure
-
-```
-artifacts/
-  monad-builder/    # React + Vite frontend
-  api-server/       # Express 5 API
-lib/
-  db/               # Drizzle schema + migrations
-  api-spec/         # OpenAPI spec
-  api-client-react/ # Auto-generated React Query hooks
-```
-
----
-
-## Local Development
+## Running Locally
 
 ```bash
-pnpm install
-# Start both services
-pnpm --filter @workspace/api-server run dev
-pnpm --filter @workspace/monad-builder run dev
+# Start everything (Python THESIS engine + Node.js API + React frontend)
+bash scripts/replit_start.sh
 ```
 
-Environment variables needed:
-- `DATABASE_URL` — PostgreSQL connection string
-- `SESSION_SECRET` — session signing secret
+Or separately:
+```bash
+# Python THESIS engine (port 8043)
+python -m uvicorn thesis_forge.serve:app --app-dir engine --port 8043
+
+# MonadBuilder+ dev server
+pnpm --filter @workspace/monad-builder run dev
+pnpm --filter @workspace/api-server run dev
+```
+
+---
+
+## Smart Contracts
+
+THESIS OS contracts in `contracts/src/`:
+
+| Contract | Purpose |
+|---|---|
+| `PolicyKernel.sol` | Evaluates proposals against law stack |
+| `SovereignVault.sol` | Executes cleared actions |
+| `LawBook.sol` | Owner-tunable governance policies |
+| `ReceiptChain.sol` | Immutable audit trail |
+| `AgentRegistry.sol` | On-chain AI agent registry |
+| `ThesisFactory.sol` | Deploy full THESIS OS suite in one tx |
+
+```bash
+# Deploy contracts
+cd contracts && forge script script/Deploy.s.sol --rpc-url https://testnet-rpc.monad.xyz --broadcast
+```
+
+---
+
+## Repo Structure
+
+```
+├── artifacts/          MonadBuilder+ web app + API server (pnpm workspace)
+│   ├── monad-builder/  React + Vite frontend
+│   ├── api-server/     Node.js Express API
+│   └── monad-mobile/   Expo mobile app
+├── engine/             Python THESIS OS engine (FastAPI)
+├── contracts/          Solidity THESIS OS contracts (Foundry)
+├── web/                THESIS engine React frontend (simple)
+├── lib/                Shared TypeScript libraries
+├── docs/               Architecture docs
+├── receipts/           On-chain action receipts
+├── scripts/            Startup + deploy scripts
+└── polyglot/           Julia + Node hybrid workers
+```

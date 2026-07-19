@@ -1,0 +1,59 @@
+{
+  "latest": {
+    "schema": "monadbuilder.self_evolve.v1",
+    "ok": true,
+    "changes": {
+      "gas_discipline": {
+        "to": 0.56
+      }
+    },
+    "skills": {
+      "reject_is_feature": 1.05,
+      "gas_discipline": 0.56,
+      "signal_trading": 0.3,
+      "morning_loop": 0.55,
+      "x_marketing": 0.2,
+      "coding_forge": 0.2
+    },
+    "note": "Local skill residual updates \u2014 not multi-GPU retrain"
+  },
+  "history": [
+    {
+      "ts": 1784398309.2584953,
+      "intent": "safety.reject",
+      "changes": {
+        "reject_is_feature": {
+          "from": 1.0,
+          "to": 1.05,
+          "delta": 0.05
+        },
+        "gas_discipline": {
+          "to": 0.52
+        }
+      }
+    },
+    {
+      "ts": 1784398313.3034046,
+      "intent": "habit.morning",
+      "changes": {
+        "morning_loop": {
+          "from": 0.5,
+          "to": 0.55,
+          "delta": 0.05
+        },
+        "gas_discipline": {
+          "to": 0.54
+        }
+      }
+    },
+    {
+      "ts": 1784398878.429112,
+      "intent": "agent.general",
+      "changes": {
+        "gas_discipline": {
+          "to": 0.56
+        }
+      }
+    }
+  ]
+}

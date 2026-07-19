@@ -1,0 +1,6 @@
+{
+  "python_tests": "5 passed",
+  "web_build": "not run: package installation timed out in runtime",
+  "contracts": "source prepared; Foundry unavailable in runtime",
+  "live_monad_deployment": false
+}

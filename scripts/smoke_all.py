@@ -1,0 +1,365 @@
+#!/usr/bin/env python3
+"""End-to-end smoke without browser."""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "engine"))
+
+from fastapi.testclient import TestClient
+from thesis_forge.api import app
+
+
+def main() -> int:
+    c = TestClient(app)
+    h = c.get("/health").json()
+    assert h["status"] == "operational", h
+    print("health", h["version"])
+
+    body = {
+        "name": "Smoke Vault",
+        "objective": "Coordinate Monad portfolio under user laws with agent proposals only.",
+        "categories": ["vault", "dex", "lending"],
+        "network": "monad-testnet",
+        "persist": True,
+    }
+    p = c.post("/pipeline", json=body).json()
+    assert p["ok"], p
+    print("pipeline files", p["file_stats"]["n_files"], "rejected", p["arena"]["n_rejected"])
+
+    a = c.post("/arena/auto", json=body).json()
+    assert a["n_rejected"] >= 1
+    print("arena winner", (a.get("winner") or {}).get("action", {}).get("agent"))
+
+    g = c.post(
+        "/academy/grade",
+        json={"quest_id": "slippage-trap", "selected_action_index": 1, "understood": True},
+    ).json()
+    assert g["passed"]
+    print("academy passed")
+
+    j = c.get("/judge").json()
+    assert j["vaporware"] is False
+    print("judge ok", j["features"])
+
+    home = c.get("/home").json()
+    assert home.get("missions")
+    c.post("/home/mission", json={"mission_id": "checkin"})
+    c.post("/home/mission", json={"mission_id": "gas-tip", "acknowledged": True})
+    print("home xp", c.get("/home").json().get("xp"))
+
+    desk = c.get("/desk").json()
+    assert "cash_usdc" in desk
+    da = c.post("/desk/arena").json()
+    assert da["n_rejected"] >= 1
+    print("desk arena", da["n_accepted"], "accept", da["n_rejected"], "reject")
+
+    marks = c.post("/desk/marks/refresh").json()
+    assert marks.get("ok") and marks.get("feed", {}).get("marks")
+    print("marks", marks["feed"]["marks"].get("MON/USDC"))
+
+    st = c.post("/desk/strategies/market-make").json()
+    assert st.get("ok")
+    print("strategy", st["strategy"]["id"], st["n_accepted"], "accept")
+
+    ai = c.get("/ai").json()
+    assert ai.get("capabilities", {}).get("real_key_access") is False
+    chat = c.post("/ai/chat", json={"message": "gas tip and show balances"}).json()
+    assert chat.get("answer")
+    print("ai node", ai.get("node", {}).get("node_id", "")[:12])
+
+    co = c.post(
+        "/company/run",
+        json={
+            "objective": "Grow my Monad position, keep 30% liquid, avoid leverage, and teach me."
+        },
+    ).json()
+    assert co.get("ok") and co.get("sla_all_met") is True
+    print("company mission", co["mission"]["status"], "winner", (co["mission"].get("winner") or {}).get("agent"))
+    hq = c.get("/company").json()
+    assert hq.get("brief") and hq.get("inbox")
+    print("company HQ ok")
+
+    land = c.get("/landing").json()
+    assert land.get("ticker") and land.get("teaching_now")
+    apps = land.get("apps") or {}
+    assert "wallets" in apps and "vault" in apps and "desk" in apps
+    assert "ai" in apps and "projects" in apps and "modules" in apps
+    assert len(apps["modules"]) >= 6
+    print(
+        "landing laws",
+        land.get("law_stack", {}).get("law_count"),
+        "wallets",
+        apps["wallets"].get("linked"),
+        "vault",
+        apps["vault"].get("deployed"),
+        "projects",
+        apps["projects"].get("count"),
+        "modules",
+        len(apps["modules"]),
+    )
+
+    wl = c.get("/wallets").json()
+    assert "links" in wl and wl.get("security", {}).get("stores_private_keys") is False
+    desk = c.get("/desk").json()
+    assert "tickets_recent" in desk
+    print("wallets/desk integrated ok")
+
+    # Platform kernel
+    plat = c.get("/platform").json()
+    assert "MonadBuilder" in str(plat.get("product") or "") or plat.get("product") == "THESIS Platform"
+    assert plat["kernel"]["primitives_total"] >= 10
+    assert plat["apps"]["first_party_count"] >= 10
+    assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
+    assert any(p.get("id") == "cloud" for p in plat.get("primitives") or [])
+    inv = c.post(
+        "/platform/apps/app.desk/invoke",
+        json={"action": "arena"},
+    ).json()
+    assert inv.get("ok") and int((inv.get("result") or {}).get("n_rejected") or 0) >= 1
+    print(
+        "platform apps",
+        plat["apps"]["total"],
+        "fp",
+        plat["apps"]["first_party_count"],
+        "forged",
+        plat["apps"]["forged_count"],
+        "invoke reject",
+        inv["result"]["n_rejected"],
+    )
+
+    eng = c.get("/engines").json()
+    assert eng.get("count", 0) >= 6
+    gas = c.post(
+        "/engines/gas/run",
+        json={"network": "monad-testnet", "params": {"estimated_gas": 80000}},
+    ).json()
+    assert gas.get("ok")
+    idx = c.post("/engines/index/run", json={"params": {"op": "all"}}).json()
+    assert idx.get("ok") and idx.get("result", {}).get("projects")
+    print("cloud engines", eng["count"], "gas limit", (gas.get("result") or {}).get("recommended_gas_limit"))
+
+    sys = c.get("/system").json()
+    assert sys.get("surfaces") and sys.get("laws", 0) >= 15
+    unified = c.post(
+        "/system/run",
+        json={
+            "network": "monad-testnet",
+            "query": "gas vault desk",
+            "run_cloud": False,
+            "run_company": True,
+            "run_desk": True,
+        },
+    ).json()
+    assert unified.get("ok") and unified.get("desk_arena")
+    print(
+        "system run",
+        unified.get("headline", "")[:48],
+        "reject",
+        (unified.get("desk_arena") or {}).get("n_rejected"),
+        "company",
+        (unified.get("company") or {}).get("status"),
+    )
+
+    pg = c.get("/polyglot").json()
+    assert pg.get("python", {}).get("available") is True
+    mesh = c.post("/polyglot/mesh", json={"equity": 10000, "estimated_gas": 80000}).json()
+    assert mesh.get("ok")
+    print(
+        "polyglot",
+        "julia",
+        pg.get("julia", {}).get("available"),
+        "node",
+        pg.get("node", {}).get("available"),
+        "mesh",
+        (mesh.get("synthesis") or {}).get("winner_agent"),
+    )
+
+    uc = c.get("/use-cases").json()
+    assert uc.get("count") == 20 and len(uc.get("use_cases") or []) == 20
+    print("use cases", uc["count"])
+
+    nom = c.get("/nomos").json()
+    assert nom.get("department") == "NOMOS"
+    assert nom.get("reject_is_a_feature") is True
+    assert nom.get("doctrine")
+    assert (nom.get("ecosystem") or {}).get("law_count", 0) >= 1
+    rules = (nom.get("arena_core") or {}).get("rules") or {}
+    assert len(rules.get("rules") or []) >= 6
+    assert rules.get("pipeline") == ["evaluate", "arbitrate", "arena_report"]
+    nr = c.post("/nomos/run", json=body).json()
+    assert nr.get("n_rejected", 0) >= 1
+    assert nr.get("reject_is_a_feature") is True
+    assert nr.get("scoreboard")
+    print(
+        "nomos",
+        nom.get("tagline", "")[:40],
+        "reject",
+        nr.get("n_rejected"),
+        "accept",
+        nr.get("n_accepted"),
+        "winner",
+        (nr.get("winner") or {}).get("action", {}).get("agent"),
+        "scoreboard",
+        len(nr.get("scoreboard") or []),
+    )
+
+    j = c.get("/judge").json()
+    assert j.get("vaporware") is False
+    assert j.get("vs_winners") and j["vs_winners"].get("one_liner")
+    print("proof pack ok vaporware", j.get("vaporware"), "vs_winners", True)
+
+    tools = c.get("/tools").json()
+    assert tools.get("count", 0) >= 10
+    assert tools.get("easy_path")
+    tr = c.post("/tools/reject_demo/run", json={}).json()
+    assert tr.get("ok") and int((tr.get("result") or {}).get("n_rejected") or 0) >= 1
+    tw = c.post("/tools/win_path/run", json={"network": "monad-testnet"}).json()
+    assert tw.get("ok")
+    te = c.post("/tools/easy_path/run", json={"network": "monad-testnet"}).json()
+    assert te.get("ok") and len((te.get("result") or {}).get("steps") or []) >= 4
+    mcp = c.get("/tools/mcp").json()
+    assert len(mcp.get("tools") or []) >= 10
+    lb = c.get("/lawbook").json()
+    assert lb.get("schema") == "thesis.lawbook.v1"
+    assert (lb.get("onchain_seed") or {}).get("count", 0) >= 20
+    assert (lb.get("alignment") or {}).get("ok") is True
+    print(
+        "tools",
+        tools["count"],
+        "reject",
+        (tr.get("result") or {}).get("n_rejected"),
+        "win_path",
+        (tw.get("result") or {}).get("scorecard_grade"),
+        "easy",
+        te.get("result", {}).get("proof", "")[:40],
+        "mcp",
+        len(mcp["tools"]),
+        "lawbook",
+        (lb.get("alignment") or {}).get("seed_in_runtime"),
+        "/",
+        (lb.get("onchain_seed") or {}).get("count"),
+    )
+
+    term = c.get("/terminal").json()
+    assert term.get("sovereign") is True and term.get("system_shell") is False
+    tev = c.post("/terminal/exec", json={"command": "brief"}).json()
+    assert tev.get("ok") and tev.get("text")
+    tev2 = c.post("/terminal/exec", json={"command": "vault"}).json()
+    assert tev2.get("ok")
+    tev3 = c.post("/terminal/exec", json={"command": "ecosystem"}).json()
+    assert tev3.get("ok")
+    rep = c.post("/reports/full", json={"network": "monad-testnet", "format": "both"}).json()
+    assert rep.get("ok") and (rep.get("download") or {}).get("pdf")
+    pdf_name = (rep.get("files") or {}).get("pdf_name")
+    assert pdf_name
+    dl = c.get(f"/reports/download/{pdf_name}")
+    assert dl.status_code == 200 and len(dl.content) > 100
+    assert dl.content[:4] == b"%PDF"
+    ai_rep = c.post("/ai/chat", json={"message": "generate full report pdf please"}).json()
+    assert ai_rep.get("answer") and any(
+        a.get("tool") == "report.full" for a in (ai_rep.get("actions") or [])
+    )
+    print(
+        "terminal",
+        "brief_ok",
+        tev.get("ok"),
+        "report_pdf",
+        pdf_name[:28],
+        "bytes",
+        len(dl.content),
+        "agent_report",
+        True,
+    )
+
+    sig = c.get("/signals").json()
+    assert sig.get("n", 0) >= 3 and sig.get("leaderboard")
+    al = c.post("/auto/loop", json={"network": "monad-testnet"}).json()
+    assert al.get("ok") and al.get("headline")
+    pulse = c.get("/intelligence/pulse").json()
+    assert pulse.get("recommendation")
+    print(
+        "auto",
+        "signals",
+        sig["n"],
+        "loop",
+        al.get("headline", "")[:50],
+        "fills",
+        (al.get("signals") or {}).get("n_filled"),
+        "intel",
+        pulse.get("recommendation"),
+    )
+
+    hy = c.get("/hybrid").json()
+    assert hy.get("novel_tech") and hy.get("layers")
+    hr = c.post("/hybrid/run", json={"op": "pulse"}).json()
+    assert hr.get("ok") is not False
+    print("hybrid", hy.get("novel_tech"), "run_ok", hr.get("ok"))
+
+    brand = c.get("/brand").json()
+    assert "MonadBuilder" in (brand.get("product") or "")
+    br = c.get("/builder/brief").json()
+    assert br.get("ai_delivered") and (br.get("brief_text") or br.get("ai_voice"))
+    assert br.get("tts") is False
+    bn = c.get("/builder/now").json()
+    assert bn.get("taps") and bn.get("signals") is not None and bn.get("headline")
+    bm = c.post("/builder/morning", json={"network": "monad-testnet"}).json()
+    assert bm.get("ok") is not False and bm.get("headline")
+    print(
+        "builder",
+        brand.get("product_short"),
+        "now_taps",
+        len(bn.get("taps") or []),
+        "ready_ms",
+        bn.get("ready_ms"),
+        "morning",
+        (bm.get("stats") or {}).get("streak"),
+    )
+
+    ag = c.get("/agent").json()
+    assert ag.get("schema") and ag.get("skills") is not None
+    st = c.post(
+        "/agent/step",
+        json={"goal": "safe daily ops with rejects", "network": "monad-testnet", "execute": True},
+    ).json()
+    assert st.get("ok") and st.get("intent") and st.get("delta_attention")
+    xd = c.post("/x/from-actions", json={}).json()
+    assert xd.get("text") and xd.get("intent_url")
+    xq = c.get("/x/queue").json()
+    assert xq.get("n", 0) >= 1
+    print(
+        "agent",
+        "step",
+        st.get("step"),
+        "intent",
+        st.get("intent"),
+        "eff",
+        (st.get("efficiency") or {}).get("delta_gain"),
+        "x_draft",
+        (xd.get("text") or "")[:40],
+    )
+
+    edge = c.get("/edge").json()
+    assert edge.get("novel_tech") and edge.get("agents")
+    er = c.post("/edge/run", json={"agent": "seatbelt", "action": "brief"}).json()
+    assert er.get("ok") and (er.get("result") or {}).get("agent") == "seatbelt"
+    er2 = c.post("/edge/run", json={"agent": "nomos", "action": "arena"}).json()
+    assert er2.get("ok")
+    print(
+        "edge",
+        "agents",
+        len(edge.get("agents") or []),
+        "brief_ok",
+        er.get("ok"),
+        "nomos",
+        (er2.get("result") or {}).get("summary", "")[:40],
+    )
+
+    print("SMOKE_OK")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
