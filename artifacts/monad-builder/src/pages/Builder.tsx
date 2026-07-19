@@ -6,7 +6,8 @@ import {
   getGetProjectQueryKey
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Zap, Play, ChevronLeft, Layout, Webhook, FileText, Globe, Share2, Check } from "lucide-react";
+import { Zap, Play, ChevronLeft, Layout, Webhook, FileText, Globe, Share2, Check, Copy, X, ExternalLink } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { COMPONENT_PALETTE } from "@/components/builder/palette";
@@ -150,6 +151,8 @@ export default function Builder() {
   }, []);
 
   const [isDeploying, setIsDeploying] = useState(false);
+  const [deployResult, setDeployResult] = useState<{ contractAddress: string; txHash: string; explorerUrl: string } | null>(null);
+  const [copiedAddr, setCopiedAddr] = useState(false);
 
   const handlePublish = async () => {
     if (isDeploying) return;
@@ -171,14 +174,7 @@ export default function Builder() {
         contractAddress = result.contractAddress;
         deployTxHash = result.txHash;
         toast.dismiss(deployToast);
-        toast.success("✅ Contract deployed!", {
-          description: `${result.contractAddress.slice(0, 10)}…${result.contractAddress.slice(-8)}`,
-          duration: 6000,
-          action: {
-            label: "Explorer ↗",
-            onClick: () => window.open(result.explorerUrl, "_blank"),
-          },
-        });
+        setDeployResult({ contractAddress: result.contractAddress, txHash: result.txHash, explorerUrl: result.explorerUrl });
       } catch (err: any) {
         toast.dismiss(deployToast);
         toast.warning("⚠️ Contract deploy skipped", {
@@ -203,12 +199,16 @@ export default function Builder() {
       if (!res.ok) throw new Error("DB publish failed");
       queryClient.invalidateQueries({ queryKey: getGetProjectQueryKey(id) });
       const liveUrl = `${window.location.origin}/preview/${id}`;
-      toast.success("🚀 Live on Monad Testnet!", {
-        description: liveUrl,
-        duration: 8000,
-        action: { label: "Open", onClick: () => setLocation(`/preview/${id}`) },
-      });
-      setTimeout(() => setLocation(`/preview/${id}`), 1800);
+      if (!contractAddress) {
+        // No wallet — just show success toast and navigate
+        toast.success("🚀 Live on Monad Testnet!", {
+          description: liveUrl,
+          duration: 8000,
+          action: { label: "Open", onClick: () => setLocation(`/preview/${id}`) },
+        });
+        setTimeout(() => setLocation(`/preview/${id}`), 1800);
+      }
+      // If contract deployed, the modal is already showing — navigate happens on modal dismiss
     } catch {
       toast.error("Deploy failed", { description: "Could not save your dApp. Please try again." });
     } finally {
@@ -248,6 +248,86 @@ export default function Builder() {
 
   return (
     <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+
+      {/* ── Deploy Success Modal ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {deployResult && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 20, stiffness: 300 }}
+              className="relative w-full max-w-lg bg-[#0d0d14] border border-green-500/30 rounded-2xl p-8 shadow-[0_0_80px_rgba(34,197,94,0.15)]"
+            >
+              {/* Close */}
+              <button onClick={() => { setDeployResult(null); setLocation(`/preview/${id}`); }}
+                className="absolute top-4 right-4 text-white/30 hover:text-white/70 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Header */}
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-4">
+                  <div className="w-8 h-8 rounded-full bg-green-400 animate-pulse" />
+                </div>
+                <h2 className="text-2xl font-extrabold text-white mb-1">On-Chain. Forever.</h2>
+                <p className="text-white/50 text-sm">Your dApp is immortalized on Monad Testnet</p>
+              </div>
+
+              {/* Contract address */}
+              <div className="mb-4">
+                <div className="text-[10px] text-white/30 uppercase tracking-widest font-bold mb-2">Contract Address</div>
+                <div className="flex items-center gap-2 bg-black/60 border border-green-500/20 rounded-xl p-3">
+                  <span className="font-mono text-green-400 text-sm flex-1 break-all">{deployResult.contractAddress}</span>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(deployResult.contractAddress); setCopiedAddr(true); setTimeout(() => setCopiedAddr(false), 2000); }}
+                    className="shrink-0 text-white/30 hover:text-green-400 transition-colors"
+                  >
+                    {copiedAddr ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Tx hash */}
+              <div className="mb-6">
+                <div className="text-[10px] text-white/30 uppercase tracking-widest font-bold mb-2">Tx Hash</div>
+                <div className="font-mono text-white/40 text-xs bg-black/40 border border-white/10 rounded-xl p-3 break-all">
+                  {deployResult.txHash}
+                </div>
+              </div>
+
+              {/* CTA buttons */}
+              <div className="flex gap-3">
+                <a
+                  href={deployResult.explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-green-500/30 text-green-400 font-bold text-sm hover:bg-green-500/10 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" /> View on Explorer
+                </a>
+                <button
+                  onClick={() => { setDeployResult(null); setLocation(`/preview/${id}`); }}
+                  className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/80 transition-colors"
+                >
+                  See Live Preview →
+                </button>
+              </div>
+
+              <p className="text-center text-[11px] text-white/20 mt-4 font-mono">
+                Monad Testnet · Chain 10143
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Topbar */}
       <header className="h-14 border-b border-white/10 bg-card flex items-center justify-between px-4 shrink-0">
         <div className="flex items-center gap-4">

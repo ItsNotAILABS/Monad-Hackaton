@@ -172,14 +172,14 @@ export default function Home() {
           </h1>
 
           <p className="text-xl md:text-2xl text-white/60 mb-4 max-w-3xl mx-auto font-light leading-relaxed">
-            No-code dApp builder. THESIS OS governance engine.
+            No-code dApp builder. THESIS OS governance. Merkl rewards.
             <br className="hidden md:block" />
-            <span className="text-white/40">Agents propose · Laws decide · Receipts remember · Owner signs.</span>
+            <span className="text-white/40">Describe it. AI builds it. Deploy it on-chain. In minutes.</span>
           </p>
 
           <p className="text-base text-white/35 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Drag-and-drop your dApp UI. Let THESIS govern how it runs — gas coaching, 
-            multi-agent proposals, onchain law enforcement — all on Monad's 10,000 TPS chain.
+            Type any idea → AI expands it into a full spec → builds the dApp → MetaMask deploys your own smart contract on Monad Testnet.
+            <span className="text-primary/50"> This app was built with itself.</span>
           </p>
 
           {/* ── "Idea to dApp" input ── */}
@@ -259,6 +259,33 @@ export default function Home() {
               Templates
             </Link>
           </div>
+
+          {/* ── Recursive Demo Banner ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="mt-8 max-w-2xl mx-auto"
+          >
+            <Link href="/preview/7">
+              <div className="group relative flex items-center gap-4 p-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all cursor-pointer">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                  <Rocket className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-sm font-bold text-white">MonadBuilder+ Protocol — Live Demo</div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    This app, built with this app, deployed on Monad. The recursive proof.
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-primary/60 group-hover:text-primary transition-colors shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                  <span className="text-xs font-mono">published</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </div>
+            </Link>
+          </motion.div>
         </motion.div>
 
         {/* Monad network stats */}

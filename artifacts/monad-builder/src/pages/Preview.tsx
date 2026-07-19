@@ -1,6 +1,6 @@
 import { useRoute, Link } from "wouter";
 import { useGetProject, getGetProjectQueryKey } from "@workspace/api-client-react";
-import { Zap, ArrowLeft, ExternalLink, Sparkles, X, Loader2 } from "lucide-react";
+import { Zap, ArrowLeft, ExternalLink, Sparkles, X, Loader2, Copy, Check } from "lucide-react";
 import { LiveWidget } from "@/components/builder/LiveWidget";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -56,6 +56,7 @@ export default function Preview() {
   const [auditOpen, setAuditOpen] = useState(false);
   const [auditing, setAuditing] = useState(false);
   const [auditText, setAuditText] = useState("");
+  const [copiedAddr, setCopiedAddr] = useState(false);
 
   // Context-aware AI
   const context = project
@@ -138,6 +139,66 @@ export default function Preview() {
 
       {/* Rendered App */}
       <main className="container mx-auto px-4 pt-20 pb-16 max-w-4xl min-h-screen flex flex-col">
+
+        {/* ── On-chain badge — TOP, unmissable ───────────────────────── */}
+        {(project as any).contractAddress && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 rounded-2xl border border-green-500/25 bg-green-500/5 shadow-[0_0_40px_rgba(34,197,94,0.08)] overflow-hidden"
+          >
+            {/* Banner row */}
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-green-500/10 bg-green-500/5">
+              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-xs font-bold text-green-400 uppercase tracking-widest flex-1">
+                Deployed On-Chain · Monad Testnet · Chain 10143
+              </span>
+              <a
+                href={`https://testnet.monadexplorer.com/address/${(project as any).contractAddress}`}
+                target="_blank" rel="noopener noreferrer"
+                className="text-[10px] text-green-400/50 hover:text-green-400 flex items-center gap-1 transition-colors font-mono"
+              >
+                Explorer <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            {/* Address row */}
+            <div className="px-5 py-4">
+              <div className="text-[10px] text-white/30 uppercase tracking-widest mb-2 font-bold">Contract Address</div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={`https://testnet.monadexplorer.com/address/${(project as any).contractAddress}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="font-mono text-green-400 text-sm sm:text-base font-bold hover:text-green-300 transition-colors break-all flex-1"
+                >
+                  {(project as any).contractAddress}
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText((project as any).contractAddress);
+                    setCopiedAddr(true); setTimeout(() => setCopiedAddr(false), 2000);
+                  }}
+                  className="shrink-0 w-8 h-8 rounded-lg border border-white/10 bg-white/5 flex items-center justify-center text-white/30 hover:text-green-400 hover:border-green-500/30 transition-colors"
+                >
+                  {copiedAddr ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              {(project as any).deployTxHash && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-[10px] text-white/20 font-mono">tx:</span>
+                  <a
+                    href={`https://testnet.monadexplorer.com/tx/${(project as any).deployTxHash}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-[11px] font-mono text-white/30 hover:text-white/60 transition-colors truncate flex items-center gap-1"
+                  >
+                    {(project as any).deployTxHash}
+                    <ExternalLink className="w-2.5 h-2.5 shrink-0" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {project.components.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <Zap className="w-12 h-12 text-white/20 mb-4" />
@@ -154,44 +215,6 @@ export default function Preview() {
               .map((comp) => (
                 <LiveWidget key={comp.id} component={comp} />
               ))}
-          </div>
-        )}
-
-        {/* On-chain contract badge */}
-        {(project as any).contractAddress && (
-          <div className="mt-6 p-4 rounded-xl border border-green-500/20 bg-green-500/5 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
-              <span className="text-xs font-bold text-green-400 uppercase tracking-widest">On-Chain · Monad Testnet</span>
-            </div>
-            <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-white/30 w-16 shrink-0">Contract</span>
-                <a
-                  href={`https://testnet.monadexplorer.com/address/${(project as any).contractAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-mono text-green-400/80 hover:text-green-400 transition-colors flex items-center gap-1 truncate"
-                >
-                  {(project as any).contractAddress}
-                  <ExternalLink className="w-3 h-3 shrink-0" />
-                </a>
-              </div>
-              {(project as any).deployTxHash && (
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-white/30 w-16 shrink-0">Tx Hash</span>
-                  <a
-                    href={`https://testnet.monadexplorer.com/tx/${(project as any).deployTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-mono text-white/40 hover:text-white/70 transition-colors flex items-center gap-1 truncate"
-                  >
-                    {(project as any).deployTxHash}
-                    <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
-                </div>
-              )}
-            </div>
           </div>
         )}
 

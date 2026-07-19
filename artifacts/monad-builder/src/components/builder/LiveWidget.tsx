@@ -420,7 +420,7 @@ function MerklRewardsWidget({ props }: { props: Record<string, any> }) {
   React.useEffect(() => {
     let cancelled = false;
     const chainId = props.chainId || 10143;
-    fetch(`https://api.merkl.xyz/v4/opportunities?chainId=${chainId}&status=LIVE`)
+    fetch(`/api/proxy/merkl?chainId=${chainId}&status=LIVE`)
       .then(r => r.json())
       .then((data: any[]) => {
         if (cancelled) return;
