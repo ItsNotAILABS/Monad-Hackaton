@@ -3,9 +3,10 @@
  *
  * Resolution order:
  * 1. VITE_API_URL (explicit deployment override)
- * 2. same-origin /health (single-process FastAPI + React deployment)
- * 3. same-origin /api/health (reverse-proxy / Pages deployment)
- * 4. localhost backend during local development
+ * 2. same-origin /engine/health (legacy/custom-domain engine gateway)
+ * 3. same-origin /health (single-process FastAPI + React deployment)
+ * 4. same-origin /api/health (reverse-proxy / Pages deployment)
+ * 5. localhost backend during local development
  */
 
 function cleanBase(value) {
@@ -64,8 +65,8 @@ function candidates() {
   } else if (isApiDev) {
     list.push("");
   } else {
-    // Production: prefer a single-origin app, then a conventional /api proxy.
-    list.push("", "/api");
+    // Production: honor the deployed /engine contract first, then same-origin fallbacks.
+    list.push("/engine", "", "/api");
   }
 
   return unique(list);
@@ -114,8 +115,7 @@ export async function resolveApiBase({ force = false } = {}) {
 
     resolvedBase = null;
     throw new Error(
-      "MonadBuilder backend is unreachable. Deploy the React build and FastAPI together, " +
-        "or set VITE_API_URL to the public API origin. Expected /health or /api/health."
+      "THESIS Engine is unreachable. Expected /engine/health, /health, or /api/health on the deployed origin."
     );
   })();
 
