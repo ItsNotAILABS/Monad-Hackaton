@@ -1,0 +1,10 @@
+entrypoint = "engine/thesis_forge/serve.py"
+run = "bash scripts/replit_start.sh"
+
+[deployment]
+run = ["bash", "scripts/replit_start.sh"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 8043
+externalPort = 80
