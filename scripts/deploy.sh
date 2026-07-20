@@ -22,12 +22,14 @@ forge script script/DeployAgentEconomy.s.sol:DeployAgentEconomy \
 extract_address(){ local label="$1"; awk -v label="$label" '$0 ~ label {print $NF}' "$LOG_PATH" | tail -1; }
 MARKET_ADDRESS="$(extract_address AGENT_MARKET_ADDRESS)"
 CREDENTIAL_ADDRESS="$(extract_address AGENT_CREDENTIAL_ADDRESS)"
+CARD_ADDRESS="$(extract_address AGENT_CARD_ADDRESS)"
 RECEIPT_CHAIN_ADDRESS="$(extract_address RECEIPT_CHAIN_ADDRESS)"
 AGENT_REGISTRY_ADDRESS="$(extract_address AGENT_REGISTRY_ADDRESS)"
 address_pattern='^0x[0-9a-fA-F]{40}$'
 for pair in \
   "AGENT_MARKET_ADDRESS=$MARKET_ADDRESS" \
   "AGENT_CREDENTIAL_ADDRESS=$CREDENTIAL_ADDRESS" \
+  "AGENT_CARD_ADDRESS=$CARD_ADDRESS" \
   "RECEIPT_CHAIN_ADDRESS=$RECEIPT_CHAIN_ADDRESS" \
   "AGENT_REGISTRY_ADDRESS=$AGENT_REGISTRY_ADDRESS"; do
   name="${pair%%=*}"; value="${pair#*=}"
@@ -37,13 +39,14 @@ for pair in \
 done
 
 jq -n \
-  --arg schema "thesis.agent-economy.deployment.v2" \
+  --arg schema "thesis.agent-economy.deployment.v3" \
   --arg status "deployed" \
   --arg network "$MONAD_NETWORK_NAME" \
   --argjson chainId "$MONAD_CHAIN_ID" \
   --arg explorer "${MONAD_EXPLORER_URL%/}" \
   --arg agentMarket "$MARKET_ADDRESS" \
   --arg agentCredential "$CREDENTIAL_ADDRESS" \
+  --arg agentCard "$CARD_ADDRESS" \
   --arg receiptChain "$RECEIPT_CHAIN_ADDRESS" \
   --arg agentRegistry "$AGENT_REGISTRY_ADDRESS" \
   --arg owner "$DEPLOYER_OWNER" \
@@ -51,7 +54,7 @@ jq -n \
   --argjson protocolFeeBps "$PROTOCOL_FEE_BPS" \
   --argjson reviewPeriodSeconds "$JOB_REVIEW_PERIOD_SECONDS" \
   --arg releaseSha "${GITHUB_SHA:-local}" \
-  '{schema:$schema,status:$status,network:$network,chainId:$chainId,explorer:$explorer,contracts:{AgentServiceMarket:$agentMarket,AgentCredentialNFT:$agentCredential,ReceiptChain:$receiptChain,AgentRegistry:$agentRegistry},governance:{owner:$owner,treasury:$treasury,protocolFeeBps:$protocolFeeBps,reviewPeriodSeconds:$reviewPeriodSeconds},releaseSha:$releaseSha}' > "$RECEIPT_PATH"
+  '{schema:$schema,status:$status,network:$network,chainId:$chainId,explorer:$explorer,contracts:{AgentServiceMarket:$agentMarket,AgentCredentialNFT:$agentCredential,AgentCardNFT:$agentCard,ReceiptChain:$receiptChain,AgentRegistry:$agentRegistry},governance:{owner:$owner,treasury:$treasury,protocolFeeBps:$protocolFeeBps,reviewPeriodSeconds:$reviewPeriodSeconds},releaseSha:$releaseSha}' > "$RECEIPT_PATH"
 
 cat "$RECEIPT_PATH"
 echo "deployment receipt: $RECEIPT_PATH"

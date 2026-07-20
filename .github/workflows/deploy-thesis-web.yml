@@ -7,6 +7,7 @@ on:
       - ".github/workflows/deploy-thesis-web.yml"
       - "web/**"
       - "scripts/check-runtime-hardcodes.mjs"
+      - "scripts/validate-agent-mint.mjs"
   workflow_dispatch:
 
 permissions:
@@ -49,7 +50,7 @@ jobs:
         shell: bash
         run: |
           pnpm dlx wrangler@latest pages secret list --project-name "$THESIS_PROJECT_NAME" > pages-secrets.txt
-          required=(THESIS_API_ORIGIN MONAD_RPC_URL MONAD_CHAIN_ID MONAD_NETWORK_NAME MONAD_NATIVE_SYMBOL AGENT_MARKET_ADDRESS RECEIPT_CHAIN_ADDRESS AGENT_REGISTRY_ADDRESS)
+          required=(THESIS_API_ORIGIN MONAD_RPC_URL MONAD_CHAIN_ID MONAD_NETWORK_NAME MONAD_NATIVE_SYMBOL AGENT_MARKET_ADDRESS AGENT_CREDENTIAL_ADDRESS AGENT_CARD_ADDRESS RECEIPT_CHAIN_ADDRESS AGENT_REGISTRY_ADDRESS)
           for key in "${required[@]}"; do
             grep -q "$key" pages-secrets.txt || { echo "Pages runtime secret missing: $key"; exit 1; }
           done
@@ -57,6 +58,10 @@ jobs:
       - name: Install THESIS dependencies
         working-directory: web
         run: pnpm install --ignore-workspace --no-frozen-lockfile
+
+      - name: Validate Agent Mint manifests
+        working-directory: web
+        run: node ../scripts/validate-agent-mint.mjs
 
       - name: Build THESIS web
         working-directory: web
@@ -73,6 +78,9 @@ jobs:
           test -f web/functions/runtime-config.js
           test -f web/functions/rpc.js
           test -f 'web/functions/engine/[[path]].js'
+          test -f web/src/AgentMintStudio.jsx
+          test -f web/src/chain/agentCards.js
+          test -f contracts/src/AgentCardNFT.sol
 
       - name: Deploy THESIS web and Pages Functions
         working-directory: web
@@ -90,12 +98,12 @@ jobs:
         run: |
           deployment_url=$(grep -Eo 'https://[^ ]+\.pages\.dev' thesis-pages-deploy.log 2>/dev/null | tail -1 || true)
           jq -n \
-            --arg schema "thesis.web.deployment.v2" \
+            --arg schema "thesis.web.deployment.v3" \
             --arg commit "$GITHUB_SHA" \
             --arg workflow "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             --arg pagesProject "$THESIS_PROJECT_NAME" \
             --arg deploymentUrl "$deployment_url" \
-            '{schema:$schema,commit:$commit,workflow:$workflow,pagesProject:$pagesProject,deploymentUrl:$deploymentUrl}' \
+            '{schema:$schema,commit:$commit,workflow:$workflow,pagesProject:$pagesProject,deploymentUrl:$deploymentUrl,products:["agent-economy","agent-mint","credential-mint","chain-decoder"]}' \
             > thesis-web-deployment.json
 
       - name: Upload deployment receipt

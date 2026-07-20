@@ -6,8 +6,9 @@ import {ReceiptChain} from "../src/ReceiptChain.sol";
 import {AgentRegistry} from "../src/AgentRegistry.sol";
 import {AgentServiceMarket} from "../src/AgentServiceMarket.sol";
 import {AgentCredentialNFT} from "../src/AgentCredentialNFT.sol";
+import {AgentCardNFT} from "../src/AgentCardNFT.sol";
 
-/// @notice Deploys the on-chain agent service economy using environment-supplied governance.
+/// @notice Deploys the on-chain agent service economy and minting surfaces.
 contract DeployAgentEconomy is Script {
     function run() external {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
@@ -18,8 +19,12 @@ contract DeployAgentEconomy is Script {
         address receiptAddress = vm.envOr("RECEIPT_CHAIN_ADDRESS", address(0));
         address registryAddress = vm.envOr("AGENT_REGISTRY_ADDRESS", address(0));
         bool configureExistingReceiptChain = vm.envOr("CONFIGURE_RECEIPT_SEALER", false);
-        string memory credentialName = vm.envOr("AGENT_CREDENTIAL_NAME", string("THESIS Agent Credentials"));
+        string memory credentialName = vm.envOr(
+            "AGENT_CREDENTIAL_NAME", string("THESIS Agent Credentials")
+        );
         string memory credentialSymbol = vm.envOr("AGENT_CREDENTIAL_SYMBOL", string("TAC"));
+        string memory cardName = vm.envOr("AGENT_CARD_NAME", string("THESIS Agent Cards"));
+        string memory cardSymbol = vm.envOr("AGENT_CARD_SYMBOL", string("AGENT"));
         require(feeBps <= type(uint16).max, "fee overflow");
         require(reviewPeriod <= type(uint32).max, "review overflow");
 
@@ -37,6 +42,7 @@ contract DeployAgentEconomy is Script {
         AgentCredentialNFT credentials = new AgentCredentialNFT(
             address(market), governor, credentialName, credentialSymbol
         );
+        AgentCardNFT cards = new AgentCardNFT(cardName, cardSymbol);
         if (deployedReceiptChain || configureExistingReceiptChain) {
             ReceiptChain(receiptAddress).setSealer(address(market), true);
         }
@@ -49,6 +55,7 @@ contract DeployAgentEconomy is Script {
         console2.log("AGENT_REGISTRY_ADDRESS", registryAddress);
         console2.log("AGENT_MARKET_ADDRESS", address(market));
         console2.log("AGENT_CREDENTIAL_ADDRESS", address(credentials));
+        console2.log("AGENT_CARD_ADDRESS", address(cards));
         console2.log("PROTOCOL_FEE_BPS", feeBps);
         console2.log("JOB_REVIEW_PERIOD_SECONDS", reviewPeriod);
     }

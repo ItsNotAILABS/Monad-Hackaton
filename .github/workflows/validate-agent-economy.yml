@@ -5,7 +5,9 @@ on:
     paths:
       - "contracts/**"
       - "web/**"
+      - "docs/agent-mint/**"
       - "scripts/check-runtime-hardcodes.mjs"
+      - "scripts/validate-agent-mint.mjs"
       - ".github/workflows/validate-agent-economy.yml"
       - ".github/workflows/deploy-thesis-web.yml"
   workflow_dispatch:
@@ -46,6 +48,9 @@ jobs:
       - name: Run credential minting tests
         working-directory: contracts
         run: forge test --match-contract AgentCredentialNFTTest -vv
+      - name: Run Agent Card tests
+        working-directory: contracts
+        run: forge test --match-contract AgentCardNFTTest -vv
 
   web:
     runs-on: ubuntu-latest
@@ -62,6 +67,9 @@ jobs:
       - name: Install THESIS dependencies
         working-directory: web
         run: pnpm install --ignore-workspace --no-frozen-lockfile
+      - name: Run Agent Mint manifest gate
+        working-directory: web
+        run: node ../scripts/validate-agent-mint.mjs
       - name: Build THESIS web and Pages Functions
         working-directory: web
         run: pnpm run build
@@ -73,9 +81,17 @@ jobs:
           test -f 'web/functions/engine/[[path]].js'
           test -f contracts/src/AgentServiceMarket.sol
           test -f contracts/src/AgentCredentialNFT.sol
+          test -f contracts/src/AgentCardNFT.sol
           test -f contracts/test/AgentServiceMarket.t.sol
           test -f contracts/test/AgentCredentialNFT.t.sol
+          test -f contracts/test/AgentCardNFT.t.sol
+          test -f web/src/AgentMintStudio.jsx
           test -f web/src/MintingStudio.jsx
           test -f web/src/ChainDecoder.jsx
+          test -f web/src/chain/agentCards.js
           test -f web/src/chain/credentials.js
           test -f web/src/chain/economyDecoder.js
+          test -f docs/agent-mint/README.md
+          test -f docs/agent-mint/PROTOCOL.md
+          test -f docs/agent-mint/WORKFLOWS_AND_USE_CASES.md
+          test -f docs/agent-mint/RESEARCH_PAPER.md
