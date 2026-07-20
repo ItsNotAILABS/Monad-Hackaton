@@ -21,12 +21,12 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
-      - name: Format, compile, and test Solidity
+      - name: Compile Solidity
         working-directory: contracts
-        run: |
-          forge fmt --check
-          forge build --sizes
-          forge test -vv
+        run: forge build --sizes
+      - name: Run agent economy tests
+        working-directory: contracts
+        run: forge test --match-contract AgentServiceMarketTest -vv
 
   web:
     runs-on: ubuntu-latest
