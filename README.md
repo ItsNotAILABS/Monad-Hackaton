@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Build the application. Govern the intelligence. Execute on Monad.</strong><br/>
-  AI application creation, wallets, agents, policy, execution, and cryptographic receipts in one stack.
+  AI creation, interoperable wallets, agents, policy, execution, CLI operations, and cryptographic receipts in one stack.
 </p>
 
 <p align="center">
@@ -19,6 +19,7 @@
   <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
   <img src="https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node" />
   <img src="https://img.shields.io/badge/Python-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/CLI-thesis_%7C_monadbuilder-f0b429?style=flat-square" alt="CLI" />
   <img src="https://img.shields.io/badge/Solidity-Foundry-363636?style=flat-square&logo=solidity&logoColor=white" alt="Solidity" />
   <img src="https://img.shields.io/badge/Chain_ID-10143-836EF9?style=flat-square" alt="Chain ID" />
 </p>
@@ -31,10 +32,10 @@
 
 | Platform | What it delivers |
 |---|---|
-| **MonadBuilder+** | AI dApp generation, visual editing, templates, wallet onboarding, live Monad utilities, publishing, gallery, education, and AI Studio |
-| **THESIS** | Python governance backend, agents, programmable laws, wallet twins, Company OS, controlled execution, smart contracts, and receipts |
+| **MonadBuilder+** | AI dApp generation, visual editing, templates, generated wallets, live Monad utilities, publishing, Gallery, education, and AI Studio |
+| **THESIS** | Python governance backend, agents, programmable laws, external-wallet identities, sandbox twins, Company OS, controlled execution, smart contracts, CLI, and receipts |
 
-The public Node application exposes THESIS through `/engine/*`, so the builder and governance engine operate through one hosted product.
+The public Node application exposes THESIS through `/engine/*`, and the installed CLI reaches both `/api/*` and `/engine/*`. Browser users, developers, operators, and agents therefore work against one hosted product rather than disconnected demos.
 
 > **Agents propose. Laws decide. Owners sign. Receipts remember.**
 
@@ -49,10 +50,12 @@ MonadBuilder+ creates the application. THESIS governs what the application and i
 1. Describe a dApp in plain language.
 2. Generate a validated Monad-specific component layout.
 3. Refine it visually and publish the project.
-4. Connect or create wallets and inspect live chain state.
-5. Send agent or operator proposals through THESIS.
-6. Reject unlawful actions with explicit reasons.
-7. Preserve material actions through receipts and owner-controlled execution.
+4. Generate a wallet or connect an existing wallet system.
+5. Normalize that public wallet identity into roles, custody, capabilities, namespace, and policy.
+6. Mirror observable balances into governed THESIS twins without importing keys.
+7. Send agent or operator proposals through programmable laws.
+8. Reject unlawful actions with explicit reasons.
+9. Preserve material actions through receipts and owner-controlled external signing.
 
 ## Product capabilities
 
@@ -69,7 +72,7 @@ MonadBuilder+ creates the application. THESIS governs what the application and i
 
 ### Real application surfaces
 
-- wallet connect and token balances;
+- wallet connection, generated wallets, and token balances;
 - token swaps and transaction feeds;
 - NFT galleries and DAO voting;
 - price charts and reward surfaces;
@@ -79,19 +82,120 @@ MonadBuilder+ creates the application. THESIS governs what the application and i
 - GitHub authentication;
 - interactive Learn modules, quizzes, badges, and wallet-linked progress.
 
-## Wallet infrastructure
+## Wallet operating system
 
-Wallets are a core product layer, not a side feature.
+Wallets are a core product layer across both platforms.
 
-### MonadBuilder+ wallets
+### MonadBuilder+ generated wallets
 
-The Node platform can generate wallets for users, learners, educators, and AI agents. It supports live MON balance reads, public wallet records, explorer and faucet links, and dedicated Governance, Builder, Auditor, and Rewards agent wallets.
+The Node platform can generate wallets for users, learners, educators, and AI agents. It supports live MON balance reads, public wallet records, explorer and faucet links, and dedicated Governance, Builder, Auditor, and Rewards agent-wallet roles.
 
-### THESIS wallet connections
+Generated wallets remain part of the MonadBuilder+ application database and can be used by its onboarding, education, project, and agent surfaces.
 
-THESIS supports public connection metadata for MetaMask, Phantom, WalletConnect, injected EVM wallets, and watch-only addresses. It refuses private keys, seeds, and mnemonics. Connected balances can be synchronized into governed sandbox twins so agents can reason about wallet state without authority to move real funds.
+### THESIS normalized wallet identities
+
+THESIS now maps external wallet systems into a shared public identity model using CAIP-style chain identifiers such as `eip155:10143`.
+
+Supported adapter families include:
+
+| Wallet system | Operating model |
+|---|---|
+| MetaMask, Rabby, injected EVM | EIP-1193 / EIP-6963 self-custody |
+| Phantom | Multichain browser wallet |
+| WalletConnect v2, Rainbow | Mobile and session-based connections |
+| Coinbase Wallet | EOA connection |
+| Coinbase Smart Wallet | Smart-account / account-abstraction capabilities |
+| Safe | Multisig treasury or organization account |
+| Ledger, Trezor | Hardware-backed signing |
+| Privy, Dynamic, embedded wallets | Embedded onboarding with public session references |
+| Turnkey | Policy-controlled signing infrastructure |
+| Fireblocks | Institutional custody and approval infrastructure |
+| Manual / watch-only | Public address observation without signing authority |
+
+Every normalized identity can carry:
+
+- wallet role: user, agent, learner, educator, operator, treasury, auditor, deployer, or multisig signer;
+- custody mode: self-custody, smart account, multisig, hardware, embedded, institutional, or watch-only;
+- account type and provider family;
+- namespace such as personal, company, project, treasury, agent, or team;
+- owner reference and policy profile;
+- declared capabilities such as message signing, transaction signing, typed data, batching, multisig, hardware, embedded, session keys, or sponsored gas;
+- public session references, tags, and observable balances.
+
+THESIS refuses private keys, seed phrases, mnemonics, recovery phrases, and other secret material.
+
+### Wallet twins and governance boundary
+
+Observable balances can be synchronized into THESIS sandbox twins. Twins let agents model portfolio state, run policy checks, plan actions, and produce receipts without receiving authority over the real account.
+
+The real MetaMask, Phantom, Safe, Ledger, Privy, Turnkey, Fireblocks, or other provider remains the signer after policy approval.
 
 > **AI can model the wallet. AI cannot silently control the wallet.**
+
+## Unified CLI
+
+Installing the Python package exposes both command names:
+
+```bash
+cd engine
+python -m pip install -e .
+
+monadbuilder status
+thesis status
+```
+
+By default the CLI targets the hosted product. Override it for local or private deployments with `--app-url`, `--engine-url`, `MONADBUILDER_URL`, or `THESIS_URL`.
+
+### Live platform and chain operations
+
+```bash
+monadbuilder status
+monadbuilder rpc
+monadbuilder chain block
+monadbuilder chain gas
+```
+
+### Generated wallets through MonadBuilder+
+
+```bash
+monadbuilder wallets generate --label "Operations Wallet" --role user
+monadbuilder wallets generate --label "Auditor Agent" --role agent
+```
+
+### Link existing wallet systems into THESIS
+
+```bash
+monadbuilder wallets architecture
+monadbuilder wallets supported
+
+monadbuilder wallets link 0xYOUR_ADDRESS \
+  --kind metamask \
+  --role operator \
+  --namespace personal \
+  --policy-profile owner-controlled
+
+monadbuilder wallets link 0xSAFE_ADDRESS \
+  --kind safe \
+  --role treasury \
+  --namespace company \
+  --policy-profile multisig-required \
+  --capability multisig=true \
+  --balance MON=25
+```
+
+### Twin synchronization and operations
+
+```bash
+monadbuilder wallets list
+monadbuilder wallets primary wid-xxxxxxxxxxxx
+monadbuilder wallets balances wid-xxxxxxxxxxxx MON=12.5 USDC=2500
+monadbuilder wallets sync --wallet-id wid-xxxxxxxxxxxx
+monadbuilder company "Prepare a governed Monad deployment"
+monadbuilder receipts --limit 20
+monadbuilder terminal "brief"
+```
+
+The CLI calls the same live HTTP routes as the application. It is not a separate mock implementation.
 
 ## THESIS governance runtime
 
@@ -107,7 +211,7 @@ THESIS supports public connection metadata for MetaMask, Phantom, WalletConnect,
 | **ExecutionRouter** | Routes approved execution |
 | **Company OS** | Coordinates missions, departments, approvals, and operational state |
 
-THESIS evaluates slippage, exposure, reserves, leverage, action value, and allowed categories. A rejected action returns the violated rules and human-readable reasons rather than a fake success toast.
+THESIS evaluates slippage, exposure, reserves, leverage, action value, allowed categories, wallet role, namespace, custody mode, and policy profile. A rejected action returns violated rules and human-readable reasons rather than a fake success toast.
 
 ## Live Monad connectivity
 
@@ -126,16 +230,31 @@ A submission contract address must come from a real Monad deployment transaction
 </p>
 
 ```text
-Browser
-  └─ MonadBuilder+ React Studio
-       ├─ AI Builder, Templates, Gallery, Learn, Wallets
-       └─ Node.js / Express API
-            ├─ Projects, AI, chain data, generated wallets
-            └─ /engine/* gateway
-                 └─ THESIS FastAPI
-                      ├─ laws, agents, wallet twins, Company OS
-                      ├─ receipts, reports, tools, deployment state
-                      └─ Monad contracts
+Browser / CLI / external AI
+  └─ MonadBuilder+ React Studio + Node API
+       ├─ projects, templates, AI, chain data, generated wallets
+       └─ /engine/* gateway
+            └─ THESIS FastAPI
+                 ├─ laws, agents, Company OS, tools and receipts
+                 ├─ normalized wallet identities
+                 │    ├─ provider + role + custody + capabilities
+                 │    └─ governed read-only sandbox twins
+                 └─ Monad contracts
+                      PolicyKernel → SovereignVault → ReceiptChain
+```
+
+## Public wallet and CLI routes
+
+```text
+/api/wallets/generate
+/api/wallets/:address/balance
+/engine/wallets/architecture
+/engine/wallets/supported
+/engine/wallets/v2
+/engine/wallets/v2/link
+/engine/wallets/v2/{wallet_id}/primary
+/engine/wallets/v2/{wallet_id}/balances
+/engine/wallets/v2/sync-twins
 ```
 
 ## Run the complete stack
@@ -152,7 +271,7 @@ The script starts THESIS internally on port `8043`, builds the pnpm workspace, r
 artifacts/monad-builder/   React application studio
 artifacts/api-server/      Node API and THESIS gateway
 artifacts/monad-mobile/    Mobile product lane
-engine/                    Python THESIS backend
+engine/                    Python THESIS backend and unified CLI
 contracts/                 Solidity and Foundry contracts
 lib/                       Shared TypeScript and database packages
 web/                       Dedicated THESIS interface
@@ -165,13 +284,13 @@ scripts/                   Startup, validation, and deployment automation
 ## Hackathon submission
 
 **Description**  
-MonadBuilder+ · THESIS is an AI-powered application creation and governance platform for Monad. Users generate and publish dApps, create or connect wallets, inspect live chain state, and operate through a Python backend that evaluates agent actions under programmable laws and preserves receipts.
+MonadBuilder+ · THESIS is an AI-powered application creation and governance platform for Monad. Users generate and publish dApps, generate or connect wallets, inspect live chain state, and operate through a Python backend and CLI that normalize wallet systems, evaluate agent actions under programmable laws, and preserve receipts.
 
 **Problem**  
-Blockchain creation is fragmented and inaccessible, while AI agents introduce risk when actions lack policy controls, wallet boundaries, and accountable records.
+Blockchain creation is fragmented and inaccessible, while AI agents introduce risk when actions lack policy controls, interoperable wallet boundaries, and accountable records.
 
 **Solution**  
-MonadBuilder+ provides the visual AI creation environment. THESIS supplies the control plane: wallet twins, programmable law, explicit rejection, owner-controlled execution, Company OS coordination, contracts, and receipt-backed accountability.
+MonadBuilder+ provides the visual AI creation environment. THESIS supplies the control plane: generated and linked wallet systems, normalized identity and custody metadata, sandbox twins, programmable law, explicit rejection, owner-controlled signing, Company OS coordination, CLI operations, contracts, and receipt-backed accountability.
 
 **Project URL:** https://monados.medinatechlabs.net  
 **GitHub:** https://github.com/ItsNotAILABS/Monad-Hackaton  
@@ -180,7 +299,7 @@ MonadBuilder+ provides the visual AI creation environment. THESIS supplies the c
 
 ## Social post
 
-> We built **MonadBuilder+ · THESIS**: one platform to create, operate, and govern applications on Monad. Generate a complete dApp with AI, refine it visually, create or connect wallets, inspect live chain state, and route agent actions through programmable laws, owner control, and cryptographic receipts.  
+> We built **MonadBuilder+ · THESIS**: one platform to create, operate, and govern applications on Monad. Generate a complete dApp with AI, generate or connect wallets across self-custody, smart accounts, multisig, hardware, embedded, and institutional systems, inspect live chain state, and route agent actions through programmable laws, owner-controlled signing, CLI operations, and cryptographic receipts.  
 >  
 > **Agents propose. Laws decide. Owners sign. Receipts remember.**  
 >  
