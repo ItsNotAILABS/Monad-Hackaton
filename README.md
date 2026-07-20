@@ -31,7 +31,7 @@
 ## One product, two coordinated platforms
 
 | Platform | What it delivers |
-|---|---|
+
 | **MonadBuilder+** | AI dApp generation, visual editing, templates, generated wallets, live Monad utilities, publishing, Gallery, education, and AI Studio |
 | **THESIS** | Python governance backend, agents, programmable laws, external-wallet identities, sandbox twins, Company OS, controlled execution, smart contracts, CLI, and receipts |
 
