@@ -10,7 +10,8 @@ export async function onRequestGet({ env }) {
     agentMarket: String(env.AGENT_MARKET_ADDRESS),
     receiptChain: String(env.RECEIPT_CHAIN_ADDRESS),
     agentRegistry: String(env.AGENT_REGISTRY_ADDRESS),
-    agentCredential: env.AGENT_CREDENTIAL_ADDRESS ? String(env.AGENT_CREDENTIAL_ADDRESS) : null
+    agentCredential: env.AGENT_CREDENTIAL_ADDRESS ? String(env.AGENT_CREDENTIAL_ADDRESS) : null,
+    agentCard: env.AGENT_CARD_ADDRESS ? String(env.AGENT_CARD_ADDRESS) : null
   };
   const invalidAddresses = Object.entries(contracts).filter(([, value]) => value && !ADDRESS_PATTERN.test(value)).map(([key]) => key);
   if (invalidAddresses.length) return json({ ok: false, configured: false, error: "invalid contract address configuration", invalidAddresses }, 503);
