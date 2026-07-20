@@ -27,11 +27,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,7 +49,7 @@ jobs:
         shell: bash
         run: |
           pnpm dlx wrangler@latest pages secret list --project-name "$THESIS_PROJECT_NAME" > pages-secrets.txt
-          required=(MONAD_RPC_URL MONAD_CHAIN_ID MONAD_NETWORK_NAME MONAD_NATIVE_SYMBOL AGENT_MARKET_ADDRESS RECEIPT_CHAIN_ADDRESS AGENT_REGISTRY_ADDRESS)
+          required=(THESIS_API_ORIGIN MONAD_RPC_URL MONAD_CHAIN_ID MONAD_NETWORK_NAME MONAD_NATIVE_SYMBOL AGENT_MARKET_ADDRESS RECEIPT_CHAIN_ADDRESS AGENT_REGISTRY_ADDRESS)
           for key in "${required[@]}"; do
             grep -q "$key" pages-secrets.txt || { echo "Pages runtime secret missing: $key"; exit 1; }
           done
