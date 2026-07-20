@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          forge build --sizes > foundry-build.log 2>&1
+          forge build > foundry-build.log 2>&1
           status=$?
           cat foundry-build.log
           exit $status
