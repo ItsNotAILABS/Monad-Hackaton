@@ -8,8 +8,15 @@ out-tsc/
 .expo
 .expo-shared
 
-# ── Python / engine ───────────────────────────────────────────────────────────
+# ── Secrets / local environment ──────────────────────────────────────────────
 .env
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+
+# ── Python / engine ───────────────────────────────────────────────────────────
 .venv/
 __pycache__/
 .pytest_cache/
@@ -17,45 +24,15 @@ __pycache__/
 *.pyc
 cache/
 
+# ── Foundry / chain publication ──────────────────────────────────────────────
+broadcast/
+contracts/broadcast/
+contracts/cache/
+agent-economy-deploy.log
+agent-economy-deployment.json
+agent-economy-publication.json
+thesis-pages-deploy.log
+
 # ── Large offline Transformers.js assets ─────────────────────────────────────
 web/public/wasm/*.wasm
-web/public/wasm/*.mjs
-web/public/models/**
-!web/public/models/README.md
-!web/public/wasm/README.md
-
-# ── Runtime receipts (generated) ─────────────────────────────────────────────
-broadcast/
-projects/
-receipts/trading_book.json
-receipts/academy_progress.json
-receipts/daily_loop.json
-receipts/sandboxes.json
-receipts/wallet_links.json
-receipts/ai_node.json
-receipts/company_os.json
-receipts/ecosystem_laws_runtime.json
-
-# ── IDEs ──────────────────────────────────────────────────────────────────────
-/.idea
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.sublime-workspace
-.DS_Store
-Thumbs.db
-
-# ── Replit internals ──────────────────────────────────────────────────────────
-.cache/
-.local/
-
-# ── Misc ─────────────────────────────────────────────────────────────────────
-npm-debug.log
-yarn-error.log
-.sass-cache
-coverage/
-
-# demo recording raw output
-demo/video/
+web/public
