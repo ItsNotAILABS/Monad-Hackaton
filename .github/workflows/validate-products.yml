@@ -25,15 +25,25 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --no-frozen-lockfile
       - name: Typecheck workspace
-        run: pnpm run typecheck
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm run typecheck 2>&1 | tail -n 120
       - name: Build MonadBuilder+
         env:
           BASE_PATH: /
           VITE_PUBLIC_API_ORIGIN: ""
-        run: pnpm --filter @workspace/monad-builder run build
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --filter @workspace/monad-builder run build 2>&1 | tail -n 120
       - name: Validate Cloudflare Worker
         working-directory: edge
-        run: pnpm install --no-frozen-lockfile && pnpm exec wrangler deploy --dry-run
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile
+          pnpm exec wrangler deploy --dry-run 2>&1 | tail -n 120
 
   thesis:
     name: Build THESIS Operations
@@ -53,4 +63,7 @@ jobs:
         env:
           BASE_PATH: /
           VITE_API_URL: ""
-        run: pnpm --dir web run build
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --dir web run build 2>&1 | tail -n 120
