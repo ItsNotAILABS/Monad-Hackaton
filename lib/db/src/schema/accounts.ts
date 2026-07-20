@@ -18,4 +18,16 @@ export const workspacesTable = pgTable("workspaces", {
   slug: text("slug").notNull().unique(),
   ownerUserId: integer("owner_user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const workspaceMembershipsTable = pgTable("workspace_memberships", {
+  workspaceId: integer("workspace_id").notNull().references(() => workspacesTable.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [primaryKey({ columns: [table.workspaceId, table.userId] })]);
+
+export type PlatformUser = typeof usersTable.$inferSelect;
+export type Workspace = typeof workspacesTable.$inferSelect;
+export type WorkspaceMembership = typeof workspaceMembershipsTable.$inferSelect;
