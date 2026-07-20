@@ -1,35 +1,57 @@
-import { index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
-import { usersTable, workspacesTable } from "./accounts";
-
-const componentTypes = ["wallet-connect","token-balance","nft-gallery","transaction-feed","token-swap","price-chart","dao-vote","heading","paragraph","button","image","divider","hero-section","card","stats-row","learn-card","quiz-widget","reward-badge","ai-agent-wallet","auto-wallet"] as const;
 
 export const componentDataSchema = z.object({
   id: z.string(),
-  type: z.enum(componentTypes),
+  type: z.enum([
+    "wallet-connect",
+    "token-balance",
+    "nft-gallery",
+    "transaction-feed",
+    "token-swap",
+    "price-chart",
+    "dao-vote",
+    "heading",
+    "paragraph",
+    "button",
+    "image",
+    "divider",
+    "hero-section",
+    "card",
+    "stats-row",
+    "learn-card",
+    "quiz-widget",
+    "reward-badge",
+    "ai-agent-wallet",
+    "auto-wallet",
+  ]),
   props: z.record(z.string(), z.unknown()),
   order: z.number().int(),
 });
+
 export type ComponentData = z.infer<typeof componentDataSchema>;
 
 export const projectsTable = pgTable("projects", {
   id: serial("id").primaryKey(),
-  workspaceId: integer("workspace_id").references(() => workspacesTable.id, { onDelete: "cascade" }),
-  createdByUserId: integer("created_by_user_id").references(() => usersTable.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   description: text("description").notNull().default(""),
   templateId: integer("template_id"),
   components: jsonb("components").notNull().$type<ComponentData[]>().default([]),
-  theme: jsonb("theme").notNull().$type<Record<string,string>>().default({}),
+  theme: jsonb("theme").notNull().$type<Record<string, string>>().default({}),
   status: text("status").notNull().default("draft"),
   publishedSlug: text("published_slug"),
   contractAddress: text("contract_address"),
   deployTxHash: text("deploy_tx_hash"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}, (t) => [index("projects_workspace_updated_idx").on(t.workspaceId, t.updatedAt)]);
+});
 
-export const insertProjectSchema = createInsertSchema(projectsTable).omit({ id:true, createdAt:true, updatedAt:true });
+export const insertProjectSchema = createInsertSchema(projectsTable).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertProject = z.infer<typeof insertProjectSchema>;
 export type Project = typeof projectsTable.$inferSelect;
