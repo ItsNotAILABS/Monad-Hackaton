@@ -27,23 +27,50 @@ jobs:
       - name: Typecheck workspace
         shell: bash
         run: |
-          set -o pipefail
-          pnpm run typecheck 2>&1 | tail -n 120
+          set +e
+          pnpm run typecheck > workspace-typecheck.log 2>&1
+          status=$?
+          cat workspace-typecheck.log
+          exit $status
+      - name: Upload workspace typecheck log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-typecheck-log
+          path: workspace-typecheck.log
       - name: Build MonadBuilder+
         env:
           BASE_PATH: /
           VITE_PUBLIC_API_ORIGIN: ""
         shell: bash
         run: |
-          set -o pipefail
-          pnpm --filter @workspace/monad-builder run build 2>&1 | tail -n 120
+          set +e
+          pnpm --filter @workspace/monad-builder run build > monadbuilder-build.log 2>&1
+          status=$?
+          cat monadbuilder-build.log
+          exit $status
+      - name: Upload MonadBuilder+ build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monadbuilder-build-log
+          path: monadbuilder-build.log
       - name: Validate Cloudflare Worker
         working-directory: edge
         shell: bash
         run: |
-          set -o pipefail
           pnpm install --no-frozen-lockfile
-          pnpm exec wrangler deploy --dry-run 2>&1 | tail -n 120
+          set +e
+          pnpm exec wrangler deploy --dry-run > worker-dry-run.log 2>&1
+          status=$?
+          cat worker-dry-run.log
+          exit $status
+      - name: Upload Worker validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-validation-log
+          path: edge/worker-dry-run.log
 
   thesis:
     name: Build THESIS Operations
@@ -65,5 +92,14 @@ jobs:
           VITE_API_URL: ""
         shell: bash
         run: |
-          set -o pipefail
-          pnpm --dir web run build 2>&1 | tail -n 120
+          set +e
+          pnpm --dir web run build > thesis-build.log 2>&1
+          status=$?
+          cat thesis-build.log
+          exit $status
+      - name: Upload THESIS build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-build-log
+          path: thesis-build.log
