@@ -18,6 +18,19 @@ const GITHUB_CLIENT_SECRET = process.env["GITHUB_CLIENT_SECRET"] ?? process.env[
 const APP_BASE_URL = process.env["APP_BASE_URL"] ?? "https://monados.medinatechlabs.net";
 const GITHUB_REDIRECT_URI = `${APP_BASE_URL}/api/auth/github/callback`;
 
+type GitHubUser = {
+  id: number;
+  login: string;
+  name: string | null;
+  avatar_url: string;
+  email: string | null;
+};
+
+type GitHubEmail = {
+  email?: string;
+  primary?: boolean;
+};
+
 declare module "express-session" {
   interface SessionData {
     user?: {
@@ -45,7 +58,7 @@ router.get("/github", (req: Request, res: Response): void => {
   }
 
   const state = randomState();
-  (req.session as any).oauthState = state;
+  req.session.oauthState = state;
 
   const params = new URLSearchParams({
     client_id: GITHUB_CLIENT_ID,
@@ -65,12 +78,12 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
     return;
   }
 
-  if (!state || state !== (req.session as any).oauthState) {
+  if (!state || state !== req.session.oauthState) {
     res.redirect(`${APP_BASE_URL}/?auth=error&reason=state_mismatch`);
     return;
   }
 
-  delete (req.session as any).oauthState;
+  delete req.session.oauthState;
 
   try {
     const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
@@ -83,7 +96,10 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
         redirect_uri: GITHUB_REDIRECT_URI,
       }),
     });
-    const tokenData: any = await tokenRes.json();
+    const tokenData = (await tokenRes.json()) as {
+      access_token?: string;
+      error?: string;
+    };
 
     if (!tokenRes.ok || tokenData.error || !tokenData.access_token) {
       res.redirect(`${APP_BASE_URL}/?auth=error&reason=token_exchange`);
@@ -100,24 +116,25 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
       res.redirect(`${APP_BASE_URL}/?auth=error&reason=user_fetch`);
       return;
     }
-    const ghUser: any = await userRes.json();
+    const ghUser = (await userRes.json()) as GitHubUser;
 
-    let email = ghUser.email as string | null;
+    let email = ghUser.email;
     if (!email) {
       try {
         const emailRes = await fetch("https://api.github.com/user/emails", {
           headers: { Authorization: `Bearer ${tokenData.access_token}`, "User-Agent": "MonadBuilder+" },
         });
         if (emailRes.ok) {
-          const emails: any[] = await emailRes.json();
-          email = emails.find((entry: any) => entry.primary)?.email ?? null;
+          const emailPayload: unknown = await emailRes.json();
+          const emails = Array.isArray(emailPayload) ? (emailPayload as GitHubEmail[]) : [];
+          email = emails.find((entry) => entry.primary)?.email ?? null;
         }
       } catch {
         email = null;
       }
     }
 
-    (req.session as any).user = {
+    req.session.user = {
       id: ghUser.id,
       login: ghUser.login,
       name: ghUser.name ?? ghUser.login,
@@ -132,7 +149,7 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
 });
 
 router.get("/me", (req: Request, res: Response): void => {
-  const user = (req.session as any)?.user;
+  const user = req.session.user;
   if (!user) {
     res.status(401).json({ authenticated: false });
     return;

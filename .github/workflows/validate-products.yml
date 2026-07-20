@@ -25,15 +25,54 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --no-frozen-lockfile
       - name: Typecheck workspace
-        run: pnpm run typecheck
+        shell: bash
+        run: |
+          set +e
+          pnpm run typecheck > workspace-typecheck.log 2>&1
+          status=$?
+          cat workspace-typecheck.log
+          exit $status
+      - name: Upload workspace typecheck log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-typecheck-log
+          path: workspace-typecheck.log
       - name: Build MonadBuilder+
         env:
           BASE_PATH: /
           VITE_PUBLIC_API_ORIGIN: ""
-        run: pnpm --filter @workspace/monad-builder run build
+        shell: bash
+        run: |
+          set +e
+          pnpm --filter @workspace/monad-builder run build > monadbuilder-build.log 2>&1
+          status=$?
+          cat monadbuilder-build.log
+          exit $status
+      - name: Upload MonadBuilder+ build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monadbuilder-build-log
+          path: monadbuilder-build.log
+      - name: Install Worker dependencies
+        working-directory: edge
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
       - name: Validate Cloudflare Worker
         working-directory: edge
-        run: pnpm install --no-frozen-lockfile && pnpm exec wrangler deploy --dry-run
+        shell: bash
+        run: |
+          set +e
+          pnpm exec wrangler deploy --dry-run > worker-dry-run.log 2>&1
+          status=$?
+          cat worker-dry-run.log
+          exit $status
+      - name: Upload Worker validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: worker-validation-log
+          path: edge/worker-dry-run.log
 
   thesis:
     name: Build THESIS Operations
@@ -46,11 +85,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install THESIS dependencies
-        run: pnpm --dir web install --no-frozen-lockfile
+        working-directory: web
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
       - name: Build THESIS Operations
+        working-directory: web
         env:
           BASE_PATH: /
           VITE_API_URL: ""
-        run: pnpm --dir web run build
+        shell: bash
+        run: |
+          set +e
+          pnpm run build > thesis-build.log 2>&1
+          status=$?
+          cat thesis-build.log
+          exit $status
+      - name: Upload THESIS build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-build-log
+          path: web/thesis-build.log
