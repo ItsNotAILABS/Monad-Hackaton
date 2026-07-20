@@ -54,13 +54,15 @@ jobs:
         run: pnpm exec wrangler pages deploy artifacts/monad-builder/dist/public --project-name monadbuilder-plus --branch main
       - name: Install THESIS dependencies
         if: steps.credentials.outputs.ready == 'true'
-        run: pnpm --dir web install --no-frozen-lockfile
+        working-directory: web
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
       - name: Build THESIS Operations
         if: steps.credentials.outputs.ready == 'true'
+        working-directory: web
         env:
           BASE_PATH: /
           VITE_API_URL: https://monados.medinatechlabs.net/engine
-        run: pnpm --dir web run build
+        run: pnpm run build
       - name: Create THESIS Pages project
         if: steps.credentials.outputs.ready == 'true'
         run: pnpm exec wrangler pages project create thesis-operations --production-branch main || true
