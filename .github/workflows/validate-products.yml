@@ -1,0 +1,56 @@
+name: Validate products
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  workspace:
+    name: Workspace typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Typecheck workspace
+        run: pnpm run typecheck
+      - name: Build MonadBuilder+
+        env:
+          BASE_PATH: /
+          VITE_PUBLIC_API_ORIGIN: ""
+        run: pnpm --filter @workspace/monad-builder run build
+      - name: Validate Cloudflare Worker
+        working-directory: edge
+        run: pnpm install --no-frozen-lockfile && pnpm exec wrangler deploy --dry-run
+
+  thesis:
+    name: Build THESIS Operations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install THESIS dependencies
+        run: pnpm --dir web install --no-frozen-lockfile
+      - name: Build THESIS Operations
+        env:
+          BASE_PATH: /
+          VITE_API_URL: ""
+        run: pnpm --dir web run build
