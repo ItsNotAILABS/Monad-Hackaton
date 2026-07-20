@@ -1,0 +1,54 @@
+name: Regenerate pnpm lockfile
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/regenerate-pnpm-lockfile.yml"
+      - "package.json"
+      - "pnpm-workspace.yaml"
+      - "artifacts/**/package.json"
+      - "lib/**/package.json"
+      - "packages/**/package.json"
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Regenerate workspace lockfile
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Verify frozen install
+        run: pnpm install --frozen-lockfile
+
+      - name: Commit regenerated lockfile
+        shell: bash
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml already matches the workspace manifests."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "fix: regenerate pnpm-lock.yaml"
+          git push origin HEAD:main
