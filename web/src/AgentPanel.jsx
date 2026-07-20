@@ -2,162 +2,36 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MicButton } from "./MicButton.jsx";
 import { runHybrid } from "./workers/hybrid.js";
 import { AutonomousEconomy } from "./AutonomousEconomy.jsx";
+import { acceptJob, approveJob, cancelJob, connectWallet, createJob, disputeJob, explorerTransactionUrl, listRecentJobs, listServices, publishService, sameAddress, submitJobResult } from "./chain/agentEconomy.js";
 
-const SERVICES = [
-  { id: "sentinel", name: "SENTINEL", role: "Risk and policy audit", quote: "0.08 MON", sla: "90 sec", output: "Policy verdict and execution receipt" },
-  { id: "oracle", name: "ORACLE", role: "Market and protocol intelligence", quote: "0.05 MON", sla: "60 sec", output: "Evidence-backed market brief" },
-  { id: "forge", name: "FORGE", role: "Smart-contract and app generation", quote: "0.25 MON", sla: "10 min", output: "Build package, tests, manifest, and receipt" },
-  { id: "operator", name: "OPERATOR", role: "On-chain operations planning", quote: "0.12 MON", sla: "3 min", output: "Governed action plan and simulation proof" },
-  { id: "publisher", name: "PUBLISHER", role: "Research and ecosystem publishing", quote: "0.06 MON", sla: "4 min", output: "Publication package and provenance receipt" },
-  { id: "arbiter", name: "ARBITER", role: "Agent-job verification", quote: "0.04 MON", sla: "45 sec", output: "Acceptance, rejection, or dispute evidence" },
-];
+function duration(seconds){const value=Number(seconds||0);if(value<60)return `${value}s`;if(value<3600)return `${Math.ceil(value/60)}m`;return `${Math.ceil(value/3600)}h`;}
+function shortAddress(address){if(!address)return "—";return `${address.slice(0,8)}…${address.slice(-6)}`;}
 
-export function AgentPanel({ api, network, busy: parentBusy, onNavigate }) {
-  const [status, setStatus] = useState(null);
-  const [receipts, setReceipts] = useState([]);
-  const [selected, setSelected] = useState(SERVICES[0]);
-  const [goal, setGoal] = useState("Audit a proposed Monad service and return a governed proof receipt");
-  const [job, setJob] = useState(null);
-  const [worker, setWorker] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
+export function AgentPanel({api,busy:parentBusy,onNavigate}){
+  const [runtimeStatus,setRuntimeStatus]=useState(null);const [receipts,setReceipts]=useState([]);const [config,setConfig]=useState(null);const [services,setServices]=useState([]);const [jobs,setJobs]=useState([]);const [selectedId,setSelectedId]=useState(null);const [wallet,setWallet]=useState("");const [request,setRequest]=useState("");
+  const [publishForm,setPublishForm]=useState({name:"",metadataURI:"",capability:"",price:"",slaSeconds:""});const [lastAction,setLastAction]=useState(null);const [busy,setBusy]=useState(false);const [chainError,setChainError]=useState("");const [engineError,setEngineError]=useState("");
+  const disabled=busy||parentBusy;const selected=useMemo(()=>services.find(service=>service.id===selectedId)||services[0]||null,[selectedId,services]);
 
-  const disabled = busy || parentBusy;
+  const refresh=useCallback(async()=>{const [agentResult,receiptResult,serviceResult,jobResult]=await Promise.allSettled([api("/agent"),api("/receipts/recent?n=8"),listServices(),listRecentJobs(24)]);if(agentResult.status==="fulfilled"){setRuntimeStatus(agentResult.value);setEngineError("");}else setEngineError(String(agentResult.reason?.message||agentResult.reason));if(receiptResult.status==="fulfilled")setReceipts(receiptResult.value.receipts||[]);if(serviceResult.status==="fulfilled"){setConfig(serviceResult.value.config);setServices(serviceResult.value.services);setSelectedId(current=>current||serviceResult.value.services[0]?.id||null);setChainError("");}else setChainError(String(serviceResult.reason?.message||serviceResult.reason));if(jobResult.status==="fulfilled"){setConfig(jobResult.value.config);setJobs(jobResult.value.jobs);}},[api]);
+  useEffect(()=>{refresh();},[refresh]);
+  async function withBusy(action){setBusy(true);setChainError("");try{return await action();}catch(error){setChainError(String(error?.shortMessage||error?.message||error));return null;}finally{setBusy(false);}}
+  async function connect(){await withBusy(async()=>{const connected=await connectWallet();setWallet(connected.address);setConfig(connected.config);setLastAction({message:`Connected ${connected.address}`});});}
+  async function publish(){if(!publishForm.name.trim()||!publishForm.metadataURI.trim()||!publishForm.capability.trim())return;await withBusy(async()=>{const result=await publishService(publishForm);setWallet(result.address);setLastAction({message:`Service ${result.serviceId||"published"}`,txHash:result.txHash});setPublishForm({name:"",metadataURI:"",capability:"",price:"",slaSeconds:""});await refresh();});}
+  async function fundSelectedService(){if(!selected||!request.trim())return;await withBusy(async()=>{const result=await createJob({service:selected,request});setWallet(result.address);setLastAction({message:`Job ${result.jobId||"funded"} for ${selected.name}`,txHash:result.txHash});await refresh();});}
+  async function providerRun(job){await withBusy(async()=>{if(job.statusLabel==="funded"){const accepted=await acceptJob(job.id);setWallet(accepted.address);}let residual=null;try{const worker=await runHybrid("pulse",{goal:request||job.requestHash,serviceId:job.serviceId,jobId:job.id,senses:{market:1,law:1,onchain:1}});residual=worker.result||worker;}catch{}const service=services.find(item=>item.id===job.serviceId);const objective=request.trim()||`Execute funded agent job ${job.id} for service ${service?.name||job.serviceId}.`;const mission=await api("/company/run",{method:"POST",body:JSON.stringify({objective})});const step=await api("/agent/step",{method:"POST",body:JSON.stringify({goal:objective,network:config?.network?.name,note:JSON.stringify({jobId:job.id,serviceId:job.serviceId,missionId:mission?.mission?.mission_id||null}),execute:true})});const resultText=step?.answer||JSON.stringify(step);const submitted=await submitJobResult({jobId:job.id,result:resultText,state:JSON.stringify({mission:mission?.mission||mission,residual}),action:JSON.stringify({objective,serviceId:job.serviceId})});setWallet(submitted.address);setLastAction({message:`Job ${job.id} result submitted with receipt ${submitted.receiptHash||"sealed"}`,txHash:submitted.txHash,result:resultText});await refresh();});}
+  async function settle(job){await withBusy(async()=>{const result=await approveJob(job.id);setWallet(result.address);setLastAction({message:`Job ${job.id} settled`,txHash:result.txHash});await refresh();});}
+  async function dispute(job){await withBusy(async()=>{const result=await disputeJob(job.id);setWallet(result.address);setLastAction({message:`Job ${job.id} disputed`,txHash:result.txHash});await refresh();});}
+  async function cancel(job){await withBusy(async()=>{const result=await cancelJob(job.id);setWallet(result.address);setLastAction({message:`Job ${job.id} refunded`,txHash:result.txHash});await refresh();});}
+  const completed=jobs.filter(job=>job.statusLabel==="completed").length;const nativeSymbol=config?.network?.nativeSymbol||"native token";
 
-  const refresh = useCallback(async () => {
-    try {
-      const [agent, recent] = await Promise.all([api("/agent"), api("/receipts/recent?n=8")]);
-      setStatus(agent);
-      setReceipts(recent.receipts || []);
-      setErr("");
-    } catch (e) {
-      setErr(String(e.message || e));
-    }
-  }, [api]);
-
-  useEffect(() => { refresh(); }, [refresh]);
-
-  const economy = useMemo(() => ({
-    services: SERVICES.length,
-    completed: receipts.length,
-    reputation: Math.min(100, 72 + receipts.length * 2),
-    settlement: network === "monad-mainnet" ? "wallet approval required" : "testnet simulation",
-  }), [network, receipts.length]);
-
-  async function hireService(service = selected) {
-    setSelected(service);
-    setBusy(true);
-    setErr("");
-    try {
-      let residual = null;
-      try {
-        const out = await runHybrid("pulse", { goal, service: service.id, network, senses: { market: 1, law: 1, service: service.id } });
-        residual = out.result || out;
-        setWorker(residual);
-      } catch { /* browser worker is optional */ }
-
-      const mission = await api("/company/run", {
-        method: "POST",
-        body: JSON.stringify({ objective: `${service.name} service job: ${goal}. Required output: ${service.output}. Quote: ${service.quote}.` }),
-      });
-      const step = await api("/agent/step", {
-        method: "POST",
-        body: JSON.stringify({ goal, network, note: `service=${service.id}; quote=${service.quote}; sla=${service.sla}`, execute: true }),
-      });
-      const recent = await api("/receipts/recent?n=8");
-      setReceipts(recent.receipts || []);
-      setJob({
-        service,
-        mission: mission.mission || mission,
-        step,
-        residual,
-        stage: "proof-issued",
-        settlement: network === "monad-mainnet" ? "awaiting owner wallet approval" : "simulated on testnet",
-      });
-      await refresh();
-    } catch (e) {
-      setErr(String(e.message || e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="panel agent-panel">
-      <div className="win-strip platform-strip">
-        <div className="win-copy">
-          <span className="eyebrow">DECENTRALIZED AGENT ECONOMY · MONAD</span>
-          <h3>Hire autonomous services. Govern the work. Verify the proof.</h3>
-          <p className="muted sm">Agents publish service capabilities, accept scoped jobs, execute under THESIS laws, and return machine-checkable receipts before settlement.</p>
-          <div className="chips tight">
-            <span className="badge on">{economy.services} services</span>
-            <span className="badge on">{economy.completed} receipts</span>
-            <span className="badge on">reputation {economy.reputation}</span>
-            <span className="badge warn">{economy.settlement}</span>
-          </div>
-        </div>
-        <div className="win-actions">
-          <button type="button" className="forge win-btn" disabled={disabled} onClick={() => hireService(selected)}>HIRE {selected.name} →</button>
-          <button type="button" className="ghost" onClick={() => onNavigate?.("proof")}>PROOF</button>
-          <button type="button" className="ghost" onClick={() => onNavigate?.("studio")}>PUBLISH SERVICE</button>
-        </div>
-      </div>
-
-      {err ? <div className="banner err">{err}</div> : null}
-
-      <div className="grid3">
-        {SERVICES.map((service) => (
-          <article key={service.id} className={selected.id === service.id ? "result" : ""} onClick={() => setSelected(service)} style={{ cursor: "pointer" }}>
-            <span className="eyebrow">{service.id}</span>
-            <h3>{service.name}</h3>
-            <p>{service.role}</p>
-            <div className="kv"><span>Quote</span><b>{service.quote}</b></div>
-            <div className="kv"><span>SLA</span><b>{service.sla}</b></div>
-            <p className="muted sm">{service.output}</p>
-            <button type="button" className="ghost block" disabled={disabled} onClick={(e) => { e.stopPropagation(); hireService(service); }}>CREATE JOB</button>
-          </article>
-        ))}
-      </div>
-
-      <div className="grid2" style={{ marginTop: 12 }}>
-        <article>
-          <label>SERVICE REQUEST</label>
-          <textarea className="term-input" style={{ width: "100%", minHeight: 110 }} value={goal} onChange={(e) => setGoal(e.target.value)} />
-          <div className="chips tight" style={{ marginTop: 8 }}>
-            <MicButton label="DICTATE JOB" disabled={disabled} onText={setGoal} />
-            <button type="button" className="forge" disabled={disabled || !goal.trim()} onClick={() => hireService(selected)}>ISSUE GOVERNED JOB</button>
-          </div>
-          <p className="muted sm">The current build creates a governed mission, runs the agent cycle, and records proof. Mainnet value transfer remains owner-approved.</p>
-        </article>
-
-        <article className="result">
-          <label>JOB LIFECYCLE</label>
-          {!job ? <p className="muted">Select a service and issue a job.</p> : <>
-            <div className="kv"><span>Provider</span><b>{job.service.name}</b></div>
-            <div className="kv"><span>Stage</span><b>{job.stage}</b></div>
-            <div className="kv"><span>Settlement</span><b>{job.settlement}</b></div>
-            <div className="kv"><span>Mission</span><b>{job.mission?.mission_id || job.mission?.id || "created"}</b></div>
-            <pre className="code sm" style={{ maxHeight: 220, overflow: "auto" }}>{job.step?.answer || JSON.stringify(job.step, null, 2)}</pre>
-          </>}
-        </article>
-      </div>
-
-      <div className="grid2" style={{ marginTop: 12 }}>
-        <article>
-          <label>PROOF AND REPUTATION</label>
-          {(receipts || []).slice(0, 6).map((r, i) => <div className="kv" key={r.id || r.receipt_id || i}><span>{r.kind || r.type || "service receipt"}</span><b>{r.status || "recorded"}</b></div>)}
-          {!receipts.length ? <p className="muted sm">No receipts returned yet.</p> : null}
-        </article>
-        <article>
-          <label>AGENT RUNTIME</label>
-          <div className="kv"><span>Runtime step</span><b>{status?.step ?? "—"}</b></div>
-          <div className="kv"><span>Network</span><b>{network}</b></div>
-          <div className="kv"><span>Browser worker</span><b>{worker ? "active" : "ready"}</b></div>
-          <p className="muted sm">Service discovery → quote → governed job → execution → proof → owner-approved settlement.</p>
-        </article>
-      </div>
-
-      <AutonomousEconomy api={api} network={network} disabled={disabled} />
-    </section>
-  );
+  return <section className="panel agent-panel">
+    <div className="win-strip platform-strip"><div className="win-copy"><span className="eyebrow">ON-CHAIN AGENT ECONOMY · {config?.network?.name||"UNCONFIGURED"}</span><h3>Agents publish services, receive funded jobs, prove work, and earn settlement.</h3><p className="muted sm">The catalog, price, provider wallet, job escrow, receipt hash, settlement state, and reputation are read from Solidity contracts. THESIS supplies governed execution; the chain remains the economic source of truth.</p><div className="chips tight"><span className="badge on">{services.length} published services</span><span className="badge on">{jobs.length} visible jobs</span><span className="badge on">{completed} settled</span><span className={config?"badge on":"badge warn"}>{config?`chain ${config.network.chainId}`:"runtime not configured"}</span></div></div><div className="win-actions"><button type="button" className="forge win-btn" disabled={disabled} onClick={connect}>{wallet?shortAddress(wallet):"CONNECT WALLET"}</button><button type="button" className="ghost" disabled={disabled} onClick={refresh}>SYNC CHAIN</button><button type="button" className="ghost" onClick={()=>onNavigate?.("judge")}>PROOF</button></div></div>
+    {chainError?<div className="banner err">Web3: {chainError}</div>:null}{engineError?<div className="banner err">Engine: {engineError}</div>:null}{lastAction?<div className="banner ok">{lastAction.message}{explorerTransactionUrl(config,lastAction.txHash)?<a className="link" href={explorerTransactionUrl(config,lastAction.txHash)} target="_blank" rel="noreferrer"> view transaction →</a>:null}</div>:null}
+    <div className="grid2"><article><label>PUBLISH A REAL AGENT SERVICE</label><input className="term-input" value={publishForm.name} onChange={event=>setPublishForm(form=>({...form,name:event.target.value}))} placeholder="Service name"/><input className="term-input" value={publishForm.capability} onChange={event=>setPublishForm(form=>({...form,capability:event.target.value}))} placeholder="Capability namespace"/><input className="term-input" value={publishForm.metadataURI} onChange={event=>setPublishForm(form=>({...form,metadataURI:event.target.value}))} placeholder="IPFS, Arweave, or HTTPS metadata URI"/><div className="grid2 tight" style={{marginTop:8}}><input className="term-input" inputMode="decimal" value={publishForm.price} onChange={event=>setPublishForm(form=>({...form,price:event.target.value}))} placeholder={`Price in ${nativeSymbol}`}/><input className="term-input" inputMode="numeric" value={publishForm.slaSeconds} onChange={event=>setPublishForm(form=>({...form,slaSeconds:event.target.value}))} placeholder="SLA seconds"/></div><button type="button" className="forge block" disabled={disabled||!config} onClick={publish}>SIGN + PUBLISH SERVICE</button><p className="muted sm">No service roster or price is embedded in the frontend. Providers publish their own terms from their wallet.</p></article>
+    <article className="result"><label>FUNDED SERVICE REQUEST</label><textarea className="term-input" style={{width:"100%",minHeight:110}} value={request} onChange={event=>setRequest(event.target.value)} placeholder="Describe the deliverable, evidence, acceptance test, and constraints."/><div className="chips tight" style={{marginTop:8}}><MicButton label="DICTATE REQUEST" disabled={disabled} onText={setRequest}/><button type="button" className="forge" disabled={disabled||!selected||!request.trim()} onClick={fundSelectedService}>FUND {selected?`${selected.price} ${nativeSymbol}`:"JOB"}</button></div><div className="kv"><span>Selected provider</span><b>{shortAddress(selected?.provider)}</b></div><div className="kv"><span>Escrow</span><b>{selected?`${selected.price} ${nativeSymbol}`:"—"}</b></div><div className="kv"><span>SLA</span><b>{selected?duration(selected.slaSeconds):"—"}</b></div></article></div>
+    <label className="reg-label">ON-CHAIN SERVICE CATALOG</label><div className="grid3">{services.map(service=><article key={service.id} className={selected?.id===service.id?"result":""} onClick={()=>setSelectedId(service.id)} style={{cursor:"pointer"}}><span className="eyebrow">SERVICE #{service.id}</span><h3>{service.name}</h3><div className="kv"><span>Provider</span><b className="mono sm">{shortAddress(service.provider)}</b></div><div className="kv"><span>Price</span><b>{service.price} {nativeSymbol}</b></div><div className="kv"><span>SLA</span><b>{duration(service.slaSeconds)}</b></div><div className="kv"><span>Status</span><b>{service.active?"active":"paused"}</b></div><a className="link" href={service.metadataURI} target="_blank" rel="noreferrer" onClick={event=>event.stopPropagation()}>metadata →</a></article>)}{!services.length?<article><p className="muted">No services have been published at the configured contract.</p></article>:null}</div>
+    <label className="reg-label">LIVE JOB ESCROW</label><div className="grid2">{jobs.map(job=>{const isProvider=sameAddress(wallet,job.provider);const isClient=sameAddress(wallet,job.client);return <article key={job.id} className={job.statusLabel==="completed"?"result":""}><span className="eyebrow">JOB #{job.id} · SERVICE #{job.serviceId}</span><div className="kv"><span>Status</span><b>{job.statusLabel}</b></div><div className="kv"><span>Client</span><b className="mono sm">{shortAddress(job.client)}</b></div><div className="kv"><span>Provider</span><b className="mono sm">{shortAddress(job.provider)}</b></div><div className="kv"><span>Escrow</span><b>{job.payment} {nativeSymbol}</b></div><div className="kv"><span>Receipt</span><b className="mono sm">{job.receiptHash&&!/^0x0+$/.test(job.receiptHash)?`${job.receiptHash.slice(0,10)}…`:"pending"}</b></div><div className="chips tight">{isProvider&&["funded","accepted"].includes(job.statusLabel)?<button type="button" className="forge" disabled={disabled} onClick={()=>providerRun(job)}>RUN + SUBMIT</button>:null}{isClient&&job.statusLabel==="submitted"?<button type="button" className="forge" disabled={disabled} onClick={()=>settle(job)}>APPROVE + RELEASE</button>:null}{isClient&&job.statusLabel==="submitted"?<button type="button" className="ghost" disabled={disabled} onClick={()=>dispute(job)}>DISPUTE</button>:null}{isClient&&job.statusLabel==="funded"?<button type="button" className="ghost" disabled={disabled} onClick={()=>cancel(job)}>CANCEL + REFUND</button>:null}</div></article>;})}{!jobs.length?<article><p className="muted">No funded jobs have been created yet.</p></article>:null}</div>
+    <div className="grid2" style={{marginTop:12}}><article><label>THESIS EXECUTION RUNTIME</label><div className="kv"><span>Agent step</span><b>{runtimeStatus?.step??"—"}</b></div><div className="kv"><span>Engine receipts</span><b>{receipts.length}</b></div><div className="kv"><span>Economic truth</span><b>Solidity market</b></div><p className="muted sm">The engine can plan and execute work. Payment and completion only change when signed transactions update the market contract.</p></article><article className="result"><label>LAST RESULT</label><pre className="code sm" style={{maxHeight:220,overflow:"auto"}}>{lastAction?.result||lastAction?.message||"No signed action yet."}</pre></article></div>
+    <AutonomousEconomy api={api} disabled={disabled} config={config} services={services} wallet={wallet} onWallet={setWallet} onRefresh={refresh}/>
+  </section>;
 }
