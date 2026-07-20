@@ -27,4 +27,54 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
       - name: Check deployment credentials
+        id: credentials
+        shell: bash
+        run: |
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ] && [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Cloudflare deployment credentials are not configured; validated builds are preserved and deployment is skipped."
+          fi
+
+      - name: Install workspace dependencies
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build MonadBuilder+
+        if: steps.credentials.outputs.ready == 'true'
+        env:
+          BASE_PATH: /
+          VITE_PUBLIC_API_ORIGIN: https://monados.medinatechlabs.net
+        run: pnpm --filter @workspace/monad-builder run build
+
+      - name: Ensure existing MonadBuilder Pages project
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm dlx wrangler@3.99.0 pages project create monadbuilder --production-branch main || true
+
+      - name: Deploy MonadBuilder+
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm dlx wrangler@3.99.0 pages deploy artifacts/monad-builder/dist/public --project-name monadbuilder --branch main
+
+      - name: Install THESIS dependencies
+        if: steps.credentials.outputs.ready == 'true'
+        working-directory: web
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
+
+      - name: Build THESIS Operations
+        if: steps.credentials.outputs.ready == 'true'
+        working-directory: web
+        env:
+          BASE_PATH: /
+          VITE_API_URL: https://monados.medinatechlabs.net/engine
+        run: pnpm run build
+
+      - name: Ensure THESIS Pages project
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm dlx wrangler@3.99.0 pages project create thesis-operations --production-branch main || true
+
+      - name: Deploy THESIS Operations
+        if: steps.credentials.outputs.ready == 'true'
+        run: pnpm dlx wrangler@3.99.0 pages deploy web/dist --project-name thesis-operations --branch main
