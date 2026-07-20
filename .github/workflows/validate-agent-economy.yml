@@ -1,0 +1,56 @@
+name: Validate on-chain agent economy
+
+on:
+  pull_request:
+    paths:
+      - "contracts/**"
+      - "web/**"
+      - "scripts/check-runtime-hardcodes.mjs"
+      - ".github/workflows/validate-agent-economy.yml"
+      - ".github/workflows/deploy-thesis-web.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Format, compile, and test Solidity
+        working-directory: contracts
+        run: |
+          forge fmt --check
+          forge build --sizes
+          forge test -vv
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Reject embedded production configuration
+        run: node scripts/check-runtime-hardcodes.mjs
+      - name: Install THESIS dependencies
+        working-directory: web
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
+      - name: Build THESIS web and Pages Functions
+        working-directory: web
+        run: pnpm run build
+      - name: Verify release surfaces
+        run: |
+          test -f web/dist/index.html
+          test -f web/functions/runtime-config.js
+          test -f web/functions/rpc.js
+          test -f 'web/functions/engine/[[path]].js'
+          test -f contracts/src/AgentServiceMarket.sol
+          test -f contracts/test/AgentServiceMarket.t.sol
