@@ -1,23 +1,30 @@
-# MonadBuilder HQ — Cloudflare Workers edge agents
-# Deploy: cd edge && npx wrangler deploy
+# MonadBuilder+ · THESIS — Cloudflare production gateway
+# Build frontend first, then deploy from edge/: pnpm exec wrangler deploy
 name = "monadbuilder-edge"
 main = "src/router.js"
 compatibility_date = "2024-11-01"
 
+[assets]
+directory = "../artifacts/monad-builder/dist/public"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
 [vars]
-ORIGIN_API = "https://monados.medinatechlabs.net/engine"
 PUBLIC_APP_URL = "https://monados.medinatechlabs.net"
+CORS_ORIGINS = "https://itsnotailabs.github.io"
 SYNTHETIC_TARGET = "https://monados.medinatechlabs.net"
 SYNTHETIC_CADENCE = "smoke"
-PRODUCT = "MonadBuilder HQ"
-DOCTRINE = "Agents propose. Laws decide. Owner signs. Receipts remember."
+PRODUCT = "MonadBuilder+ · THESIS"
+DOCTRINE = "Agents propose. Laws decide. Owners sign. Receipts remember."
 EDGE_REGION_HINT = "auto"
 
-# Configure as secrets where applicable:
-# wrangler secret put SYNTHETIC_RUN_TOKEN
-# wrangler secret put ETHEREUM_RPC_URL
-# Optional: THESIS_URL, EDGE_PUBLIC_URL, OPENAI_API_KEY, XAI_API_KEY,
-# ANTHROPIC_API_KEY, CF_AI_GATEWAY_URL
+# Configure non-recursive upstreams as Worker service bindings or distinct origins.
+# Never point API_ORIGIN or THESIS_ORIGIN back to PUBLIC_APP_URL.
+# Required encrypted values belong in Cloudflare Secrets, never in this file:
+#   SYNTHETIC_RUN_TOKEN
+#   ETHEREUM_RPC_URL
+# Optional encrypted values:
+#   OPENAI_API_KEY, CF_AI_GATEWAY_URL, XAI_API_KEY, ANTHROPIC_API_KEY
 
 [triggers]
 crons = ["*/30 * * * *"]
