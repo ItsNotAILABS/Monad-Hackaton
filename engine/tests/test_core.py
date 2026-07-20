@@ -2,7 +2,9 @@
 
 from fastapi.testclient import TestClient
 
+from thesis_forge import __version__
 from thesis_forge.academy import grade_quest, list_quests
+from thesis_forge.brand import PRODUCT
 from thesis_forge.agents import propose_plans
 from thesis_forge.api import app
 from thesis_forge.codegen import generate_package, package_stats
@@ -359,10 +361,10 @@ def test_company_os_commercial():
 
 def test_api_surface():
     c = TestClient(app)
-    assert c.get("/health").json()["version"] == "2.6.0"
+    assert c.get("/health").json()["version"] == __version__
     assert c.get("/health").json().get("kind") == "platform"
     plat = c.get("/platform").json()
-    assert plat.get("product") == "THESIS Platform"
+    assert plat.get("product") == PRODUCT
     assert plat.get("kernel", {}).get("primitives_total", 0) >= 10
     assert (plat.get("apps") or {}).get("first_party_count", 0) >= 10
     assert any(p.get("id") == "local_ai" for p in plat.get("primitives") or [])
