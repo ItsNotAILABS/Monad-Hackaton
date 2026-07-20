@@ -55,11 +55,13 @@ jobs:
         with:
           name: monadbuilder-build-log
           path: monadbuilder-build.log
+      - name: Install Worker dependencies
+        working-directory: edge
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
       - name: Validate Cloudflare Worker
         working-directory: edge
         shell: bash
         run: |
-          pnpm install --no-frozen-lockfile
           set +e
           pnpm exec wrangler deploy --dry-run > worker-dry-run.log 2>&1
           status=$?
