@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { MicButton } from "./MicButton.jsx";
 import { runHybrid } from "./workers/hybrid.js";
+import { AutonomousEconomy } from "./AutonomousEconomy.jsx";
 
 const SERVICES = [
   { id: "sentinel", name: "SENTINEL", role: "Risk and policy audit", quote: "0.08 MON", sla: "90 sec", output: "Policy verdict and execution receipt" },
@@ -155,6 +156,8 @@ export function AgentPanel({ api, network, busy: parentBusy, onNavigate }) {
           <p className="muted sm">Service discovery → quote → governed job → execution → proof → owner-approved settlement.</p>
         </article>
       </div>
+
+      <AutonomousEconomy api={api} network={network} disabled={disabled} />
     </section>
   );
 }
