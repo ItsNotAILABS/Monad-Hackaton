@@ -23,7 +23,20 @@ jobs:
           version: stable
       - name: Compile Solidity
         working-directory: contracts
-        run: forge build --sizes
+        shell: bash
+        run: |
+          set +e
+          forge build --sizes > foundry-build.log 2>&1
+          status=$?
+          cat foundry-build.log
+          exit $status
+      - name: Upload Foundry build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-economy-foundry-build
+          path: contracts/foundry-build.log
+          if-no-files-found: error
       - name: Run agent economy tests
         working-directory: contracts
         run: forge test --match-contract AgentServiceMarketTest -vv
