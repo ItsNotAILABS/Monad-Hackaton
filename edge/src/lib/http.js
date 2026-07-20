@@ -1,0 +1,7 @@
+const METHODS="GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
+const clean=v=>String(v||"").trim().replace(/\/+$/,"");
+export function corsHeaders(req,env){const o=req.headers.get("Origin")||"";const allowed=new Set([env.PUBLIC_APP_URL,...String(env.CORS_ORIGINS||"").split(",")].map(clean).filter(Boolean));const local=/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(o);return{"access-control-allow-origin":(!o||allowed.has(clean(o))||local)?(o||env.PUBLIC_APP_URL||"null"):(env.PUBLIC_APP_URL||"null"),"access-control-allow-methods":METHODS,"access-control-allow-headers":"authorization, content-type, x-owner-approval, x-synthetic-token","access-control-allow-credentials":"true","access-control-max-age":"86400",vary:"Origin"};}
+export const secure=(x={})=>({"x-content-type-options":"nosniff","x-frame-options":"DENY","referrer-policy":"strict-origin-when-cross-origin",...x});
+export function json(data,status=200,extra={}){return new Response(JSON.stringify(data),{status,headers:secure({"content-type":"application/json; charset=utf-8","cache-control":"no-store",...extra})});}
+export function wrap(res,headers={}){const out=new Response(res.body,res);for(const [k,v] of Object.entries(secure(headers)))out.headers.set(k,v);return out;}
+export function bearerToken(req){const a=req.headers.get("authorization")||"";return a.toLowerCase().startsWith("bearer ")?a.slice(7).trim():(req.headers.get("x-synthetic-token")||"");}
