@@ -35,7 +35,7 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Cloudflare deployment credentials are not configured; builds remain validated and deployment is skipped."
+            echo "Cloudflare deployment credentials are not configured; validated builds are preserved and deployment is skipped."
           fi
       - name: Install workspace dependencies
         if: steps.credentials.outputs.ready == 'true'
@@ -48,10 +48,10 @@ jobs:
         run: pnpm --filter @workspace/monad-builder run build
       - name: Create MonadBuilder+ Pages project
         if: steps.credentials.outputs.ready == 'true'
-        run: pnpm exec wrangler pages project create monadbuilder-plus --production-branch main || true
+        run: pnpm dlx wrangler@3.99.0 pages project create monadbuilder-plus --production-branch main || true
       - name: Deploy MonadBuilder+
         if: steps.credentials.outputs.ready == 'true'
-        run: pnpm exec wrangler pages deploy artifacts/monad-builder/dist/public --project-name monadbuilder-plus --branch main
+        run: pnpm dlx wrangler@3.99.0 pages deploy artifacts/monad-builder/dist/public --project-name monadbuilder-plus --branch main
       - name: Install THESIS dependencies
         if: steps.credentials.outputs.ready == 'true'
         working-directory: web
@@ -65,7 +65,7 @@ jobs:
         run: pnpm run build
       - name: Create THESIS Pages project
         if: steps.credentials.outputs.ready == 'true'
-        run: pnpm exec wrangler pages project create thesis-operations --production-branch main || true
+        run: pnpm dlx wrangler@3.99.0 pages project create thesis-operations --production-branch main || true
       - name: Deploy THESIS Operations
         if: steps.credentials.outputs.ready == 'true'
-        run: pnpm exec wrangler pages deploy web/dist --project-name thesis-operations --branch main
+        run: pnpm dlx wrangler@3.99.0 pages deploy web/dist --project-name thesis-operations --branch main
