@@ -1,0 +1,75 @@
+name: Deploy dual frontend mirrors to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "artifacts/monad-builder/**"
+      - "web/**"
+      - "lib/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/github-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install monorepo dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Build MonadBuilder+ mirror
+        env:
+          BASE_PATH: /Monad-Hackaton/builder/
+          VITE_PUBLIC_API_ORIGIN: https://monados.medinatechlabs.net
+        run: pnpm --filter @workspace/monad-builder run build
+      - name: Install THESIS web dependencies
+        run: pnpm --dir web install --no-frozen-lockfile
+      - name: Build THESIS mirror
+        env:
+          BASE_PATH: /Monad-Hackaton/thesis/
+          VITE_API_URL: https://monados.medinatechlabs.net/engine
+        run: pnpm --dir web run build
+      - name: Assemble Pages site
+        run: |
+          mkdir -p _site/builder _site/thesis
+          cp -R artifacts/monad-builder/dist/public/. _site/builder/
+          cp -R web/dist/. _site/thesis/
+          cp _site/builder/index.html _site/builder/404.html
+          cp _site/thesis/index.html _site/thesis/404.html
+          touch _site/.nojekyll
+          cat > _site/index.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MonadBuilder+ · THESIS</title><style>body{margin:0;background:#080910;color:#fff;font:16px system-ui;display:grid;place-items:center;min-height:100vh}.wrap{max-width:900px;padding:40px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}a{color:inherit;text-decoration:none;padding:26px;border:1px solid #ffffff20;border-radius:18px;background:#ffffff08}a:hover{border-color:#836ef9}small{color:#ffffff80}</style></head><body><main class="wrap"><h1>MonadBuilder+ · THESIS</h1><p>Two coordinated platforms. Cloudflare remains the production API, agent, wallet, and governance gateway.</p><div class="grid"><a href="./builder/"><h2>MonadBuilder+</h2><small>AI application studio, templates, wallets, preview, publishing, learning, and Gallery.</small></a><a href="./thesis/"><h2>THESIS Operations</h2><small>Governance, Python agents, laws, wallet twins, Company OS, execution controls, and receipts.</small></a></div></main></body></html>
+          HTML
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
