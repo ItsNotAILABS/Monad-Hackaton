@@ -7,4 +7,15 @@
   "description": "Desktop operator for MonadBuilder+, THESIS tools, MESIE evaluation, and governed deployment.",
   "scripts": {
     "dev": "electron .",
-    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/localServer.mjs && node --check src/tools.mjs && node --check renderer/app.mjs &&
+    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/localServer.mjs && node --check src/tools.mjs && node --check renderer/app.mjs && node --check scripts/stage-web.mjs && node --check scripts/smoke.mjs && node --check scripts/hash-dist.mjs",
+    "stage:web": "node scripts/stage-web.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "package": "electron-builder --publish never",
+    "package:dir": "electron-builder --dir --publish never",
+    "hash:dist": "node scripts/hash-dist.mjs"
+  },
+  "devDependencies": {
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3"
+  }
+}
