@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: thesis-web-production
@@ -17,7 +17,85 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      THESIS_PROJECT_NAME: thesis-operations
+      THESIS_API_URL: https://monados.medinatechlabs.net/engine
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify Cloudflare credentials
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+
+      - name: Install THESIS dependencies
+        working-directory: web
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build THESIS web
+        working-directory: web
+        env:
+          BASE_PATH: /
+          VITE_API_URL: ${{ env.THESIS_API_URL }}
+        run: pnpm run build
+
+      - name: Verify production bundle
+        shell: bash
+        run: |
+          test -f web/dist/index.html
+          test -d web/dist/assets
+          grep -R "monados.medinatechlabs.net/engine" web/dist >/dev/null
+
+      - name: Ensure Cloudflare Pages project
+        run: pnpm dlx wrangler@3.99.0 pages project create "$THESIS_PROJECT_NAME" --production-branch main || true
+
+      - name: Deploy THESIS web
+        id: deploy
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm dlx wrangler@3.99.0 pages deploy web/dist \
+            --project-name "$THESIS_PROJECT_NAME" \
+            --branch main \
+            --commit-dirty=true | tee thesis-deployment.log
+
+      - name: Write deployment receipt
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "# THESIS Cloudflare Deployment Receipt"
+            echo
+            echo "- project: $THESIS_PROJECT_NAME"
+            echo "- canonical URL: https://thesis-operations.pages.dev/"
+            echo "- engine URL: $THESIS_API_URL"
+            echo "- commit: $GITHUB_SHA"
+            echo "- workflow run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            echo '```text'
+            cat thesis-deployment.log 2>/dev/null || true
+            echo '```'
+          } > thesis-deployment-receipt.md
+
+      - name: Upload deployment receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thesis-cloudflare-deployment-receipt
+          path: |
+            thesis-deployment.log
+            thesis-deployment-receipt.md
+          if-no-files-found: warn
