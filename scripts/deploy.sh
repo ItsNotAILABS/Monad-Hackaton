@@ -1,81 +1,51 @@
 #!/usr/bin/env bash
-# Deploy THESIS contracts to Monad (official Foundry path).
-# https://docs.monad.xyz/guides/deploy-smart-contract/foundry
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT/contracts"
 
-# Prefer public testnet RPC from docs if unset
-export MONAD_TESTNET_RPC_URL="${MONAD_TESTNET_RPC_URL:-https://testnet-rpc.monad.xyz}"
-export MONAD_MAINNET_RPC_URL="${MONAD_MAINNET_RPC_URL:-https://rpc.monad.xyz}"
+required=(MONAD_RPC_URL MONAD_CHAIN_ID MONAD_NETWORK_NAME MONAD_EXPLORER_URL PRIVATE_KEY DEPLOYER_OWNER PROTOCOL_TREASURY PROTOCOL_FEE_BPS JOB_REVIEW_PERIOD_SECONDS)
+for key in "${required[@]}"; do
+  [[ -n "${!key:-}" ]] || { echo "missing required environment variable: $key" >&2; exit 1; }
+done
 
-NETWORK="${1:-testnet}" # testnet | mainnet
-: "${PRIVATE_KEY:?Set PRIVATE_KEY (hex, 0x…)}"
+LOG_PATH="${DEPLOY_LOG_PATH:-$ROOT/receipts/agent-economy-deploy.log}"
+RECEIPT_PATH="${DEPLOY_RECEIPT_PATH:-$ROOT/receipts/agent-economy-deployment.json}"
+mkdir -p "$(dirname "$LOG_PATH")" "$(dirname "$RECEIPT_PATH")"
 
-if [[ "$NETWORK" == "mainnet" ]]; then
-  RPC="$MONAD_MAINNET_RPC_URL"
-  CHAIN=143
-  EXPLORER="https://monadvision.com"
-else
-  RPC="$MONAD_TESTNET_RPC_URL"
-  CHAIN=10143
-  EXPLORER="https://testnet.monadvision.com"
-fi
-
-echo "[deploy] network=$NETWORK chainId=$CHAIN rpc=$RPC"
-
-# Optional: keystore path from docs
-# forge script … --account monad-deployer --broadcast
-if [[ -n "${FOUNDRY_ACCOUNT:-}" ]]; then
-  ACCOUNT_ARGS=(--account "$FOUNDRY_ACCOUNT")
-  unset PRIVATE_KEY_EXPORT
-  PK_ARGS=()
-else
-  ACCOUNT_ARGS=()
-  PK_ARGS=(--private-key "$PRIVATE_KEY")
-fi
-
-OUT_JSON="$ROOT/receipts/deployment.json"
-mkdir -p "$ROOT/receipts"
-
-# Broadcast via forge script (wires SovereignVault constructor)
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url "$RPC" \
+forge script script/DeployAgentEconomy.s.sol:DeployAgentEconomy \
+  --rpc-url "$MONAD_RPC_URL" \
+  --chain-id "$MONAD_CHAIN_ID" \
   --broadcast \
-  -vvv \
-  "${ACCOUNT_ARGS[@]}" \
-  "${PK_ARGS[@]}" \
-  --sig "run()" 2>&1 | tee /tmp/thesis-deploy.log
+  -vvv 2>&1 | tee "$LOG_PATH"
 
-# Best-effort address harvest from console logs
-VAULT=$(grep -E "SovereignVault|PRIMARY_SUBMISSION_ADDRESS" /tmp/thesis-deploy.log | awk '{print $NF}' | tail -1 || true)
-POLICY=$(grep "PolicyKernel" /tmp/thesis-deploy.log | awk '{print $NF}' | tail -1 || true)
-RECEIPTS=$(grep "ReceiptChain" /tmp/thesis-deploy.log | awk '{print $NF}' | tail -1 || true)
+extract_address(){ local label="$1"; awk -v label="$label" '$0 ~ label {print $NF}' "$LOG_PATH" | tail -1; }
+MARKET_ADDRESS="$(extract_address AGENT_MARKET_ADDRESS)"
+RECEIPT_CHAIN_ADDRESS="$(extract_address RECEIPT_CHAIN_ADDRESS)"
+AGENT_REGISTRY_ADDRESS="$(extract_address AGENT_REGISTRY_ADDRESS)"
+address_pattern='^0x[0-9a-fA-F]{40}$'
+for pair in "AGENT_MARKET_ADDRESS=$MARKET_ADDRESS" "RECEIPT_CHAIN_ADDRESS=$RECEIPT_CHAIN_ADDRESS" "AGENT_REGISTRY_ADDRESS=$AGENT_REGISTRY_ADDRESS"; do
+  name="${pair%%=*}"; value="${pair#*=}"
+  [[ "$value" =~ $address_pattern ]] || { echo "invalid deployed address for $name: $value" >&2; exit 1; }
+  code="$(cast code --rpc-url "$MONAD_RPC_URL" "$value")"
+  [[ -n "$code" && "$code" != "0x" ]] || { echo "no code at $name=$value" >&2; exit 1; }
+done
 
-cat >"$OUT_JSON" <<EOF
-{
-  "schema": "thesis.deployment.v1",
-  "network": "$NETWORK",
-  "chainId": $CHAIN,
-  "rpc": "$RPC",
-  "explorer": "$EXPLORER",
-  "primary_submission_address": "$VAULT",
-  "contracts": {
-    "PolicyKernel": "$POLICY",
-    "ReceiptChain": "$RECEIPTS",
-    "SovereignVault": "$VAULT"
-  },
-  "docs": {
-    "deploy": "https://docs.monad.xyz/guides/deploy-smart-contract/foundry",
-    "verify": "https://docs.monad.xyz/guides/verify-smart-contract/foundry",
-    "network": "https://docs.monad.xyz/developer-essentials/network-information",
-    "faucet": "https://testnet.monad.xyz"
-  },
-  "verify_hint": "forge verify-contract <addr> <Name> --chain $CHAIN --verifier sourcify --verifier-url https://sourcify-api-monad.blockvision.org/"
-}
-EOF
+jq -n \
+  --arg schema "thesis.agent-economy.deployment.v1" \
+  --arg status "deployed" \
+  --arg network "$MONAD_NETWORK_NAME" \
+  --argjson chainId "$MONAD_CHAIN_ID" \
+  --arg explorer "${MONAD_EXPLORER_URL%/}" \
+  --arg agentMarket "$MARKET_ADDRESS" \
+  --arg receiptChain "$RECEIPT_CHAIN_ADDRESS" \
+  --arg agentRegistry "$AGENT_REGISTRY_ADDRESS" \
+  --arg owner "$DEPLOYER_OWNER" \
+  --arg treasury "$PROTOCOL_TREASURY" \
+  --argjson protocolFeeBps "$PROTOCOL_FEE_BPS" \
+  --argjson reviewPeriodSeconds "$JOB_REVIEW_PERIOD_SECONDS" \
+  --arg releaseSha "${GITHUB_SHA:-local}" \
+  '{schema:$schema,status:$status,network:$network,chainId:$chainId,explorer:$explorer,contracts:{AgentServiceMarket:$agentMarket,ReceiptChain:$receiptChain,AgentRegistry:$agentRegistry},governance:{owner:$owner,treasury:$treasury,protocolFeeBps:$protocolFeeBps,reviewPeriodSeconds:$reviewPeriodSeconds},releaseSha:$releaseSha}' > "$RECEIPT_PATH"
 
-echo "[deploy] wrote $OUT_JSON"
-echo "[deploy] Spark contract address field → SovereignVault: $VAULT"
-echo "[deploy] Explorer: $EXPLORER/address/$VAULT"
+cat "$RECEIPT_PATH"
+echo "deployment receipt: $RECEIPT_PATH"

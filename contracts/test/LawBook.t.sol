@@ -41,7 +41,7 @@ contract LawBookAndModulesTest {
         uint256 id = co.openMission(keccak256("grow mon"), keccak256("laws"));
         co.setAwaiting(id, ThesisTypes.Department.AGORA, keccak256("yield-agent"));
         co.approve(id);
-        (,,,,, uint8 status,,) = co.missions(id);
+        (,,,, uint8 status,,,) = co.missions(id);
         require(status == 2, "approved");
     }
 
@@ -50,7 +50,6 @@ contract LawBookAndModulesTest {
         require(g.recommend(80_000) == 86_000);
         require(g.isSane(86_000, 80_000));
         require(g.nativeTransferGas() == 21_000);
-
         ThesisMulticall mc = new ThesisMulticall();
         require(mc.getChainId() > 0);
         require(mc.getCurrentBlockTimestamp() > 0);
@@ -60,7 +59,6 @@ contract LawBookAndModulesTest {
         AgentRegistry reg = new AgentRegistry();
         reg.register(address(0xA11CE), keccak256("id"), bytes32(uint256(1)), uint64(block.timestamp + 30 days));
         require(reg.authorized(address(this), address(0xA11CE)));
-
         ProposalBook book = new ProposalBook();
         uint256 id = book.proposeFull(keccak256("act"), address(0xBEEF), 1 ether);
         book.markSimulated(id, keccak256("sim"));
