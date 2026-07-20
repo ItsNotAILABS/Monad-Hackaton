@@ -1,25 +1,3 @@
-/** Cloudflare upstream, CORS, and response helpers. */
-
-const DEFAULT_ALLOWED_METHODS = "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS";
-
-function cleanBase(value) {
-  return String(value || "").trim().replace(/\/+$/, "");
-}
-
-function allowedOrigins(env) {
-  return new Set(
-    [env.PUBLIC_APP_URL, ...(String(env.CORS_ORIGINS || "").split(","))]
-      .map(cleanBase)
-      .filter(Boolean),
-  );
-}
-
-export function corsHeaders(request, env) {
-  const requestOrigin = request.headers.get("Origin") || "";
-  const allow = allowedOrigins(env);
-  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestOrigin);
-  const permitted = !requestOrigin || allow.has(cleanBase(requestOrigin)) || local;
-  return {
-    "access-control-allow-origin": permitted && requestOrigin ? requestOrigin : (env.PUBLIC_APP_URL || "null"),
-    "access-control-allow-methods": DEFAULT_ALLOWED_METHODS,
-   
+export{corsHeaders,json,secure as securityHeaders,wrap,bearerToken}from"./http.js";
+export{proxyUpstream,originFetch}from"./upstream.js";
+export function edgeMeta(request,env){const cf=request.cf||{};return{product:env.PRODUCT||"MonadBuilder+ · THESIS",doctrine:env.DOCTRINE||"Agents propose. Laws decide. Owners sign. Receipts remember.",edge:{runtime:"cloudflare-workers",colo:cf.colo||null,country:cf.country||null,city:cf.city||null,httpProtocol:cf.httpProtocol||null},upstreams:{api:Boolean(env.API?.fetch||env.API_ORIGIN),thesis:Boolean(env.THESIS?.fetch||env.THESIS_ORIGIN),monad_rpc:Boolean(env.MONAD_RPC_URL),ethereum_rpc:Boolean(env.ETHEREUM_RPC_URL)}};}
