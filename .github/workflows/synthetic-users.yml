@@ -1,0 +1,54 @@
+name: Continuous Synthetic Users
+
+on:
+  workflow_dispatch:
+    inputs:
+      cadence:
+        description: Synthetic suite cadence
+        required: false
+        default: full
+        type: choice
+        options: [smoke, full]
+  schedule:
+    - cron: "*/30 * * * *"
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  exercise-live-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ./engine
+      - name: Resolve cadence
+        id: cadence
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "value=${{ inputs.cadence }}" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.event.schedule }}" == "17 3 * * *" ]]; then
+            echo "value=full" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=smoke" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run live synthetic users
+        env:
+          MONADBUILDER_URL: ${{ vars.MONADBUILDER_URL || 'https://monados.medinatechlabs.net' }}
+          THESIS_URL: ${{ vars.THESIS_URL }}
+          EDGE_URL: ${{ vars.EDGE_URL }}
+          ETHEREUM_RPC_URL: ${{ secrets.ETHEREUM_RPC_URL }}
+        run: python scripts/run_synthetic_users.py --cadence "${{ steps.cadence.outputs.value }}" --strict --output receipts/synthetic_users/ci-latest.json
+      - name: Upload proof receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-users-${{ github.run_id }}
+          path: receipts/synthetic_users/ci-latest.json
+          if-no-files-found: error
+          retention-days: 30
