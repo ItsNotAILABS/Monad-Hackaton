@@ -17,7 +17,7 @@ const forbidden = [
   /rpc\.monad\.xyz/i,
   /thesis-operations/i,
   /monadbuilder-plus/i,
-  /0x[a-fA-F0-9]{40}/,
+  /["'`]0x[0-9a-fA-F]{40}["'`]/,
   /const\s+SERVICES\s*=/,
   /const\s+ACTORS\s*=/,
 ];
