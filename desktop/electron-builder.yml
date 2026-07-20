@@ -1,0 +1,27 @@
+appId: labs.itsnotai.medina-agent-forge
+productName: Medina Agent Forge
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+asar: true
+directories:
+  output: dist
+files:
+  - src/**/*
+  - renderer/**/*
+  - staged-web/**/*
+  - package.json
+  - config.example.json
+extraMetadata:
+  main: src/main.mjs
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: Development
+mac:
+  target:
+    - dmg
+  category: public.app-category.developer-tools
+npmRebuild: false
+publish: null
