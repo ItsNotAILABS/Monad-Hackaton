@@ -1,26 +1,26 @@
 # MonadBuilder HQ — Cloudflare Workers edge agents
 # Deploy: cd edge && npx wrangler deploy
-# Docs: docs/EDGE_WORKERS.md
-
 name = "monadbuilder-edge"
 main = "src/router.js"
 compatibility_date = "2024-11-01"
 
-# Point at your hosted FastAPI / dashboard origin
 [vars]
-ORIGIN_API = "http://127.0.0.1:8043"
+ORIGIN_API = "https://monados.medinatechlabs.net/engine"
+PUBLIC_APP_URL = "https://monados.medinatechlabs.net"
+SYNTHETIC_TARGET = "https://monados.medinatechlabs.net"
+SYNTHETIC_CADENCE = "smoke"
 PRODUCT = "MonadBuilder HQ"
 DOCTRINE = "Agents propose. Laws decide. Owner signs. Receipts remember."
 EDGE_REGION_HINT = "auto"
 
-# Optional secrets (set via: wrangler secret put NAME)
-# OPENAI_API_KEY
-# XAI_API_KEY
-# ANTHROPIC_API_KEY
-# CF_AI_GATEWAY_URL
+# Configure as secrets where applicable:
+# wrangler secret put SYNTHETIC_RUN_TOKEN
+# wrangler secret put ETHEREUM_RPC_URL
+# Optional: THESIS_URL, EDGE_PUBLIC_URL, OPENAI_API_KEY, XAI_API_KEY,
+# ANTHROPIC_API_KEY, CF_AI_GATEWAY_URL
 
-# Routes (set after domain is ready)
-# routes = [{ pattern = "edge.yourdomain.com/*", zone_name = "yourdomain.com" }]
+[triggers]
+crons = ["*/30 * * * *"]
 
 [observability]
 enabled = true
