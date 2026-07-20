@@ -83,17 +83,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - name: Install THESIS dependencies
-        run: pnpm --dir web install --no-frozen-lockfile
+        working-directory: web
+        run: pnpm install --ignore-workspace --no-frozen-lockfile
       - name: Build THESIS Operations
+        working-directory: web
         env:
           BASE_PATH: /
           VITE_API_URL: ""
         shell: bash
         run: |
           set +e
-          pnpm --dir web run build > thesis-build.log 2>&1
+          pnpm run build > thesis-build.log 2>&1
           status=$?
           cat thesis-build.log
           exit $status
@@ -102,4 +103,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: thesis-build-log
-          path: thesis-build.log
+          path: web/thesis-build.log
