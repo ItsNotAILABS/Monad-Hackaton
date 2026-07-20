@@ -1,5 +1,5 @@
 import { Contract, Interface, keccak256, toUtf8Bytes } from "ethers";
-import { connectWallet, loadRuntimeConfig } from "./agentEconomy.js";
+import { connectWallet, createReadContext, loadRuntimeConfig } from "./agentEconomy.js";
 
 const CREDENTIAL_ABI = [
   "function mintAgentCredential(address subject,bytes32 identityHash,bytes32 capabilityHash,string metadataURI) returns (uint256 tokenId)",
@@ -60,7 +60,7 @@ export async function mintAgentIdentity({ subject, identity, capability, metadat
 export async function listCredentials(owner) {
   const config = await loadRuntimeConfig();
   const address = requireCredentialAddress(config);
-  const { provider } = await import("./agentEconomy.js").then((module) => module.createReadContext());
+  const { provider } = await createReadContext();
   const credential = new Contract(address, CREDENTIAL_ABI, provider);
   const code = await provider.getCode(address);
   if (!code || code === "0x") throw new Error("Credential contract is not deployed at the configured address.");
