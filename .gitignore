@@ -56,3 +56,6 @@ npm-debug.log
 yarn-error.log
 .sass-cache
 coverage/
+
+# demo recording raw output
+demo/video/
