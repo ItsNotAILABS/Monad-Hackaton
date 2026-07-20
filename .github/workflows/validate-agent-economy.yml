@@ -21,6 +21,9 @@ jobs:
       - uses: foundry-rs/foundry-toolchain@v1
         with:
           version: stable
+      - name: Install Foundry libraries
+        working-directory: contracts
+        run: forge install foundry-rs/forge-std --no-commit
       - name: Compile Solidity
         working-directory: contracts
         shell: bash
