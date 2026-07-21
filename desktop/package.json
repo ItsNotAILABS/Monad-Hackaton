@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "main": "src/main.mjs",
-  "description": "Governed desktop operator for MonadBuilder+, THESIS tools, MESIE evaluation, Agent Mint workflows, and deployment receipts.",
+  "description": "Governed desktop operator for Agent Mint, THESIS, MESIE, and Monad.",
   "scripts": {
     "dev": "electron .",
+    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/tools.mjs && node --check renderer/app.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "package": "electron-builder --publish never"
+  },
+  "devDependencies": {
+    "electron": "43.1.1",
+    "electron-builder": "26.15.3"
+  }
+}
