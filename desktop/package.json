@@ -1,21 +1,9 @@
 {
   "name": "medina-agent-forge-desktop",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "src/main.mjs",
-  "description": "Desktop operator for MonadBuilder+, THESIS tools, MESIE evaluation, and governed deployment.",
+  "description": "Governed desktop operator for MonadBuilder+, THESIS tools, MESIE evaluation, Agent Mint workflows, and deployment receipts.",
   "scripts": {
     "dev": "electron .",
-    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/localServer.mjs && node --check src/tools.mjs && node --check renderer/app.mjs && node --check scripts/stage-web.mjs && node --check scripts/smoke.mjs && node --check scripts/hash-dist.mjs",
-    "stage:web": "node scripts/stage-web.mjs",
-    "smoke": "node scripts/smoke.mjs",
-    "package": "electron-builder --publish never",
-    "package:dir": "electron-builder --dir --publish never",
-    "hash:dist": "node scripts/hash-dist.mjs"
-  },
-  "devDependencies": {
-    "electron": "43.1.1",
-    "electron-builder": "26.15.3"
-  }
-}
