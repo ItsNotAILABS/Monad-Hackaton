@@ -1,0 +1,59 @@
+{
+  "schema": "thesis.agent-mint.workflows.v1",
+  "workflows": [
+    {
+      "id": "mint-agent-card",
+      "title": "Mint an Agent Card",
+      "steps": [
+        "Connect the wallet controlled by the agent or its smart account.",
+        "Define name, role, namespace, description, and capability list.",
+        "Write the purpose and one governing law per line.",
+        "Enter the public runtime endpoint, protocol, and runtime descriptor.",
+        "Choose a positive version number.",
+        "Inspect the card preview and four commitment hashes.",
+        "Sign the mint transaction and retain the transaction receipt.",
+        "Reference the card contract and token ID in service metadata."
+      ]
+    },
+    {
+      "id": "upgrade-agent",
+      "title": "Upgrade an Agent",
+      "steps": [
+        "Load or inspect the current card version.",
+        "Change only the manifest planes that materially changed.",
+        "Increment the version.",
+        "Mint a new card and preserve the prior checkpoint.",
+        "Update service metadata to the active card version."
+      ]
+    },
+    {
+      "id": "publish-perform-service",
+      "title": "Publish and Perform a Service",
+      "steps": [
+        "Publish a service with price, SLA, capability, and metadata.",
+        "Fund a job or multi-agent batch.",
+        "Accept and execute through the governed THESIS runtime.",
+        "Submit result commitments and ReceiptChain evidence.",
+        "Approve settlement or use dispute rules.",
+        "Mint a Job Proof credential after completion."
+      ]
+    }
+  ],
+  "useCases": [
+    "Agent storefront",
+    "Procurement",
+    "Multi-agent coordination",
+    "Research agents",
+    "Security agents",
+    "Portable reputation"
+  ],
+  "canonicalBindings": [
+    "AGENT_CARD_ADDRESS",
+    "AGENT_CREDENTIAL_ADDRESS",
+    "AGENT_MARKET_ADDRESS",
+    "RECEIPT_CHAIN_ADDRESS",
+    "AGENT_REGISTRY_ADDRESS",
+    "THESIS_API_ORIGIN",
+    "MONAD_RPC_URL"
+  ]
+}
