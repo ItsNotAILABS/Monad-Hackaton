@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const KEYS = new Set(["builderApiOrigin", "thesisApiOrigin", "toolGatewayOrigin", "releaseChannel", "workspaceRoot"]);
+const KEYS = new Set(["builderAppOrigin", "builderApiOrigin", "thesisApiOrigin", "toolGatewayOrigin", "releaseChannel", "workspaceRoot"]);
 
 export const defaultConfig = Object.freeze({
+  builderAppOrigin: process.env.MONAD_BUILDER_APP_ORIGIN || "",
   builderApiOrigin: process.env.MONAD_BUILDER_API_ORIGIN || "",
   thesisApiOrigin: process.env.THESIS_API_ORIGIN || "",
   toolGatewayOrigin: process.env.THESIS_TOOL_GATEWAY_ORIGIN || "",
@@ -25,6 +26,7 @@ function cleanOrigin(value, key) {
 export function validateConfig(input = {}) {
   const merged = { ...defaultConfig };
   for (const [key, value] of Object.entries(input || {})) if (KEYS.has(key)) merged[key] = value;
+  merged.builderAppOrigin = cleanOrigin(merged.builderAppOrigin, "builderAppOrigin");
   merged.builderApiOrigin = cleanOrigin(merged.builderApiOrigin, "builderApiOrigin");
   merged.thesisApiOrigin = cleanOrigin(merged.thesisApiOrigin, "thesisApiOrigin");
   merged.toolGatewayOrigin = cleanOrigin(merged.toolGatewayOrigin, "toolGatewayOrigin");
