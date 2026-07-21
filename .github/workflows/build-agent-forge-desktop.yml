@@ -1,0 +1,59 @@
+name: Build Agent Forge Desktop
+
+on:
+  pull_request:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/build-agent-forge-desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate desktop source
+        working-directory: desktop
+        run: |
+          npm run typecheck
+          npm run smoke
+      - name: Write validation receipt
+        run: |
+          mkdir -p desktop/receipts
+          node -e 'const fs=require("fs"),crypto=require("crypto");const files=["desktop/package.json","desktop/src/main.mjs","desktop/src/preload.mjs","desktop/src/config.mjs","desktop/src/tools.mjs","desktop/renderer/index.html","desktop/renderer/app.mjs","desktop/renderer/styles.css","desktop/workflows/agent-mint-workflows.json"];const hashes=Object.fromEntries(files.map(f=>[f,crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex")]));fs.writeFileSync("desktop/receipts/desktop-validation.json",JSON.stringify({schema:"medina.agent-forge.validation.v1",commit:process.env.GITHUB_SHA,workflow:process.env.GITHUB_RUN_ID,files:hashes},null,2));'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-forge-validation-receipt
+          path: desktop/receipts/desktop-validation.json
+
+  package:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/package.json
+      - name: Install dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Package desktop application
+        working-directory: desktop
+        run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-forge-${{ matrix.os }}
+          path: desktop/dist/*
+          if-no-files-found: error
