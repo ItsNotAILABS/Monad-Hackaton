@@ -1,13 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const KEYS = new Set(["builderAppUrl", "builderApiOrigin", "thesisApiOrigin", "releaseChannel", "workspaceRoot", "enabledBackendTools"]);
+const KEYS = new Set(["builderAppUrl", "builderApiOrigin", "thesisApiOrigin", "mcpSpineOrigin", "mcpAutostart", "releaseChannel", "workspaceRoot", "enabledBackendTools"]);
 const BACKEND_TOOLS = new Set(["thesis.runtime.status", "thesis.receipts.recent"]);
 
 export const defaultConfig = Object.freeze({
   builderAppUrl: process.env.MONAD_BUILDER_APP_URL || "",
   builderApiOrigin: process.env.MONAD_BUILDER_API_ORIGIN || "",
   thesisApiOrigin: process.env.THESIS_API_ORIGIN || "",
+  mcpSpineOrigin: process.env.MCP_SPINE_ORIGIN || "http://127.0.0.1:8080",
+  mcpAutostart: process.env.MCP_SPINE_AUTOSTART === "true",
   releaseChannel: process.env.MEDINA_RELEASE_CHANNEL || "stable",
   workspaceRoot: process.env.MEDINA_WORKSPACE_ROOT || "",
   enabledBackendTools: [],
@@ -31,6 +33,8 @@ export function validateConfig(input = {}) {
   merged.builderAppUrl = cleanOrigin(merged.builderAppUrl, "builderAppUrl");
   merged.builderApiOrigin = cleanOrigin(merged.builderApiOrigin, "builderApiOrigin");
   merged.thesisApiOrigin = cleanOrigin(merged.thesisApiOrigin, "thesisApiOrigin");
+  merged.mcpSpineOrigin = cleanOrigin(merged.mcpSpineOrigin, "mcpSpineOrigin") || "http://127.0.0.1:8080";
+  merged.mcpAutostart = merged.mcpAutostart === true;
   merged.releaseChannel = String(merged.releaseChannel || "stable").trim().slice(0, 40);
   merged.workspaceRoot = String(merged.workspaceRoot || "").trim();
   merged.enabledBackendTools = Array.from(new Set((Array.isArray(merged.enabledBackendTools) ? merged.enabledBackendTools : [])

@@ -1,315 +1,171 @@
-<p align="center">
-  <img src="docs/assets/thesis-icon.jpg" alt="MonadBuilder+ · THESIS" width="132" height="132" />
-</p>
+# MonadBuilder+ · THESIS Agent Desktop
 
-<h1 align="center">MonadBuilder+ · THESIS</h1>
+**Two surfaces. One sovereign architecture.**
 
-<p align="center">
-  <strong>Build the application. Govern the intelligence. Execute on Monad.</strong><br/>
-  AI creation, interoperable wallets, agents, policy, execution, CLI operations, and cryptographic receipts in one stack.
-</p>
+MonadBuilder+ is the public web and ecosystem surface. THESIS Agent Desktop is the sovereign local execution and control surface. The repository contains both products and their shared internal technology.
 
-<p align="center">
-  <a href="https://monados.medinatechlabs.net"><img src="https://img.shields.io/badge/Live-monados.medinatechlabs.net-2ee6a6?style=for-the-badge&labelColor=0a0b12" alt="Live app" /></a>
-  <a href="https://github.com/ItsNotAILABS/Monad-Hackaton"><img src="https://img.shields.io/badge/GitHub-Public_Repository-ffffff?style=for-the-badge&logo=github&logoColor=white&labelColor=0a0b12" alt="GitHub" /></a>
-  <img src="https://img.shields.io/badge/Network-Monad_Testnet-836EF9?style=for-the-badge&labelColor=0a0b12" alt="Monad Testnet" />
-</p>
+> **Agents propose. Policy evaluates. Owners approve. Wallets sign. Receipts remember.**
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
-  <img src="https://img.shields.io/badge/Node.js-Express-339933?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node" />
-  <img src="https://img.shields.io/badge/Python-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/CLI-thesis_%7C_monadbuilder-f0b429?style=flat-square" alt="CLI" />
-  <img src="https://img.shields.io/badge/Solidity-Foundry-363636?style=flat-square&logo=solidity&logoColor=white" alt="Solidity" />
-  <img src="https://img.shields.io/badge/Chain_ID-10143-836EF9?style=flat-square" alt="Chain ID" />
-</p>
+## Canonical product architecture
 
-<p align="center">
-  <img src="docs/assets/thesis-hero.jpg" alt="MonadBuilder+ and THESIS command center" width="100%" />
-</p>
+```text
+MONADBUILDER+ WEB
+Creation · applications · crypto · markets · research · publishing
+                       |
+             authenticated federation
+                       |
+THESIS AGENT DESKTOP
+Local intelligence · MCP · approvals · tools · receipts · execution
+```
 
-## One product, two coordinated platforms
+There is no third public application.
 
-| Platform | What it delivers |
-
-| **MonadBuilder+** | AI dApp generation, visual editing, templates, generated wallets, live Monad utilities, publishing, Gallery, education, and AI Studio |
-| **THESIS** | Python governance backend, agents, programmable laws, external-wallet identities, sandbox twins, Company OS, controlled execution, smart contracts, CLI, and receipts |
-
-The public Node application exposes THESIS through `/engine/*`, and the installed CLI reaches both `/api/*` and `/engine/*`. Browser users, developers, operators, and agents therefore work against one hosted product rather than disconnected demos.
-
-> **Agents propose. Laws decide. Owners sign. Receipts remember.**
-
-## The problem
-
-Blockchain application development is fragmented across UI frameworks, Solidity, wallets, RPC configuration, deployment scripts, gas logic, governance, and monitoring. AI accelerates creation, but an AI that can propose actions should not automatically receive unrestricted access to wallets or capital.
-
-## The solution
-
-MonadBuilder+ creates the application. THESIS governs what the application and its agents are allowed to do.
-
-1. Describe a dApp in plain language.
-2. Generate a validated Monad-specific component layout.
-3. Refine it visually and publish the project.
-4. Generate a wallet or connect an existing wallet system.
-5. Normalize that public wallet identity into roles, custody, capabilities, namespace, and policy.
-6. Mirror observable balances into governed THESIS twins without importing keys.
-7. Send agent or operator proposals through programmable laws.
-8. Reject unlawful actions with explicit reasons.
-9. Preserve material actions through receipts and owner-controlled external signing.
-
-## Product capabilities
-
-### AI application studio
-
-- full dApp generation from a natural-language idea;
-- prompt expansion into a Monad-specific architecture brief;
-- visual component editing and project refinement;
-- component validation instead of invented UI types;
-- contract, gas, dApp, and governance analysis;
-- production-readiness audits;
-- Python and JavaScript script generation;
-- context-aware assistant across the application.
-
-### Real application surfaces
-
-- wallet connection, generated wallets, and token balances;
-- token swaps and transaction feeds;
-- NFT galleries and DAO voting;
-- price charts and reward surfaces;
-- responsive layout primitives;
-- database-backed templates;
-- project previews, publishing, and Gallery distribution;
-- GitHub authentication;
-- interactive Learn modules, quizzes, badges, and wallet-linked progress.
-
-## Wallet operating system
-
-Wallets are a core product layer across both platforms.
-
-### MonadBuilder+ generated wallets
-
-The Node platform can generate wallets for users, learners, educators, and AI agents. It supports live MON balance reads, public wallet records, explorer and faucet links, and dedicated Governance, Builder, Auditor, and Rewards agent-wallet roles.
-
-Generated wallets remain part of the MonadBuilder+ application database and can be used by its onboarding, education, project, and agent surfaces.
-
-### THESIS normalized wallet identities
-
-THESIS now maps external wallet systems into a shared public identity model using CAIP-style chain identifiers such as `eip155:10143`.
-
-Supported adapter families include:
-
-| Wallet system | Operating model |
+| Product | Public role |
 |---|---|
-| MetaMask, Rabby, injected EVM | EIP-1193 / EIP-6963 self-custody |
-| Phantom | Multichain browser wallet |
-| WalletConnect v2, Rainbow | Mobile and session-based connections |
-| Coinbase Wallet | EOA connection |
-| Coinbase Smart Wallet | Smart-account / account-abstraction capabilities |
-| Safe | Multisig treasury or organization account |
-| Ledger, Trezor | Hardware-backed signing |
-| Privy, Dynamic, embedded wallets | Embedded onboarding with public session references |
-| Turnkey | Policy-controlled signing infrastructure |
-| Fireblocks | Institutional custody and approval infrastructure |
-| Manual / watch-only | Public address observation without signing authority |
+| **MonadBuilder+** | Browser-based creation, ecosystem, crypto, research, publishing, deployment, and proof exploration |
+| **THESIS Agent Desktop** | Local control plane for MCP Spine lifecycle, capabilities, approvals, execution, receipts, adapters, namespaces, federation, and releases |
 
-Every normalized identity can carry:
+`artifacts/monad-mobile` is a legacy Replit-oriented companion prototype. NOVA remains an internal runtime and optional paired-device capability within the THESIS operating system.
 
-- wallet role: user, agent, learner, educator, operator, treasury, auditor, deployer, or multisig signer;
-- custody mode: self-custody, smart account, multisig, hardware, embedded, institutional, or watch-only;
-- account type and provider family;
-- namespace such as personal, company, project, treasury, agent, or team;
-- owner reference and policy profile;
-- declared capabilities such as message signing, transaction signing, typed data, batching, multisig, hardware, embedded, session keys, or sponsored gas;
-- public session references, tags, and observable balances.
+## MonadBuilder+
 
-THESIS refuses private keys, seed phrases, mnemonics, recovery phrases, and other secret material.
+MonadBuilder+ is designed to contain:
 
-### Wallet twins and governance boundary
+- AI application generation and visual editing;
+- templates, Gallery, Learn, and AI Studio;
+- wallet linking, normalized wallet identity, wallet twins, and Agent Cards;
+- agent credentials and ReceiptChain proof;
+- smart-contract creation, analysis, verification, deployment, and transaction decoding;
+- Monad-first tooling with EVM interoperability;
+- MCP Server Bridge status and discovery;
+- Scientific Experiment Lab workflows;
+- PARRALAX market intelligence, strategy research, gas analysis, DEX and liquidity analysis, treasury simulation, and governed execution planning;
+- GitHub import, publishing, release automation, and deployment controls;
+- receipts, manifests, and proof exploration.
 
-Observable balances can be synchronized into THESIS sandbox twins. Twins let agents model portfolio state, run policy checks, plan actions, and produce receipts without receiving authority over the real account.
+## THESIS Agent Desktop
 
-The real MetaMask, Phantom, Safe, Ledger, Privy, Turnkey, Fireblocks, or other provider remains the signer after policy approval.
+The desktop source is now named **THESIS Agent Desktop**. It is designed as the sovereign operator surface for:
 
-> **AI can model the wallet. AI cannot silently control the wallet.**
+- starting, stopping, and inspecting the local MCP Spine;
+- discovering local servers and governed tools;
+- capability permissions and confirmation queues;
+- approval or denial of sensitive actions;
+- NOVA paired-device management;
+- local and cloud model routing;
+- Scientific Lab execution and MESIE validation;
+- NEXUS packaging and proof generation;
+- PARRALAX market tools and blockchain adapters;
+- GitHub and Cloudflare controls;
+- receipt verification, bridge logs, namespaces, offline operation, updates, and releases.
 
-## Unified CLI
+The renderer is sandboxed, context-isolated, and does not store wallet private keys.
 
-Installing the Python package exposes both command names:
+## Shared internal technology
 
-```bash
-cd engine
-python -m pip install -e .
+The following are platform internals rather than additional public products:
 
-monadbuilder status
-thesis status
-```
+`MCP Spine` · `Triple-MCP` · `NOVA Runtime` · `NEXUS` · `Loom Cluster` · `MESIE` · `Virtual Processor` · `PARRALAX` · `LiveVault` · `Scientific Experiment Lab` · `Medina Protocol` · blockchain adapters · Cloudflare federation · GitHub release automation
 
-By default the CLI targets the hosted product. Override it for local or private deployments with `--app-url`, `--engine-url`, `MONADBUILDER_URL`, or `THESIS_URL`.
+The machine-readable boundary is recorded in `docs/platform-integration-manifest.json`.
 
-### Live platform and chain operations
+## MCP Spine
 
-```bash
-monadbuilder status
-monadbuilder rpc
-monadbuilder chain block
-monadbuilder chain gas
-```
-
-### Generated wallets through MonadBuilder+
+The governed local bridge is under `artifacts/mcp-bridge`.
 
 ```bash
-monadbuilder wallets generate --label "Operations Wallet" --role user
-monadbuilder wallets generate --label "Auditor Agent" --role agent
+cd artifacts/mcp-bridge
+npm run typecheck
+npm test
+npm run proof
+node src/index.mjs
 ```
 
-### Link existing wallet systems into THESIS
+Default local endpoint: `http://127.0.0.1:8080`
 
-```bash
-monadbuilder wallets architecture
-monadbuilder wallets supported
-
-monadbuilder wallets link 0xYOUR_ADDRESS \
-  --kind metamask \
-  --role operator \
-  --namespace personal \
-  --policy-profile owner-controlled
-
-monadbuilder wallets link 0xSAFE_ADDRESS \
-  --kind safe \
-  --role treasury \
-  --namespace company \
-  --policy-profile multisig-required \
-  --capability multisig=true \
-  --balance MON=25
-```
-
-### Twin synchronization and operations
-
-```bash
-monadbuilder wallets list
-monadbuilder wallets primary wid-xxxxxxxxxxxx
-monadbuilder wallets balances wid-xxxxxxxxxxxx MON=12.5 USDC=2500
-monadbuilder wallets sync --wallet-id wid-xxxxxxxxxxxx
-monadbuilder company "Prepare a governed Monad deployment"
-monadbuilder receipts --limit 20
-monadbuilder terminal "brief"
-```
-
-The CLI calls the same live HTTP routes as the application. It is not a separate mock implementation.
-
-## THESIS governance runtime
-
-| Module | Responsibility |
-|---|---|
-| **EcosystemLaw** | Non-negotiable system rules |
-| **LawBook** | Owner-configurable policy |
-| **PolicyKernel** | Evaluates every proposed action |
-| **SovereignVault** | Gates execution behind policy approval |
-| **ReceiptChain** | Records material actions and outcomes |
-| **AgentRegistry** | Tracks governed agents |
-| **ProposalBook** | Preserves proposals and decisions |
-| **ExecutionRouter** | Routes approved execution |
-| **Company OS** | Coordinates missions, departments, approvals, and operational state |
-
-THESIS evaluates slippage, exposure, reserves, leverage, action value, allowed categories, wallet role, namespace, custody mode, and policy profile. A rejected action returns violated rules and human-readable reasons rather than a fake success toast.
-
-## Live Monad connectivity
-
-The stack uses Monad Testnet, Chain ID `10143`, and exposes live block, gas, native MON balance, wallet refresh, RPC health, explorer, deployment-state, and receipt operations. Unavailable upstream services fail honestly instead of returning fabricated market values.
-
-## Smart-contract system
-
-`PolicyKernel.sol` · `SovereignVault.sol` · `LawBook.sol` · `ReceiptChain.sol` · `AgentRegistry.sol` · `ProposalBook.sol` · `ExecutionRouter.sol` · `ThesisFactory.sol`
-
-A submission contract address must come from a real Monad deployment transaction. This repository does not substitute token addresses or invented values.
-
-## Architecture
-
-<p align="center">
-  <img src="docs/assets/thesis-architecture.jpg" alt="MonadBuilder+ and THESIS architecture" width="100%" />
-</p>
+Core routes:
 
 ```text
-Browser / CLI / external AI
-  └─ MonadBuilder+ React Studio + Node API
-       ├─ projects, templates, AI, chain data, generated wallets
-       └─ /engine/* gateway
-            └─ THESIS FastAPI
-                 ├─ laws, agents, Company OS, tools and receipts
-                 ├─ normalized wallet identities
-                 │    ├─ provider + role + custody + capabilities
-                 │    └─ governed read-only sandbox twins
-                 └─ Monad contracts
-                      PolicyKernel → SovereignVault → ReceiptChain
+GET  /health
+GET  /v1/tools
+POST /v1/call
+GET  /v1/approvals
+POST /v1/approvals/{id}
+GET  /v1/receipts
 ```
 
-## Public wallet and CLI routes
+Read and proposal capabilities remain bounded by policy. Sensitive capabilities enter an owner approval queue. Unsafe command patterns are denied and receipted. Wallet signing remains external and owner-controlled.
 
-```text
-/api/wallets/generate
-/api/wallets/:address/balance
-/engine/wallets/architecture
-/engine/wallets/supported
-/engine/wallets/v2
-/engine/wallets/v2/link
-/engine/wallets/v2/{wallet_id}/primary
-/engine/wallets/v2/{wallet_id}/balances
-/engine/wallets/v2/sync-twins
-```
-
-## Run the complete stack
+## Desktop development
 
 ```bash
-bash scripts/replit_start.sh
+cd desktop
+npm install --no-audit --no-fund
+npm run typecheck
+npm run smoke
+npm run dev
 ```
 
-The script starts THESIS internally on port `8043`, builds the pnpm workspace, runs database setup when configured, and launches the public Node application on `$PORT`.
+Cross-platform packaging is configured for Windows, macOS, and Linux. Source packaging configuration is not the same as a signed or notarized production release.
 
-## Repository map
+## Existing repository systems
 
 ```text
-artifacts/monad-builder/   React application studio
-artifacts/api-server/      Node API and THESIS gateway
-artifacts/monad-mobile/    Mobile product lane
-engine/                    Python THESIS backend and unified CLI
+artifacts/monad-builder/   MonadBuilder+ React application
+artifacts/api-server/      Node API and service gateway
+artifacts/mcp-bridge/      Governed MCP Spine
+artifacts/monad-mobile/    Legacy NOVA companion prototype
+engine/                    THESIS Python runtime and CLI
+ desktop/                   THESIS Agent Desktop
 contracts/                 Solidity and Foundry contracts
+edge/                      Cloudflare gateway source
 lib/                       Shared TypeScript and database packages
-web/                       Dedicated THESIS interface
-polyglot/                  Julia and Node execution engines
-receipts/                  Runtime receipts and deployment records
-docs/                      Architecture and product documentation
-scripts/                   Startup, validation, and deployment automation
+polyglot/                  Shared execution engines
+receipts/                  Runtime and deployment evidence
+docs/                      Architecture and release documentation
+.github/workflows/         Validation, packaging, and release gates
 ```
 
-## Hackathon submission
+## Crypto and trading boundary
 
-**Description**  
-MonadBuilder+ · THESIS is an AI-powered application creation and governance platform for Monad. Users generate and publish dApps, generate or connect wallets, inspect live chain state, and operate through a Python backend and CLI that normalize wallet systems, evaluate agent actions under programmable laws, and preserve receipts.
+The platform may provide contract tooling, wallet identity, transaction decoding, market adapters, gas and liquidity analysis, portfolio and treasury simulation, risk scoring, routing analysis, strategy research, and governed execution plans.
 
-**Problem**  
-Blockchain creation is fragmented and inaccessible, while AI agents introduce risk when actions lack policy controls, interoperable wallet boundaries, and accountable records.
+PARRALAX must not silently receive unrestricted wallet or trading authority. Agents may propose actions; policy evaluates them; owners approve; wallets sign; receipts preserve the result.
 
-**Solution**  
-MonadBuilder+ provides the visual AI creation environment. THESIS supplies the control plane: generated and linked wallet systems, normalized identity and custody metadata, sandbox twins, programmable law, explicit rejection, owner-controlled signing, Company OS coordination, CLI operations, contracts, and receipt-backed accountability.
+## Current source status
 
-**Project URL:** https://monados.medinatechlabs.net  
-**GitHub:** https://github.com/ItsNotAILABS/Monad-Hackaton  
-**Category:** Monad Testnet  
-**Contract address:** use the verified address from the actual deployment transaction.
+Implemented in this repository or this consolidation branch:
 
-## Social post
+- MonadBuilder+ web source, THESIS backend, contracts, receipts, and release workflows;
+- merged desktop alpha from PR #11, now being consolidated under the THESIS Agent Desktop name;
+- MCP Spine package, local HTTP control surface, tool registry, policy boundary, approval queue, receipt chain, source gate, and client configuration example;
+- THESIS desktop MCP lifecycle and approval controls;
+- canonical two-product manifest and legacy companion classification.
 
-> We built **MonadBuilder+ · THESIS**: one platform to create, operate, and govern applications on Monad. Generate a complete dApp with AI, generate or connect wallets across self-custody, smart accounts, multisig, hardware, embedded, and institutional systems, inspect live chain state, and route agent actions through programmable laws, owner-controlled signing, CLI operations, and cryptographic receipts.  
->  
-> **Agents propose. Laws decide. Owners sign. Receipts remember.**  
->  
-> https://monados.medinatechlabs.net  
-> https://github.com/ItsNotAILABS/Monad-Hackaton  
->  
-> #Monad #BuildOnMonad #AI #Web3 #SparkHackathon
+Not claimed as complete by this README:
 
----
+- production DNS configuration;
+- externally verified Cloudflare authenticated federation;
+- live synthetic monitoring;
+- production blockchain adapter coverage;
+- unrestricted or autonomous trading execution;
+- signed Windows installers;
+- notarized macOS installers;
+- external security audit or third-party certification.
 
-<p align="center">
-  <strong>MonadBuilder+ creates the application. THESIS makes autonomous operation governable.</strong>
-</p>
+## Fixed production order
+
+1. Complete and validate the shared MCP Spine.
+2. Consolidate the README and THESIS Agent Desktop naming.
+3. Wire MonadBuilder+ to MCP, Scientific Lab, crypto, PARRALAX, and GitHub.
+4. Wire THESIS Agent Desktop to lifecycle, approvals, adapters, and receipts.
+5. Deploy the authenticated Cloudflare federation gateway.
+6. Configure production DNS and synthetic monitoring.
+7. Produce signed Windows and notarized macOS installers.
+8. Publish one coordinated release presenting both applications as one platform.
+
+## Repository identity
+
+The historical URL `ItsNotAILABS/Monad-Hackaton` currently resolves to this repository. The active repository is handled as one codebase and one release line.
+
+No fragmented product story. No third public app. **MonadBuilder+ and THESIS Agent Desktop are the two surfaces of one sovereign system.**

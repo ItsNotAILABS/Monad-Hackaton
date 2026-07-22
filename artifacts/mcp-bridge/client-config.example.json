@@ -1,0 +1,16 @@
+{
+  "schema": "medina.mcp-spine.client.v1",
+  "name": "thesis-local-spine",
+  "transport": "http",
+  "baseUrl": "http://127.0.0.1:8080",
+  "healthPath": "/health",
+  "toolsPath": "/v1/tools",
+  "callPath": "/v1/call",
+  "approvalsPath": "/v1/approvals",
+  "receiptsPath": "/v1/receipts",
+  "authority": {
+    "walletSigning": false,
+    "sensitiveActionsRequireOwnerApproval": true,
+    "receiptsRequired": true
+  }
+}

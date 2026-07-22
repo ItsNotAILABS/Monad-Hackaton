@@ -1,0 +1,32 @@
+name: MCP Spine Production Gate
+
+on:
+  pull_request:
+    paths:
+      - "artifacts/mcp-bridge/**"
+      - ".github/workflows/mcp-spine-production.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate MCP Spine source
+        working-directory: artifacts/mcp-bridge
+        run: |
+          npm run typecheck
+          npm test
+          npm run proof
+      - name: Upload production proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-spine-production-proof
+          path: artifacts/mcp-bridge/receipts/mcp-spine-production-proof.json
+          if-no-files-found: error
