@@ -23,15 +23,17 @@ export async function spineStatus(config) {
   }
 }
 
-export async function startSpine(config, repositoryRoot) {
+export async function startSpine(config, baseRoot, packaged = false) {
   const status = await spineStatus(config);
   if (status.connected) return { ...status, started: false, reason: "already-running" };
   if (child) return { ...status, started: false, reason: "process-starting" };
   const endpoint = new URL(origin(config));
   if (!["127.0.0.1", "localhost", "::1"].includes(endpoint.hostname)) throw new Error("Desktop-managed MCP Spine must bind to a loopback address.");
-  const entrypoint = path.join(repositoryRoot, "artifacts", "mcp-bridge", "src", "index.mjs");
+  const entrypoint = packaged
+    ? path.join(baseRoot, "mcp-bridge", "src", "index.mjs")
+    : path.join(baseRoot, "artifacts", "mcp-bridge", "src", "index.mjs");
   child = spawn(process.execPath, [entrypoint], {
-    cwd: repositoryRoot,
+    cwd: packaged ? path.join(baseRoot, "mcp-bridge") : baseRoot,
     env: { ...process.env, MCP_SPINE_HOST: endpoint.hostname === "localhost" ? "127.0.0.1" : endpoint.hostname, MCP_SPINE_PORT: endpoint.port || "8080" },
     stdio: ["ignore", "pipe", "pipe"],
     windowsHide: true,
