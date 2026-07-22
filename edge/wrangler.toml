@@ -4,6 +4,12 @@ name = "monadbuilder-edge"
 main = "src/router.js"
 compatibility_date = "2024-11-01"
 
+# Build the served frontend before every deploy. Cloudflare Workers Builds runs
+# `wrangler deploy`, which runs this command first — so the assets directory
+# below always exists. Runs from repo root via pnpm workspace.
+[build]
+command = "cd .. && CI=1 pnpm install --filter=@workspace/monad-builder... --frozen-lockfile && CI=1 pnpm --filter=@workspace/monad-builder build"
+
 [assets]
 directory = "../artifacts/monad-builder/dist/public"
 binding = "ASSETS"
