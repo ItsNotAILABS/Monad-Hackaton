@@ -36,3 +36,6 @@ thesis-pages-deploy.log
 # ── Large offline Transformers.js assets ─────────────────────────────────────
 web/public/wasm/*.wasm
 web/public
+# Runtime receipts
+receipts/
+projects/
