@@ -1,15 +1,25 @@
 {
-  "name": "medina-agent-forge-desktop",
-  "version": "0.2.0",
+  "name": "thesis-agent-desktop",
+  "productName": "THESIS Agent Desktop",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "src/main.mjs",
-  "description": "Governed desktop operator for Agent Mint, THESIS, MESIE, and Monad.",
+  "description": "Sovereign desktop control plane for MCP Spine lifecycle, approvals, tools, receipts, THESIS, MESIE, NEXUS, NOVA and MonadBuilder+.",
   "scripts": {
     "dev": "electron .",
-    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/tools.mjs && node --check renderer/app.mjs",
+    "typecheck": "node --check src/main.mjs && node --check src/preload.mjs && node --check src/config.mjs && node --check src/mcp.mjs && node --check src/tools.mjs && node --check renderer/app.mjs",
     "smoke": "node scripts/smoke.mjs",
     "package": "electron-builder --publish never"
+  },
+  "build": {
+    "appId": "ai.itsnotailabs.thesis.desktop",
+    "productName": "THESIS Agent Desktop",
+    "files": ["src/**/*", "renderer/**/*", "workflows/**/*", "package.json"],
+    "extraResources": [{ "from": "../artifacts/mcp-bridge", "to": "mcp-bridge", "filter": ["package.json", "src/**/*"] }],
+    "win": { "target": ["nsis"] },
+    "mac": { "target": ["dmg"] },
+    "linux": { "target": ["AppImage"] }
   },
   "devDependencies": {
     "electron": "43.1.1",
