@@ -8,8 +8,9 @@ import { generateCode, listTools, runTool } from "./tools.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(directory, "..");
-const repositoryRoot = path.resolve(root, "..");
+const developmentRepositoryRoot = path.resolve(root, "..");
 const configPath = () => path.join(app.getPath("userData"), "config.json");
+const spineRoot = () => app.isPackaged ? process.resourcesPath : developmentRepositoryRoot;
 let mainWindow;
 
 async function getState() {
@@ -55,7 +56,7 @@ ipcMain.handle("desktop:health-check", async () => {
   return { ok: true, desktop: "THESIS Agent Desktop", spine: await spineStatus(config) };
 });
 ipcMain.handle("desktop:spine-status", async () => spineStatus(await readConfig(configPath())));
-ipcMain.handle("desktop:spine-start", async () => startSpine(await readConfig(configPath()), repositoryRoot));
+ipcMain.handle("desktop:spine-start", async () => startSpine(await readConfig(configPath()), spineRoot(), app.isPackaged));
 ipcMain.handle("desktop:spine-stop", async () => stopSpine(await readConfig(configPath())));
 ipcMain.handle("desktop:approvals-list", async () => listApprovals(await readConfig(configPath())));
 ipcMain.handle("desktop:approval-resolve", async (_event, request) => resolveApproval(await readConfig(configPath()), request?.approvalId, request?.decision));
@@ -79,9 +80,9 @@ ipcMain.handle("desktop:save-text", async (_event, request) => {
 
 app.whenReady().then(async () => {
   const config = await readConfig(configPath());
-  if (config.mcpAutostart) startSpine(config, repositoryRoot).catch((error) => { process.stderr.write(`${error.message}\n`); });
+  if (config.mcpAutostart) startSpine(config, spineRoot(), app.isPackaged).catch((error) => { process.stderr.write(`${error.message}\n`); });
   createWindow();
   app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
-app.on("before-quit", () => { stopSpine({ mcpSpineOrigin: "http://127.0.0.1:8080" }).catch(() => {}); });
+app.on("before-quit", () => { readConfig(configPath()).then(stopSpine).catch(() => {}); });
 app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
