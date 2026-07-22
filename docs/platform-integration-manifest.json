@@ -1,0 +1,58 @@
+{
+  "schema": "medina.two-product-platform.v1",
+  "status": "source-integration",
+  "publicProducts": [
+    {
+      "id": "monadbuilder-plus",
+      "name": "MonadBuilder+",
+      "surface": "web-browser",
+      "authority": "creation-ecosystem-and-publishing"
+    },
+    {
+      "id": "thesis-agent-desktop",
+      "name": "THESIS Agent Desktop",
+      "surface": "desktop-control-plane",
+      "authority": "local-intelligence-approvals-tools-receipts-and-execution"
+    }
+  ],
+  "internalTechnology": [
+    "MCP Spine",
+    "Triple-MCP",
+    "NOVA Runtime",
+    "NEXUS",
+    "Loom Cluster",
+    "MESIE",
+    "Virtual Processor",
+    "PARRALAX",
+    "LiveVault",
+    "Scientific Experiment Lab",
+    "Medina Protocol",
+    "Blockchain adapters",
+    "Cloudflare federation",
+    "GitHub release automation"
+  ],
+  "legacy": {
+    "artifacts/monad-mobile": {
+      "classification": "legacy-companion-prototype",
+      "publicProduct": false,
+      "futureOption": "responsive-companion-route-or-pwa",
+      "allowedCapabilities": [
+        "desktop-pairing",
+        "connection-status",
+        "sensitive-action-approval-or-denial",
+        "receipt-viewing",
+        "device-revocation",
+        "emergency-bridge-disconnect"
+      ]
+    }
+  },
+  "federation": {
+    "model": "authenticated",
+    "web": "MonadBuilder+",
+    "desktop": "THESIS Agent Desktop",
+    "sharedBoundary": "MCP Spine",
+    "walletSigningAuthority": "owner-controlled-external-wallet"
+  },
+  "governanceLaw": "Agents propose. Policy evaluates. Owners approve. Wallets sign. Receipts remember.",
+  "claimBoundary": "This manifest defines product architecture and source-integration intent. It does not claim configured DNS, live federation, external monitoring, signed Windows installers, notarized macOS installers, an external audit, or unrestricted trading authority."
+}
