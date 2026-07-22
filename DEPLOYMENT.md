@@ -1,134 +1,130 @@
-# Deployment (Monad official path)
+# Deployment Guide: MonadBuilder+ and THESIS Operations
 
-Aligned with:
+This document covers deployment of both the **MonadBuilder+** (monad-builder) frontend and **THESIS Operations** (web + engine) stack.
 
-- [Deploy a Contract](https://docs.monad.xyz/guides/deploy-smart-contract/index)
-- [Foundry on Monad](https://docs.monad.xyz/guides/deploy-smart-contract/foundry)
-- [Verify with Foundry](https://docs.monad.xyz/guides/verify-smart-contract/foundry)
-- [Network information](https://docs.monad.xyz/developer-essentials/network-information)
-- [Deployment summary](https://docs.monad.xyz/developer-essentials/summary)
+## Current Deployment Status
 
-## Networks
+### ✅ Frontend: MonadBuilder+ (Cloudflare Pages)
+- **Project**: `monadbuilder`
+- **Status**: ✅ Deployed and live
+- **Preview Branch**: claude-video-demo-creation-j.monadbuilder.pages.dev
+- **Deployment**: Automated via Cloudflare Git integration
+- **Configuration**: `edge/wrangler.toml` with pre-deploy build step
 
-| | Testnet (Spark default) | Mainnet |
-|--|-------------------------|---------|
-| Chain ID | `10143` | `143` |
-| RPC | `https://testnet-rpc.monad.xyz` | `https://rpc.monad.xyz` |
-| Explorer | [testnet.monadvision.com](https://testnet.monadvision.com) | [monadvision.com](https://monadvision.com) |
-| Faucet | [testnet.monad.xyz](https://testnet.monad.xyz) | — |
-| Currency | MON | MON |
+### ✅ Frontend: THESIS Web (Cloudflare Pages)
+- **Project**: Configured in `THESIS_PAGES_PROJECT` environment variable
+- **Status**: ✅ Deployment workflow ready
+- **Deployment**: Automated via GitHub Actions (`deploy-thesis-web.yml`)
+- **API URL**: Set via `THESIS_API_URL` secret
 
-## Prerequisites
+### ⏳ Backend: THESIS Engine (Python FastAPI)
+- **Current Location**: Replit (needs migration)
+- **Status**: Ready for deployment
+- **Options**: Render.com, Fly.io, Railway, or Docker host
 
-**Windows:** Foundry needs **WSL** ([docs note](https://docs.monad.xyz/guides/deploy-smart-contract/foundry)).
+## Backend Deployment Options
 
+The Python FastAPI engine is containerized in `Dockerfile`. Choose one:
+
+### Option 1: Render.com (Recommended for Free Tier)
+
+**Prerequisites:**
+- Render.com account: https://render.com
+- GitHub repository connected to Render
+
+**Steps:**
+1. Go to https://dashboard.render.com/
+2. Click "New +" → "Web Service"
+3. Connect your GitHub repository
+4. Set up the service:
+   - Name: `monad-engine`
+   - Environment: `Docker`
+   - Build Command: (leave empty, uses Dockerfile)
+   - Start Command: (leave empty, uses Dockerfile CMD)
+   - Plan: `Free` (with auto-spindown)
+5. Add environment variables:
+   - `THESIS_CORS`: `*` (or your frontend origins)
+   - Any additional secrets (RPC URLs, API keys)
+6. Deploy
+
+The engine will be available at: `https://monad-engine.onrender.com`
+
+### Option 2: Fly.io
+
+**Prerequisites:**
+- Fly.io account: https://fly.io
+- `flyctl` CLI installed
+
+**Steps:**
 ```bash
-# Inside WSL
-curl -L https://foundry.category.xyz | bash
-foundryup --network monad
-forge --version
+brew install flyctl  # or your OS equivalent
+flyctl auth login
+flyctl launch --name monad-engine --region sjc  # or your preferred region
+# Follow prompts, configure env vars
+flyctl deploy
 ```
 
-Also: `forge-std` for scripts (install once in `contracts/`):
+The engine will be available at: `https://monad-engine.fly.dev`
+
+### Option 3: Railway
+
+**Prerequisites:**
+- Railway.app account: https://railway.app
+- GitHub repository connected
+
+**Steps:**
+1. Go to https://railway.app/dashboard
+2. Click "New Project" → "Deploy from GitHub"
+3. Select this repository
+4. Select `Dockerfile` as the build
+5. Configure environment variables
+6. Deploy
+
+### Option 4: Docker Hub + Cloud Run / ECS / Azure Container Instances
+
+Push the Docker image to a registry and deploy to your preferred cloud provider.
+
+## Configuration
+
+### Environment Variables Required for Backend
+
+- `THESIS_CORS`: CORS origins (e.g., `https://monados.medinatechlabs.net,https://your-frontend.pages.dev`)
+- `PORT`: Default `8043` (Render/Railway auto-configure this)
+- Any RPC URLs or API keys needed by the engine
+
+### Updating Frontend API URLs
+
+After deploying the backend:
+
+1. **THESIS Web**: Update `THESIS_API_URL` secret in GitHub Actions
+2. **MonadBuilder**: Update API endpoints in configuration
+
+## Verification
+
+After deployment, verify all services:
 
 ```bash
-cd contracts
-forge install foundry-rs/forge-std --no-commit
+# Health check
+curl https://your-backend-domain/health
+
+# List engines
+curl https://your-backend-domain/engines
+
+# Platform status
+curl https://your-backend-domain/platform
 ```
 
-## 1. Fund deployer
+## Next Steps
 
-1. Create or import a wallet (prefer **keystore**, not raw key in shell history).
-2. Claim testnet MON: https://testnet.monad.xyz
-3. Optional keystore (official recommendation):
+1. Choose a backend deployment platform (Render, Fly, Railway, or Docker host)
+2. Deploy the backend using the steps above
+3. Update API URLs in GitHub Actions secrets
+4. Verify all endpoints are responding
+5. Test the full application flow
 
-```bash
-cast wallet import monad-deployer --interactive
-cast wallet address --account monad-deployer
-```
+## Notes
 
-## 2. Deploy THESIS kernel
-
-From repo root (WSL), with funded key:
-
-```bash
-export PRIVATE_KEY=0x…          # or use FOUNDRY_ACCOUNT=monad-deployer
-export DEPLOYER_OWNER=0x…       # vault owner (defaults to deployer if set in script via env)
-
-# Testnet (Spark)
-./scripts/deploy.sh testnet
-
-# Mainnet (only if you intend Mainnet category)
-# ./scripts/deploy.sh mainnet
-```
-
-What deploys (order):
-
-1. `PolicyKernel`
-2. `ReceiptChain`
-3. `AgentRegistry`
-4. `ProposalBook`
-5. `ExecutionRouter`
-6. **`SovereignVault(owner, policy, receipts)`** ← use this for Spark **Contract address**
-
-Addresses are written to `receipts/deployment.json`.
-
-Manual equivalent (docs style):
-
-```bash
-cd contracts
-forge script script/Deploy.s.sol:Deploy \
-  --rpc-url https://testnet-rpc.monad.xyz \
-  --private-key $PRIVATE_KEY \
-  --broadcast -vvv
-```
-
-## 3. Verify (MonadVision / Sourcify)
-
-```bash
-# Example after deploy
-./scripts/verify.sh 10143 0xYourSovereignVault SovereignVault
-./scripts/verify.sh 10143 0xYourPolicyKernel PolicyKernel
-```
-
-Or:
-
-```bash
-forge verify-contract \
-  0xYourAddress \
-  src/SovereignVault.sol:SovereignVault \
-  --chain 10143 \
-  --verifier sourcify \
-  --verifier-url https://sourcify-api-monad.blockvision.org/
-```
-
-Constructor-args contracts need the ABI-encoded constructor if the verifier asks for them (`SovereignVault`).
-
-## 4. Spark submission fields
-
-| Field | Value |
-|-------|--------|
-| Category | **Testnet** (unless you deployed mainnet) |
-| Contract address | `SovereignVault` from `receipts/deployment.json` |
-| Github | https://github.com/ItsNotAILABS/Monad-Hackaton |
-| Project URL | Hosted web cockpit |
-| Demo video | ≤3 min public URL |
-| Post URL | Social post (viral prize) |
-
-## API / Web (off-chain)
-
-```bash
-# Engine
-cd engine && pip install -e ".[dev]"
-uvicorn thesis_forge.api:app --host 0.0.0.0 --port 8043
-
-# Web
-cd web && npm install && npm run build
-# set VITE_API_URL to API origin before build
-```
-
-## Safety
-
-- No private keys in git or browser bundles.
-- Prefer Foundry **keystore** over `PRIVATE_KEY` in shell history.
-- Alpha is not audited — do not put real capital on test vaults without review.
+- All frontends are configured for **production use** on Cloudflare Pages
+- The Python backend deployment is independent and can be swapped anytime
+- Use GitHub Actions secrets for sensitive configuration (API keys, RPC URLs)
+- Monitor logs on your hosting platform for any runtime issues
