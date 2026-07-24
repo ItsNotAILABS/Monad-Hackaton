@@ -1,0 +1,45 @@
+{
+  "schema": "itsnotailabs.github-profile.v1",
+  "generatedFor": {
+    "organization": "ItsNotAILABS",
+    "founderAccount": "FreddyCreates"
+  },
+  "sourceRepository": "ItsNotAILABS/CapsulaBuilder",
+  "organizationProfile": {
+    "source": "docs/github-profile/ORGANIZATION_PROFILE_README.md",
+    "targetRepository": "ItsNotAILABS/.github",
+    "targetPath": "profile/README.md",
+    "status": "prepared-not-activated"
+  },
+  "founderProfile": {
+    "source": "docs/github-profile/FOUNDER_PROFILE_README.md",
+    "targetRepository": "FreddyCreates/FreddyCreates",
+    "targetPath": "README.md",
+    "status": "prepared-not-activated"
+  },
+  "portfolioPlan": "docs/github-profile/PUBLIC_PORTFOLIO.md",
+  "canonicalFlagship": "ItsNotAILABS/CapsulaBuilder",
+  "publicProductModel": [
+    "MonadBuilder+",
+    "THESIS Agent Desktop"
+  ],
+  "internalTechnology": [
+    "MCP Spine",
+    "Triple-MCP",
+    "NOVA Runtime",
+    "NEXUS",
+    "Loom Cluster",
+    "MESIE",
+    "Virtual Processor",
+    "PARRALAX",
+    "LiveVault",
+    "Scientific Experiment Lab",
+    "Medina Protocol"
+  ],
+  "claimBoundary": {
+    "implementedSourceIsNotExternalDeployment": true,
+    "localValidationIsNotExternalAudit": true,
+    "simulationIsNotLiveFinancialExecution": true,
+    "agentProposalIsNotOwnerAuthority": true
+  }
+}
